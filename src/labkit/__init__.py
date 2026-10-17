@@ -14,6 +14,12 @@ experiments, monitoring) and the rest lives here, each piece with tests:
     ops         response cache, usage/cost ledger, metered LLM wrapper, cheap-to-strong router, prompt registry
     graph       knowledge graph (triples, k-hop neighbourhood, paths, LLM triple extraction) for GraphRAG
     memory      conversation memory: recent turns + running summary + exact facts
+    agentic_rag route -> retrieve -> grade -> rewrite -> answer -> verify -> abstain, with budgets (CRAG/Self-RAG)
+    contextual  contextual retrieval: an LLM sentence situating each chunk, cached, for BM25 and embeddings
+    context     context engineering: token-budget packing, stable prefix for caching, tool-output trimming
+    optimize    GEPA-style reflective prompt optimisation with a Pareto front, validation selection, length penalty
+    reasoning   self-consistency voting (agreement = confidence) and best-of-n with a verifier
+    capsec      CaMeL-style prompt-injection defence: provenance-tracked values + tool policies in code
 
 Every module works without a model: the LLM, the encoder and the reranker are passed in.
 """
