@@ -6,7 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; sys.path.insert(0, str(ROOT / "src"))
 from support.agent import Session
 from support.config import DB_PATH, RESULTS_DIR
-from support.evaluation import build_scenarios, run_scenario, summarize, UserSimulator, save_results
+from labkit.metrics import reliability_report
+from support.evaluation import build_scenarios, run_scenario, save_results, score, summarize, UserSimulator
 from support.runtime import load_classifier, make_agent, make_answerer, make_llm
 from support.settings import settings, tuned_thresholds
 from support.tools import connect
@@ -32,12 +33,20 @@ print(len(scenarios), "scenarios, simulating", min(E.n_run, len(scenarios)))
 
 # %%
 sim = UserSimulator(make_llm("user_sim"))
-results = []
+results, by_scenario = [], {}
 for i, sc in enumerate(scenarios[:E.n_run], 1):
-    results.append(run_scenario(fresh_agent, sim, sc, max_turns=E.max_turns))
-    print(f"[{i}/{min(E.n_run, len(scenarios))}] {sc.scenario_id} expected={sc.expected} outcome={results[-1]['outcome']}")
+    for rep in range(E.repeats):        # repeats > 1: same scenario again (user simulator samples differently)
+        r = run_scenario(fresh_agent, sim, sc, max_turns=E.max_turns)
+        r["repeat"] = rep
+        by_scenario.setdefault(sc.scenario_id, []).append(score(r)["success"])
+        if rep == 0:
+            results.append(r)           # point metrics and CIs use the first run of each scenario
+        print(f"[{i}/{min(E.n_run, len(scenarios))}#{rep + 1}] {sc.scenario_id} expected={sc.expected} outcome={r['outcome']}")
 save_results(results, RESULTS_DIR / "stage6_runs.jsonl")
 summary = summarize(results, n_boot=E.n_bootstrap)
+if E.repeats > 1:
+    summary["reliability"] = {k: round(v, 4) if isinstance(v, float) else v
+                              for k, v in reliability_report(by_scenario).items()}
 summary["same_model_both_sides"] = settings().llm.user_sim_model == settings().llm.chat_model
 summary["thresholds"] = tuned_thresholds()
 print(json.dumps(summary, indent=2))

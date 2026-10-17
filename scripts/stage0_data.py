@@ -1,7 +1,7 @@
 # Stage 0: data, order database, data summary. Same steps as notebooks/00_setup_data.ipynb, runnable from the panel.
 # Parameters: configs/project.yaml -> data.*, project.seed
 # %%
-import json, os, platform, sqlite3, sys
+import hashlib, json, os, platform, sqlite3, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; sys.path.insert(0, str(ROOT / "src"))
 import pandas as pd, sklearn
@@ -54,8 +54,18 @@ con.close()
 print(sizes, by_status, f"{len(edge)} boundary orders")
 
 # %% Data summary: every number in the README comes from here
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()[:16]
+
+
+# Fingerprints of the raw data: if a dataset changes upstream, results become incomparable and this shows why.
+raw_files = {p.name: {"sha256": sha256(p), "bytes": p.stat().st_size} for p in sorted(config.RAW_DIR.glob("*")) if p.is_file()}
 summary = {
-    "reference_date": str(config.reference_date()), "seed": config.SEED,
+    "reference_date": str(config.reference_date()), "seed": config.SEED, "raw_files": raw_files,
     "bitext": {"rows_raw": len(raw), "intents": int(raw["intent"].nunique()), **report,
                "splits": {n: len(p) for n, p in splits.items()}, "max_intent_share_gap": max_gap,
                "flag_share": flag_share.to_dict()},

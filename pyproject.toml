@@ -17,3 +17,12 @@ testpaths = ["tests"]
 
 [tool.setuptools.package-data]
 "support.panel" = ["static/*", "roadmap_template.html", "templates/*/*", "templates/*/*/*"]
+
+[tool.ruff]
+line-length = 130
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+# scripts are notebook-style (cells, several imports per line); short lambdas and l/O names are used on purpose
+ignore = ["E501", "E702", "E731", "E401", "E402", "E741", "B008", "B905"]

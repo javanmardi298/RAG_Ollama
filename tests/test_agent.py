@@ -68,3 +68,35 @@ def test_german_customer_gets_german_template(shop):
     s = Session("t")
     out = agent.reply(s, "Ich möchte bitte den Newsletter abbestellen")
     assert "Ich kann nur" in out
+
+
+def test_ollama_llm_retries_transient_errors_only(monkeypatch):
+    import sys
+    import types
+    calls = []
+
+    class Msg:
+        content, tool_calls = "ok", None
+
+    class Client:
+        def __init__(self, **kw):
+            pass
+
+        def chat(self, **kw):
+            calls.append(kw)
+            if len(calls) == 1:
+                raise ConnectionError("ollama restarting")
+            if kw["model"] == "missing":
+                raise ValueError("model not found")
+            return types.SimpleNamespace(message=Msg())
+
+    monkeypatch.setitem(sys.modules, "ollama", types.SimpleNamespace(Client=Client))
+    from support.llm import OllamaLLM
+    llm = OllamaLLM("m", backoff_s=0)
+    assert llm.chat([{"role": "user", "content": "hi"}]).content == "ok" and len(calls) == 2
+    bad = OllamaLLM("missing", backoff_s=0)
+    calls.clear(); calls.append("skip-first-failure")
+    import pytest
+    with pytest.raises(ValueError):
+        bad.chat([{"role": "user", "content": "hi"}])
+    assert len(calls) == 2          # not retried

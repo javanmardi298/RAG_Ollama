@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 import re
 import unicodedata
+from math import comb
 
 
 def recall_at_k(ranked: list[str], relevant: set[str], k: int) -> float:
@@ -36,6 +37,36 @@ def retrieval_report(runs: list[tuple[list[str], set[str]]], k: int = 5) -> dict
     return {f"recall@{k}": sum(recall_at_k(r, g, k) for r, g in runs) / n,
             f"hit@{k}": sum(hit_at_k(r, g, k) for r, g in runs) / n,
             "mrr": sum(mrr(r, g) for r, g in runs) / n, "n": len(runs)}
+
+
+# ---------- reliability over repeated trials (agents) ----------
+
+def pass_at_k(n: int, c: int, k: int) -> float:
+    """Chance that at least one of k attempts succeeds, from n trials with c successes (unbiased)."""
+    if k > n:
+        raise ValueError("k must be <= n")
+    return 1.0 - comb(n - c, k) / comb(n, k)
+
+
+def pass_hat_k(n: int, c: int, k: int) -> float:
+    """pass^k (tau-bench): chance that ALL k attempts succeed. What a customer meeting the agent k times
+    experiences; it falls fast when the agent is only sometimes right, even if pass@1 looks fine."""
+    if k > n:
+        raise ValueError("k must be <= n")
+    return comb(c, k) / comb(n, k)
+
+
+def reliability_report(successes: dict[str, list[bool]]) -> dict:
+    """successes: task id -> list of outcomes over repeated runs (same number per task). Mean over tasks."""
+    if not successes:
+        return {}
+    n = min(len(v) for v in successes.values())
+    out = {}
+    for k in range(1, n + 1):
+        out[f"pass^{k}"] = sum(pass_hat_k(n, sum(v[:n]), k) for v in successes.values()) / len(successes)
+        out[f"pass@{k}"] = sum(pass_at_k(n, sum(v[:n]), k) for v in successes.values()) / len(successes)
+    out["n_tasks"], out["trials"] = len(successes), n
+    return out
 
 
 # ---------- structured extraction ----------

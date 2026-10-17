@@ -9,4 +9,5 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install pandas numpy scipy scikit-learn pyyaml pydantic matplotlib fastapi httpx mcp psutil pytest
+      - run: pip install ruff && ruff check src scripts app tests
       - run: pytest -q          # no data download, no model and no API key needed

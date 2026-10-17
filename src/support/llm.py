@@ -24,17 +24,33 @@ class LLMReply:
 
 
 class OllamaLLM:
-    def __init__(self, model: str = "qwen2.5:7b", temperature: float = 0.0, host: str | None = None):
+    def __init__(self, model: str = "qwen2.5:7b", temperature: float = 0.0, host: str | None = None,
+                 timeout_s: float = 180, max_retries: int = 2, backoff_s: float = 2.0):
         import ollama  # imported here so tests do not need the package
 
-        self.client = ollama.Client(host=host) if host else ollama.Client()
+        kwargs = {"timeout": timeout_s}
+        self.client = ollama.Client(host=host, **kwargs) if host else ollama.Client(**kwargs)
         self.model = model
         self.temperature = temperature
+        self.max_retries, self.backoff_s = max_retries, backoff_s
+
+    def _call(self, **kw):
+        """A long evaluation run must not die on one timeout or a restarting Ollama: retry with backoff.
+        Model errors (unknown model, bad request) are not retried: they will not fix themselves."""
+        for attempt in range(self.max_retries + 1):
+            try:
+                return self.client.chat(**kw)
+            except Exception as e:
+                transient = isinstance(e, (TimeoutError, ConnectionError)) or type(e).__name__ in {
+                    "ConnectError", "ReadTimeout", "ConnectTimeout", "RemoteProtocolError", "TimeoutException"}
+                if not transient or attempt == self.max_retries:
+                    raise
+                time.sleep(self.backoff_s * 2 ** attempt)
 
     def chat(self, messages: list[dict], tools: list[dict] | None = None,
              json_schema: dict | None = None) -> LLMReply:
         start = time.perf_counter()
-        resp = self.client.chat(
+        resp = self._call(
             model=self.model, messages=messages, tools=tools,
             format=json_schema, options={"temperature": self.temperature},
         )

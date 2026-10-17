@@ -74,18 +74,18 @@ class ClaudeChat:
                             resp = client.messages.create(**kwargs)
                     else:
                         resp = client.messages.create(**kwargs)
-                except anthropic.AuthenticationError:
+                except anthropic.AuthenticationError as err:
                     messages.pop()
-                    raise ClaudeUnavailable("کلید API نامعتبر است.")
-                except anthropic.RateLimitError:
+                    raise ClaudeUnavailable("کلید API نامعتبر است.") from err
+                except anthropic.RateLimitError as err:
                     messages.pop()
-                    raise ClaudeUnavailable("محدودیت نرخ API؛ کمی بعد دوباره امتحان کن.")
-                except anthropic.APIConnectionError:
+                    raise ClaudeUnavailable("محدودیت نرخ API؛ کمی بعد دوباره امتحان کن.") from err
+                except anthropic.APIConnectionError as err:
                     messages.pop()
-                    raise ClaudeUnavailable("اتصال به API برقرار نشد (اینترنت؟).")
+                    raise ClaudeUnavailable("اتصال به API برقرار نشد (اینترنت؟).") from err
                 except anthropic.APIStatusError as e:
                     messages.pop()
-                    raise ClaudeUnavailable(f"خطای API ({e.status_code}): {e.message}")
+                    raise ClaudeUnavailable(f"خطای API ({e.status_code}): {e.message}") from e
                 usage["input_tokens"] += resp.usage.input_tokens
                 usage["output_tokens"] += resp.usage.output_tokens
                 messages.append({"role": "assistant", "content": resp.content})

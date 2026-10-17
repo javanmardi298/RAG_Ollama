@@ -34,7 +34,7 @@ def test_apply_changes_saves_valid_values(tmp_path):
 def test_invalid_changes_save_nothing(tmp_path, changes):
     path = tmp_path / "project.yaml"
     st.apply_changes({"rag.k": 4}, path)
-    with pytest.raises(Exception):
+    with pytest.raises((ValueError, KeyError)):          # pydantic.ValidationError is a ValueError
         st.apply_changes({"evaluation.n_run": 50, **changes}, path)
     s = st.load(path)
     assert s.rag.k == 4 and s.evaluation.n_run == 20     # the valid part of the batch was not saved either

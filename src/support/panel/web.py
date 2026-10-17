@@ -262,7 +262,7 @@ def preset_get(preset_id: str):
     try:
         return service.get_preset(preset_id)
     except KeyError:
-        raise HTTPException(404)
+        raise HTTPException(404) from None
 
 
 @app.post("/api/presets/{preset_id}/progress")

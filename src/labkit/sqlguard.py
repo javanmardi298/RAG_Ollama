@@ -43,9 +43,7 @@ def check_sql(sql: str, allowed_tables: set[str], max_rows: int = 200) -> SQLVer
     allowed = {t.lower() for t in allowed_tables}
     if tables - allowed:
         problems.append("table not allowed: " + ", ".join(sorted(tables - allowed)))
-    m = None
-    for m in _LIMIT.finditer(scan):            # the last LIMIT is the outer one
-        pass
+    m = next(reversed(list(_LIMIT.finditer(scan))), None)   # the last LIMIT is the outer one
     if m is None:
         body = f"{body} LIMIT {max_rows}"
     elif int(m.group(1)) > max_rows:

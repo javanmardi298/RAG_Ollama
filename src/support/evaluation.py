@@ -18,7 +18,7 @@ import numpy as np
 from sklearn.metrics import cohen_kappa_score
 
 from . import policy
-from .config import SEED, reference_date
+from .config import SEED
 
 
 @dataclass

@@ -126,6 +126,10 @@ def _s6():
          _metric("false automation rate", d["false_automation_rate"], "pct"),
          _metric("policy violations", d["policy_violation_rate"], "pct"),
          _metric("unnecessary handoffs", d["unnecessary_handoff_rate"], "pct")]
+    rel = d.get("reliability") or {}
+    if rel:
+        k = rel.get("trials", 1)
+        m.append(_metric(f"pass^{k} (all {k} runs succeed)", rel.get(f"pass^{k}"), "pct", "reliability, tau-bench style"))
     j = _load("stage6_judge.json")
     if j:
         m.append(_metric("judge kappa", j["kappa"], "num", ">= 0.6 before trusting the judge"))

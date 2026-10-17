@@ -41,6 +41,8 @@ class LLM(_Section):
                                                           "A different model than the agent makes the test harder to game.")
     user_sim_temperature: float = Field(0.7, ge=0, le=2, description="Some randomness makes simulated customers more varied.")
     judge_model: str = Field("qwen2.5:7b", description="Model used as LLM judge (tone, clarity). Validate it against human labels first.")
+    timeout_s: float = Field(180, ge=5, le=3600, description="Seconds before one LLM call is abandoned (slow laptops need more).")
+    max_retries: int = Field(2, ge=0, le=10, description="Retries for timeouts / connection errors (with exponential backoff).")
 
 
 class Embeddings(_Section):
@@ -103,6 +105,8 @@ class Evaluation(_Section):
     n_run: int = Field(20, ge=1, le=5000, description="Scenarios actually simulated (slow: an LLM on both sides).")
     max_turns: int = Field(8, ge=2, le=30, description="Turn limit per simulated conversation.")
     n_bootstrap: int = Field(2000, ge=100, le=100_000, description="Bootstrap resamples for confidence intervals.")
+    repeats: int = Field(1, ge=1, le=10, description="Runs per scenario. >1 measures reliability: pass^k = all k runs "
+                                                       "succeed (tau-bench). Costs repeats x time.")
 
 
 class Robustness(_Section):

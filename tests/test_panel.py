@@ -25,7 +25,7 @@ def tmp_registry(tmp_path, monkeypatch):
 # ---------- catalog ----------
 
 def test_every_task_points_to_an_existing_script():
-    for st, task in catalog.TASKS.values():
+    for _st, task in catalog.TASKS.values():
         scripts = [p for p in task.cmd if p.startswith("scripts/") or p.startswith("tests/")]
         for s in scripts:
             assert (ROOT / s).exists(), f"{task.id}: {s} missing"
@@ -249,7 +249,7 @@ def test_mcp_server_exposes_all_tools_without_origin():
     names = {t.name for t in tools}
     assert names == {f.__name__ for f in service.ALL_TOOLS}
     for t in tools:
-        schema = getattr(t, "input_schema", None) or getattr(t, "inputSchema")
+        schema = getattr(t, "input_schema", None) or t.inputSchema
         assert "origin" not in schema.get("properties", {})
 
 

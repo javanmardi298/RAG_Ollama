@@ -21,7 +21,7 @@ def make_llm(role: str = "agent"):
     model, temp = {"agent": (s.chat_model, s.temperature),
                    "user_sim": (s.user_sim_model, s.user_sim_temperature),
                    "judge": (s.judge_model, 0.0)}[role]
-    return OllamaLLM(model, temperature=temp, host=s.host)
+    return OllamaLLM(model, temperature=temp, host=s.host, timeout_s=s.timeout_s, max_retries=s.max_retries)
 
 
 def make_encoder():
