@@ -1,0 +1,6 @@
+id: claude_readonly
+title: "Claude فقط مشاور (بدون اجرا و تغییر)"
+description: "Claude فقط می‌خواند و توضیح می‌دهد؛ اجرای task و تغییر پارامتر خاموش. این پریست فقط از خود پنل قابل اعمال است."
+changes:
+  claude.allow_runs: false
+  claude.allow_settings_changes: false

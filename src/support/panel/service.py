@@ -310,11 +310,75 @@ def make_colab_bundle() -> dict:
     return {"ok": True, "path": str(out), "size": out.stat().st_size}
 
 
+# ---------- project presets (learning tracks) and settings presets ----------
+
+
+def list_presets(level: int = 0, track: str = "") -> dict:
+    """The real-world project presets (basic -> advanced) with level, tracks, progress and how many of their building
+    blocks are ready in the system, added in labkit, or external tools. level: 1 basic, 2 intermediate, 3 advanced,
+    0 = all. track: rag, agent, workflow, eval, ml, production or empty."""
+    from . import presets
+    prog = presets.progress()
+    items = [presets.summary(p, prog) for p in presets.projects().values()
+             if (not level or p.level == level) and (not track or track in p.tracks)]
+    return {"projects": items, "levels": presets.LEVELS, "tracks": presets.TRACKS}
+
+
+def get_preset(preset_id: str) -> dict:
+    """Everything about one project preset: real-world use, problem, goal, data sources with licences, stack,
+    building blocks (with status and where they live), stages (learn / build / measure / pitfall), metrics,
+    parameters, guardrails, production notes, interview questions, advanced steps, CV line, progress."""
+    from . import presets
+    return presets.detail(preset_id)
+
+
+def set_preset_progress(preset_id: str, stage: int, done: bool = True, origin: str = "panel") -> dict:
+    """Mark a stage (0-based) of a project preset as done or not done (the learner's progress)."""
+    from . import presets
+    out = presets.set_progress(preset_id, stage, done)
+    registry.log_event(origin, "preset_progress", {"preset": preset_id, "stage": stage, "done": done})
+    return out
+
+
+def scaffold_preset(preset_id: str, origin: str = "panel") -> dict:
+    """Create projects/<preset_id>/ with the full plan (README), config.yaml with the preset's parameters, sample data
+    and a runnable starter (run.py) built on labkit. Refuses to overwrite an existing folder."""
+    from . import presets
+    out = presets.scaffold(preset_id)
+    if out.get("ok"):
+        registry.log_event(origin, "preset_scaffolded", {"preset": preset_id, "path": out["path"]})
+    return out
+
+
+def list_settings_presets() -> list[dict]:
+    """Ready-made parameter sets for this project (quick smoke test, laptop without GPU, full evaluation, German focus,
+    strict safety, production-like, Claude read-only) with the exact changes each one makes."""
+    from . import presets
+    current = load().model_dump(mode="json")
+    out = []
+    for sp in presets.settings_presets().values():
+        diff = {k: {"current": current[k.split(".")[0]][k.split(".")[1]], "preset": v} for k, v in sp.changes.items()}
+        out.append({**sp.model_dump(), "diff": {k: v for k, v in diff.items() if v["current"] != v["preset"]}})
+    return out
+
+
+def apply_settings_preset(preset_id: str, origin: str = "panel") -> dict:
+    """Apply a settings preset to configs/project.yaml (validated; nothing is saved if any value is invalid)."""
+    from . import presets
+    sp = presets.settings_presets()[preset_id]
+    out = update_settings(dict(sp.changes), origin=origin)
+    if out.get("ok"):
+        registry.log_event(origin, "settings_preset_applied", {"preset": preset_id})
+    return {**out, "preset": preset_id}
+
+
 # ---------- tool registry for MCP and the Claude chat ----------
 
 READ_TOOLS = [project_status, get_stage, get_settings, get_results, get_advice, job_ad_coverage, policy_rules,
-              read_project_file, list_tasks, run_status, list_runs, compare_runs, sample_orders]
-ACTION_TOOLS = [update_settings, run_task, stop_run, chat_with_agent, make_colab_bundle]
+              read_project_file, list_tasks, run_status, list_runs, compare_runs, sample_orders,
+              list_presets, get_preset, list_settings_presets]
+ACTION_TOOLS = [update_settings, run_task, stop_run, chat_with_agent, make_colab_bundle,
+                set_preset_progress, scaffold_preset, apply_settings_preset]
 ALL_TOOLS = READ_TOOLS + ACTION_TOOLS
 
 

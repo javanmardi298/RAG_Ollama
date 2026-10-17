@@ -1,0 +1,9 @@
+id: production_like
+title: "شبیه production"
+description: "load test واقعی‌تر، هدف p95 سخت‌تر، پنجره‌ی پایش بزرگ‌تر، آستانه‌های تنظیم‌شده روشن."
+changes:
+  serving.loadtest_users: 10
+  serving.loadtest_requests: 200
+  serving.p95_target_ms: 3000
+  monitoring.window: 500
+  decision.use_tuned_thresholds: true

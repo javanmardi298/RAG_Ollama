@@ -196,6 +196,23 @@ def advice(checks: list[dict] | None = None) -> list[dict]:
         items.append(_item("info", None, "Claude هنوز وصل نیست", "یا کلید API را در «اتصال‌ها» بگذار، یا پنل را در Claude Desktop نصب کن.",
                            {"type": "page", "page": "setup"}))
 
+    # --- learning roadmap (project presets) ---
+    try:
+        from . import presets
+        prog = presets.progress()
+        projs = presets.projects()
+        share = {pid: len(prog.get(pid, [])) / len(p.stages) for pid, p in projs.items()}
+        share["p08_support_agent"] = max(share.get("p08_support_agent", 0),
+                                         sum(res[i]["available"] for i in range(10)) / 10)
+        nxt = next((p for p in projs.values() if share[p.id] < 1 and all(share.get(q, 0) >= 0.5 for q in p.prerequisites)
+                    and p.id != "p08_support_agent"), None)
+        if nxt:
+            items.append(_item("info", None, f"نقشه‌ی راه: پروژه‌ی پیشنهادی بعدی «{nxt.title}»",
+                               f"سطح {presets.LEVELS[nxt.level]}، {nxt.weeks} هفته. پیش‌نیازهایش را تا نیمه رفته‌ای.",
+                               {"type": "page", "page": f"preset/{nxt.id}"}))
+    except Exception:          # a broken preset file must not break the advice list
+        pass
+
     for job_id, text in JOB_AD.items():
         if not any(res[st.id]["available"] for st in STAGES if job_id in st.job_ad):
             items.append(_item("info", None, f"بند آگهی بدون مدرک: {text}",
@@ -209,6 +226,23 @@ def coverage() -> list[dict]:
     """For each job-ad requirement: which stages provide evidence and their headline numbers."""
     res = {i: stage_results(i) for i in range(10)}
     out = []
+    # --- learning roadmap (project presets) ---
+    try:
+        from . import presets
+        prog = presets.progress()
+        projs = presets.projects()
+        share = {pid: len(prog.get(pid, [])) / len(p.stages) for pid, p in projs.items()}
+        share["p08_support_agent"] = max(share.get("p08_support_agent", 0),
+                                         sum(res[i]["available"] for i in range(10)) / 10)
+        nxt = next((p for p in projs.values() if share[p.id] < 1 and all(share.get(q, 0) >= 0.5 for q in p.prerequisites)
+                    and p.id != "p08_support_agent"), None)
+        if nxt:
+            items.append(_item("info", None, f"نقشه‌ی راه: پروژه‌ی پیشنهادی بعدی «{nxt.title}»",
+                               f"سطح {presets.LEVELS[nxt.level]}، {nxt.weeks} هفته. پیش‌نیازهایش را تا نیمه رفته‌ای.",
+                               {"type": "page", "page": f"preset/{nxt.id}"}))
+    except Exception:          # a broken preset file must not break the advice list
+        pass
+
     for job_id, text in JOB_AD.items():
         stages = [st for st in STAGES if job_id in st.job_ad]
         evidence = [{"stage": st.id, "title": st.title, "metrics": res[st.id]["metrics"]}

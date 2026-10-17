@@ -16,4 +16,4 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 
 [tool.setuptools.package-data]
-"support.panel" = ["static/*"]
+"support.panel" = ["static/*", "roadmap_template.html", "templates/*/*", "templates/*/*/*"]

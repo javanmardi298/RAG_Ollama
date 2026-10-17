@@ -1,0 +1,44 @@
+id: p09_multilingual_rag
+order: 9
+level: 2
+title: "RAG چندزبانه (فارسی، انگلیسی، آلمانی)"
+title_en: "Multilingual and cross-lingual RAG (FA / EN / DE)"
+tracks: [rag, eval]
+weeks: "2–3"
+real_world: "شرکت‌های چندملیتی و دولتی: سند به یک زبان، سؤال به زبان دیگر؛ پشتیبانی فارسی‌زبان روی مستندات انگلیسی."
+problem: "توکن‌سازی فارسی (نیم‌فاصله، ی/ي و ک/ك عربی)، مدل‌های embedding انگلیسی‌محور، و سؤال و سند به زبان‌های مختلف."
+goal: "بازیابی هم‌زبان و بین‌زبانی را برای هر زبان جدا اندازه بگیری و با نرمال‌سازی و ترجمه‌ی query بهتر کنی."
+prerequisites: [p01_faq_search]
+data:
+  - {name: "MIRACL", url: "https://huggingface.co/datasets/miracl/miracl", license: "Apache 2.0", note: "۱۸ زبان شامل فارسی، آلمانی و انگلیسی، با qrels انسانی"}
+  - {name: "سیاست‌های EN/DE همین repo", url: "policies/", license: "ساختگی", note: "سؤال فارسی روی سند آلمانی بنویس"}
+stack: {llm: "qwen2.5:7b (ترجمه‌ی query)", embeddings: "bge-m3 یا multilingual-e5-base", extras: ["hazm یا parsivar برای نرمال‌سازی فارسی"]}
+components: [chunking, bm25, dense, hybrid_rrf, query_rewriting, metadata_filter, retrieval_metrics, citations, llm_judge]
+stages:
+  - title: "نرمال‌سازی متن فارسی"
+    learn: ["ی/ي، ک/ك، نیم‌فاصله (ZWNJ)، اعداد فارسی/عربی", "اثر نرمال‌سازی روی BM25"]
+    build: ["تابع normalize قبل از index و query", "BM25 با و بدون نرمال‌سازی روی MIRACL-fa"]
+    measure: "recall@10 فارسی قبل و بعد"
+    pitfall: "اگر سند را نرمال کنی و query را نه، هیچ چیز پیدا نمی‌شود."
+  - title: "embedding چندزبانه"
+    learn: ["فضای برداری مشترک بین زبان‌ها", "چرا مدل انگلیسی روی فارسی شکست می‌خورد"]
+    build: ["دو مدل embedding را روی هر سه زبان مقایسه کن"]
+    measure: "recall@10 به تفکیک زبان"
+    pitfall: "میانگین روی همه‌ی زبان‌ها افت یک زبان را پنهان می‌کند؛ همیشه به تفکیک گزارش کن."
+  - title: "بازیابی بین‌زبانی"
+    learn: ["سؤال فارسی، سند آلمانی: dense مستقیم یا ترجمه‌ی query", "multi-query با ترجمه"]
+    build: ["multi_query_search با ترجمه‌ی query به زبان سندها"]
+    measure: "recall@10 بین‌زبانی برای هر روش"
+    pitfall: "ترجمه‌ی ماشینی اسم‌های خاص را خراب می‌کند؛ نمونه را دستی چک کن."
+  - title: "جواب به زبان کاربر با citation به زبان سند"
+    learn: ["تولید به زبان کاربر، استناد به منبع اصلی"]
+    build: ["prompt با زبان هدف؛ citation به chunk اصلی", "judge برای «زبان درست»"]
+    measure: "نرخ جواب به زبان درست، fact rate"
+    pitfall: "مدل‌های کوچک وسط جواب زبان را عوض می‌کنند."
+metrics: ["recall@10 per language", "cross-lingual recall@10", "answer-in-user-language rate"]
+params: {embeddings: "BAAI/bge-m3", k: 10, mode: hybrid, normalize_fa: true, translate_query: true}
+guardrails: ["تشخیص زبان؛ اگر مطمئن نیستی، زبان پیام قبلی"]
+production: ["index جدا برای هر زبان یا یک index با فیلتر زبان: هزینه و دقت را مقایسه کن"]
+interview: ["چالش‌های فارسی در بازیابی؟", "بین‌زبانی را چطور ارزیابی کردی؟", "چرا گزارش به تفکیک زبان؟"]
+advanced: ["fine-tune embedding روی جفت فارسی-انگلیسی", "تشخیص زبان با fastText lid", "ارزیابی گویش‌ها و فینگلیش"]
+cv: "Built FA/EN/DE retrieval with Persian normalisation, multilingual embeddings and query translation; cross-lingual recall@10 {xl}, Persian recall@10 {fa}."

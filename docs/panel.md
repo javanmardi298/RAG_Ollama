@@ -82,3 +82,23 @@ windows/                      setup.ps1, start_panel.bat, install_claude_desktop
 - **Claude Desktop ابزارها را نمی‌بیند:** Claude Desktop را کامل ببند (نه فقط پنجره). اگر نسخه‌ی Microsoft Store نصب است، پنل در هر دو مسیر config می‌نویسد. لاگ: `%APPDATA%\Claude\logs\mcp-server-support-agent.log`.
 - **اجرا «lost» شد:** کامپیوتر خاموش شده یا پروسه کشته شده؛ دوباره اجرا کن.
 - **حروف آلمانی/فارسی در لاگ خراب است:** پنل همه‌ی اجراها را با `PYTHONUTF8=1` اجرا می‌کند؛ اگر اسکریپت را دستی اجرا می‌کنی، قبلش `set PYTHONUTF8=1`.
+
+## پروژه‌ها (پریست‌ها) و نقشه‌ی راه
+
+۱۶ پروژه‌ی واقعی در `presets/projects/` از پایه تا پیشرفته. هر پروژه این‌ها را دارد: کاربرد واقعی، مسئله، هدف، پیش‌نیاز، داده با لایسنس، stack، قطعه‌ها، مرحله‌ها (یاد بگیر / بساز / بسنج / دام)، معیار، guardrail، نکته‌های production، سؤال مصاحبه، نسخه‌ی پیشرفته و خط رزومه.
+
+| سطح | پروژه‌ها |
+|---|---|
+| پایه | ۱ جستجوی FAQ، ۲ جستجوی محصول (WANDS)، ۳ پرسش‌وپاسخ روی اسناد با citation، ۴ طبقه‌بندی تیکت |
+| میانی | ۵ استخراج فاکتور + workflow تأیید، ۶ Text-to-SQL، ۷ workflow ایمیل، ۸ همین support agent، ۹ RAG چندزبانه (فارسی) |
+| پیشرفته | ۱۰ agent پژوهشی، ۱۱ دستیار کد، ۱۲ multi-agent خسارت بیمه، ۱۳ GraphRAG، ۱۴ پلتفرم LLMOps، ۱۵ fine-tune و distillation، ۱۶ امنیت و red-team |
+
+- **پنل:** «پروژه‌ها (۱۶ پریست)»: فیلتر سطح و مسیر، تیک زدن مرحله‌ها، و «ساخت اسکلت پروژه». این دکمه پوشه‌ی `projects/<id>/` را با README کامل، `config.yaml` و یک `run.py` قابل اجرا روی labkit می‌سازد.
+- **قطعه‌ها:** فایل `presets/components.yaml` وضعیت هر قطعه را می‌گوید: **در سیستم** (تست‌شده در repo)، **labkit** (تازه اضافه‌شده در `src/labkit/`) یا **بیرونی** (ابزار شناخته‌شده‌ای که نصب یا وصل می‌کنی، مثل OCR، پایگاه برداری، جستجوی وب، tracing).
+- **پریست‌های پارامتر** (`presets/settings/`) برای همین پروژه: تست سریع، لپ‌تاپ بدون GPU، ارزیابی کامل، تمرکز آلمانی، ایمنی سخت‌گیرانه، شبیه production، و Claude فقط مشاور. از صفحه‌ی «همه‌ی پارامترها» اعمال می‌شوند.
+- **Claude:** ابزارهای `list_presets`، `get_preset`، `scaffold_preset`، `set_preset_progress`، `list_settings_presets` و `apply_settings_preset`. Claude نمی‌تواند با پریست، اجازه‌های خودش را عوض کند.
+- **نسخه‌ی آنلاین (Artifact در claude.ai):** همین نقشه‌ی راه همراه با ثبت پیشرفت خصوصی و پرسش از Claude. برای ساختن دوباره‌اش بعد از تغییر پریست‌ها: `python -m support.panel.presets html out.html`.
+- **اعتبارسنجی:** `python -m support.panel.presets check` (در تست‌ها هم اجرا می‌شود).
+
+### labkit: قطعه‌هایی که برای این پروژه‌ها اضافه شد
+`loaders` (txt/md/html/pdf/docx و حذف سرصفحه) · `chunking` (fixed، recursive، heading، AST برای کد) · `retrieval` (index عمومی BM25/dense/hybrid، فیلتر metadata، reranker، MMR، multi-query) · `metrics` (recall، MRR، nDCG درجه‌دار، F1 فیلدی) · `structured` (اعتبارسنجی JSON با pydantic و یک دور repair) · `sqlguard` (فقط SELECT، جدول مجاز، LIMIT، اتصال read-only، execution accuracy) · `workflow` (retry، resume، idempotency، تأیید انسانی، audit) · `ops` (کش، ledger هزینه، router مدل ارزان ← قوی، نسخه‌گذاری prompt) · `graph` (گراف دانش، مسیر چندپرشی با منبع) · `memory` (حافظه‌ی گفتگو).

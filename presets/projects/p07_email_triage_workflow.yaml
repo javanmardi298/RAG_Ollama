@@ -1,0 +1,44 @@
+id: p07_email_triage_workflow
+order: 7
+level: 2
+title: "workflow پاسخ به ایمیل‌های صندوق مشترک"
+title_en: "Shared-inbox email triage and reply workflow"
+tracks: [workflow, agent]
+weeks: "2"
+real_world: "ایمیل info@ یا support@: دسته‌بندی، استخراج شماره سفارش، پیش‌نویس جواب، تأیید اپراتور، ارسال؛ با SLA."
+problem: "حجم بالا، ایمیل‌های تکراری و thread طولانی، و اینکه ارسال اشتباه قابل برگشت نیست."
+goal: "یک workflow قطعی با چند گام LLM: هر گام قابل تست، ارسال فقط با تأیید یا با اطمینان بالا، و هیچ ایمیلی دو بار جواب نگیرد."
+prerequisites: [p04_ticket_triage]
+data:
+  - {name: "ایمیل‌های ساختگی از Bitext + shop.db", url: "", license: "ساختگی", note: "پیام Bitext را با شماره سفارش واقعی shop.db ترکیب کن"}
+  - {name: "Enron (فقط برای نویز واقعی)", url: "https://www.cs.cmu.edu/~enron/", license: "عمومی", note: "PII دارد؛ فقط برای تمرین ingestion"}
+stack: {llm: "qwen2.5:7b", embeddings: "—", extras: ["imaplib/IMAP یا فایل .eml"]}
+components: [workflow_engine, human_approval, idempotency, intent_classifier, structured_output, citations, grounding_check, pii_masking, memory, cost_ledger]
+stages:
+  - title: "طراحی workflow"
+    learn: ["workflow در برابر agent: مسیر ثابت با گام‌های LLM", "idempotency key = Message-ID"]
+    build: ["گام‌ها: parse → classify → extract → draft → check → approve → send", "labkit.workflow با audit"]
+    measure: "پوشش موارد: تکراری، thread، پیوست"
+    pitfall: "agent آزاد برای ایمیل، رفتار غیرقابل‌پیش‌بینی و تست‌ناپذیر دارد."
+  - title: "گام‌های LLM قابل تست"
+    learn: ["هر گام یک ورودی/خروجی مشخص و تست با ScriptedLLM"]
+    build: ["classify با مدل مرحله‌ی ۱ support-agent", "extract با structured_output", "draft با RAG روی قواعد"]
+    measure: "دقت هر گام جداگانه"
+    pitfall: "ارزیابی فقط end-to-end نمی‌گوید کدام گام خراب است."
+  - title: "تأیید و ارسال"
+    learn: ["ارسال خودکار فقط برای دسته‌های کم‌ریسک با اطمینان بالا", "بقیه با تأیید اپراتور"]
+    build: ["approval=lambda ctx: risk(ctx) != 'low' or conf < t", "صف تأیید در یک صفحه‌ی ساده"]
+    measure: "نرخ ارسال خودکار در برابر نرخ ویرایش اپراتور"
+    pitfall: "نرخ ویرایش اپراتور بهترین معیار کیفیت پیش‌نویس است؛ ثبتش کن."
+  - title: "SLA و بازیابی از خطا"
+    learn: ["retry با backoff، resume بعد از crash", "هشدار نزدیک شدن به SLA"]
+    build: ["crash وسط workflow را شبیه‌سازی کن و resume کن", "گزارش زمان پاسخ"]
+    measure: "صفر جواب تکراری، درصد پاسخ در SLA"
+    pitfall: "retry گام send بدون idempotency = دو ایمیل به مشتری."
+metrics: ["per-step accuracy", "auto-send rate", "operator edit rate", "SLA hit rate", "duplicate replies (=0)"]
+params: {llm: "qwen2.5:7b", auto_send_categories: [track_order, delivery_period], auto_send_min_conf: 0.9, sla_hours: 24}
+guardrails: ["جواب فقط عددهای موجود در سفارش و قواعد", "پیوست‌ها اجرا نمی‌شوند؛ ایمیل حاوی دستور = injection غیرمستقیم"]
+production: ["صف پیام (Redis/RabbitMQ) به‌جای polling", "داشبورد SLA"]
+interview: ["چرا workflow و نه agent؟", "idempotency را کجا گذاشتی؟", "کیفیت پیش‌نویس را چطور اندازه گرفتی؟"]
+advanced: ["Temporal یا Prefect برای workflow در مقیاس", "یادگیری از ویرایش‌های اپراتور (DPO روی جفت پیش‌نویس/نسخه‌ی نهایی)", "خلاصه‌ی thread طولانی با memory"]
+cv: "Built a durable email-triage workflow (classify, extract, RAG draft, guarded send with human approval, idempotent by Message-ID); auto-send {auto} at {edit} operator edit rate, zero duplicate replies."

@@ -1,0 +1,44 @@
+id: p06_text_to_sql
+order: 6
+level: 2
+title: "دستیار تحلیل داده (Text-to-SQL)"
+title_en: "Text-to-SQL analytics assistant"
+tracks: [agent, eval]
+weeks: "2–3"
+real_world: "BI سلف‌سرویس (مثل Databricks Genie، Snowflake Cortex Analyst): مدیر می‌پرسد «فروش ماه قبل به تفکیک دسته» و جدول می‌گیرد."
+problem: "مدل باید schema را بفهمد، SQL درست بنویسد، و هرگز داده را تغییر ندهد یا جدول حساس را بخواند."
+goal: "Text-to-SQL با schema linking، اجرای امن (فقط خواندن) و ارزیابی execution accuracy؛ و پرسیدن سؤال روشن‌کننده وقتی سؤال مبهم است."
+prerequisites: [p04_ticket_triage]
+data:
+  - {name: "shop.db همین repo", url: "data/shop.db", license: "ساختگی", note: "سفارش، مشتری، محصول، بازپرداخت: ۵۰ سؤال طلایی با SQL درست بنویس"}
+  - {name: "Spider / BIRD mini-dev", url: "https://bird-bench.github.io/", license: "CC BY-SA", note: "بنچمارک استاندارد"}
+stack: {llm: "qwen2.5-coder:7b", embeddings: "برای انتخاب جدول/مثال", extras: ["sqlite3", "sqlglot (اختیاری برای parse دقیق)"]}
+components: [sql_guard, sql_exec_accuracy, structured_output, prompt_registry, tool_agent, selective_decision, cost_ledger, retrieval_metrics]
+stages:
+  - title: "مجموعه‌ی سؤال طلایی"
+    learn: ["execution accuracy در برابر تطابق متنی SQL"]
+    build: ["۵۰ سؤال با SQL درست روی shop.db، از آسان (count) تا سخت (join + group + تاریخ)"]
+    measure: "توزیع سختی"
+    pitfall: "سؤال‌های فقط آسان، دقت را ۹۰٪ نشان می‌دهند و در عمل شکست می‌خورد."
+  - title: "schema در prompt و few-shot"
+    learn: ["schema linking: فقط جدول‌ها و ستون‌های مرتبط", "few-shot پویا با شبیه‌ترین سؤال‌ها"]
+    build: ["DDL + چند ردیف نمونه در prompt", "few-shot با بازیابی"]
+    measure: "execution accuracy (labkit.sqlguard.execution_match)"
+    pitfall: "schema کامل یک دیتابیس بزرگ context را پر می‌کند؛ اول جدول‌ها را بازیابی کن."
+  - title: "اجرای امن و repair"
+    learn: ["دفاع چندلایه: validator + اتصال read-only + LIMIT + timeout", "repair با پیام خطای دیتابیس"]
+    build: ["labkit.sqlguard.run_guarded با جدول‌های مجاز", "یک دور repair با خطا"]
+    measure: "نرخ SQL رد شده، دقت بعد از repair"
+    pitfall: "فقط validator کافی نیست؛ اتصال هم باید read-only باشد."
+  - title: "سؤال مبهم و ارائه‌ی نتیجه"
+    learn: ["تشخیص ابهام («بهترین مشتری» با چه معیاری؟)", "خلاصه‌ی نتیجه بدون عدد ساختگی"]
+    build: ["مرحله‌ی clarify قبل از SQL", "خلاصه‌ی متنی که فقط عددهای جدول را دارد (check_output)"]
+    measure: "نرخ سؤال روشن‌کننده‌ی بجا"
+    pitfall: "خلاصه‌ی LLM ممکن است عدد بسازد؛ همان grounding check مرحله‌ی ۵ support-agent."
+metrics: ["execution accuracy", "blocked unsafe SQL (=100%)", "clarification precision", "latency"]
+params: {llm: "qwen2.5-coder:7b", max_rows: 200, allowed_tables: [orders, products, refunds], few_shot_k: 4, max_repairs: 1}
+guardrails: ["جدول customers فقط ستون‌های غیرشخصی (view بساز)", "هیچ نوشتنی؛ اتصال read-only"]
+production: ["کش نتیجه‌ی queryهای تکراری", "ثبت SQL و کاربر برای audit"]
+interview: ["چطور مطمئن شدی SQL مخرب اجرا نمی‌شود؟", "execution accuracy چیست و چرا بهتر از تطابق متنی است؟", "با schema بزرگ چه می‌کنی؟"]
+advanced: ["semantic layer (dbt metrics) به‌جای SQL خام", "agent چندمرحله‌ای: کاوش schema، SQL، بررسی نتیجه", "fine-tune مدل کوچک روی سؤال‌های خودت"]
+cv: "Built a guarded Text-to-SQL assistant (schema retrieval, few-shot, read-only execution, repair loop); execution accuracy {acc} on 50 gold questions, 100% of unsafe SQL blocked."

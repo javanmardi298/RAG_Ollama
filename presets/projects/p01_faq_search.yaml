@@ -1,0 +1,44 @@
+id: p01_faq_search
+order: 1
+level: 1
+title: "جستجوی معنایی در FAQ و پایگاه دانش پشتیبانی"
+title_en: "Semantic FAQ / help-center search"
+tracks: [rag]
+weeks: "1–2"
+real_world: "مرکز راهنمای هر سایت و نرم‌افزار (Zendesk Guide، Intercom، Confluence): کاربر سؤال می‌پرسد، سیستم مقاله‌ی درست را نشان می‌دهد."
+problem: "کاربر با کلمه‌های خودش می‌پرسد («پولم کی برمی‌گردد») و مقاله با کلمه‌های شرکت نوشته شده («زمان بازپرداخت»). جستجوی کلیدواژه‌ای جواب را پیدا نمی‌کند."
+goal: "سه روش بازیابی را روی یک مجموعه سؤال با برچسب درست مقایسه کنی و عددی بدهی که بگوید کدام بهتر است و چرا."
+prerequisites: []
+data:
+  - {name: "BEIR FiQA-2018", url: "https://huggingface.co/datasets/BeIR/fiqa", license: "CC BY-SA", note: "سؤال‌های واقعی مالی کاربران + جواب‌های برچسب‌خورده (qrels)"}
+  - {name: "سیاست‌های فروشگاه همین repo", url: "policies/", license: "ساختگی", note: "برای شروع کوچک: ۱۲ سند، ۳۰ سؤال"}
+stack: {llm: "لازم نیست (فقط بازیابی)", embeddings: "paraphrase-multilingual-MiniLM-L12-v2 یا bge-m3", extras: []}
+components: [doc_loaders, chunking, bm25, dense, hybrid_rrf, retrieval_metrics, query_rewriting, run_registry]
+stages:
+  - title: "داده و مجموعه‌ی ارزیابی"
+    learn: ["qrels: جدول سؤال ← سند درست؛ بدون آن هیچ بهبودی قابل اندازه‌گیری نیست", "corpus، query، relevance"]
+    build: ["FiQA را بخوان یا ۳۰ سؤال برای اسناد خودت بنویس", "۲۰٪ سؤال‌ها را برای test کنار بگذار"]
+    measure: "تعداد سؤال، تعداد سند درست برای هر سؤال"
+    pitfall: "سؤال‌هایی که خودت از روی متن سند می‌نویسی، کلمه‌های سند را دارند؛ BM25 را خوش‌بینانه نشان می‌دهند. چند سؤال با کلمه‌های متفاوت بنویس."
+  - title: "baseline با BM25"
+    learn: ["TF، IDF و نرمال‌سازی طول در BM25", "توکن‌سازی و حروف کوچک/بزرگ"]
+    build: ["chunk با labkit.chunking.recursive", "Index(chunks).search(mode='bm25')"]
+    measure: "recall@5، MRR"
+    pitfall: "توکن‌ساز ضعیف (مثلاً فقط split روی فاصله) علامت‌ها را به کلمه می‌چسباند."
+  - title: "dense و hybrid"
+    learn: ["embedding و شباهت کسینوسی", "RRF: ترکیب رتبه‌ها بدون هم‌مقیاس کردن امتیاز"]
+    build: ["encoder را بساز، mode='dense' و 'hybrid' را اجرا کن", "سؤال‌هایی که هر روش از دست داد را کنار هم بگذار"]
+    measure: "recall@5 هر سه روش + جدول سؤال‌های از دست رفته"
+    pitfall: "مدل embedding انگلیسی‌محور روی متن فارسی/آلمانی ضعیف است؛ مدل چندزبانه انتخاب کن."
+  - title: "اندازه‌ی chunk و بازنویسی query"
+    learn: ["trade-off اندازه‌ی chunk: کوچک = دقیق ولی بی‌زمینه", "multi-query و ترکیب با RRF"]
+    build: ["سه اندازه‌ی chunk (100/200/400 کلمه) را مقایسه کن", "multi_query_search با ۲-۳ بازنویسی از LLM"]
+    measure: "recall@5 برای هر تنظیم در run registry"
+    pitfall: "بازنویسی با LLM تأخیر اضافه می‌کند؛ فقط وقتی نتیجه‌ی اول ضعیف است اجرایش کن."
+metrics: ["recall@5", "MRR", "latency p95 جستجو"]
+params: {chunk_strategy: recursive, chunk_words: 200, k: 5, mode: hybrid, rrf_k: 60, embeddings: "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"}
+guardrails: ["بازیابی خالی یا امتیاز پایین → «جواب مطمئنی پیدا نکردم» + لینک تماس"]
+production: ["index را یک بار بساز و ذخیره کن (FAISS)؛ با هر تغییر سند فقط همان سند را دوباره index کن", "click-through را ثبت کن: داده‌ی ارزیابی رایگان"]
+interview: ["چرا hybrid؟ کی BM25 تنها برنده است؟", "recall@k و MRR چه فرقی دارند؟", "اندازه‌ی chunk را چطور انتخاب کردی؟"]
+advanced: ["reranker با cross-encoder روی ۲۰ نتیجه‌ی اول", "fine-tune embedding روی جفت‌های سؤال-سند خودت", "ارزیابی آنلاین با click-through و interleaving"]
+cv: "Built a help-center semantic search comparing BM25, dense and hybrid (RRF) retrieval on a labelled query set; hybrid improved recall@5 from {bm25} to {hybrid}."

@@ -1,0 +1,44 @@
+id: p11_code_assistant
+order: 11
+level: 3
+title: "دستیار کد: پرسش از codebase و agent که تست اجرا می‌کند"
+title_en: "Codebase assistant: repo Q&A and a test-running coding agent"
+tracks: [agent, rag]
+weeks: "3–4"
+real_world: "ابزارهای مثل Claude Code، Cursor، Sourcegraph Cody: «احراز هویت کجا انجام می‌شود؟» یا «این باگ را درست کن و تست را سبز کن»."
+problem: "کد ساختار دارد (تابع، کلاس، import)؛ chunk پنجره‌ای آن را خرد می‌کند. تغییر کد باید با اجرای تست تأیید شود، در محیط امن."
+goal: "بازیابی کد با AST و نماد، و agent که تغییر پیشنهاد می‌دهد، در sandbox تست اجرا می‌کند و فقط با تست سبز تمام می‌شود."
+prerequisites: [p01_faq_search, p08_support_agent]
+data:
+  - {name: "همین repo", url: "src/", license: "—", note: "۳۰ سؤال درباره‌ی کد خودت با فایل/تابع درست"}
+  - {name: "SWE-bench Lite", url: "https://www.swebench.com/", license: "MIT", note: "issue واقعی + تست؛ زیرمجموعه‌ی کوچک انتخاب کن"}
+stack: {llm: "qwen2.5-coder:7b/14b یا Claude", embeddings: "jina-embeddings-v2-base-code یا bge-m3", extras: ["Docker برای sandbox", "ripgrep"]}
+components: [code_chunking, bm25, dense, hybrid_rrf, reranker, retrieval_metrics, tool_agent, sandbox_exec, langgraph, structured_output, cost_ledger, tracing]
+stages:
+  - title: "index کد"
+    learn: ["chunk با AST: تابع و کلاس کامل", "نام نماد، docstring و مسیر فایل به‌عنوان زمینه"]
+    build: ["labkit.chunking.python_code روی src/", "BM25 روی نام‌ها + dense روی docstring/کد"]
+    measure: "recall@5 روی ۳۰ سؤال (فایل/تابع درست)"
+    pitfall: "BM25 روی snake_case و camelCase بدون شکستن نام ضعیف است؛ get_refund را به get و refund بشکن."
+  - title: "پرسش از codebase"
+    learn: ["جواب با ارجاع به فایل:خط", "گراف import برای سؤال‌های «کجا صدا زده می‌شود»"]
+    build: ["جواب با citation فایل:خط", "ابزار grep برای جستجوی دقیق در کنار بازیابی معنایی"]
+    measure: "دقت citation"
+    pitfall: "بازیابی معنایی برای «همه‌ی جاهایی که X صدا زده می‌شود» مناسب نیست؛ grep بهتر است."
+  - title: "agent تغییر کد با تست"
+    learn: ["ابزارها: read_file، search، edit، run_tests", "حلقه تا تست سبز یا بودجه"]
+    build: ["sandbox Docker بدون شبکه با timeout", "agent روی ۵ باگ عمدی در کپی repo"]
+    measure: "نرخ حل (تست سبز)، گام و هزینه"
+    pitfall: "agent تست را پاک یا skip می‌کند تا سبز شود؛ diff تست‌ها را ممنوع کن یا بررسی کن."
+  - title: "ارزیابی روی issue واقعی"
+    learn: ["SWE-bench: patch باید تست‌های پنهان را پاس کند"]
+    build: ["۱۰ issue از SWE-bench Lite"]
+    measure: "resolve rate"
+    pitfall: "اجرای کد ناشناس روی ماشین خودت بدون sandbox خطرناک است."
+metrics: ["code retrieval recall@5", "citation accuracy", "bug-fix resolve rate", "cost per fix"]
+params: {llm: "qwen2.5-coder:14b", max_steps: 20, test_timeout_s: 120, sandbox: docker, network: false}
+guardrails: ["sandbox بدون شبکه و بدون دسترسی به فایل‌های بیرون", "ممنوعیت تغییر تست‌ها بدون تأیید"]
+production: ["index افزایشی با git diff", "tracing هر قدم agent"]
+interview: ["کد را چطور chunk کردی؟", "agent را چطور امن اجرا کردی؟", "چطور جلوی تقلب agent با تست را گرفتی؟"]
+advanced: ["گراف فراخوانی (call graph) برای بازیابی", "MCP server برای ابزارهای repo", "ارزیابی با SWE-bench Verified"]
+cv: "Built an AST-aware codebase assistant and a sandboxed test-driven coding agent; code retrieval recall@5 {r5}, resolved {res} of seeded bugs."

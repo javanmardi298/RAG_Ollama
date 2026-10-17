@@ -31,11 +31,12 @@ def _client():
 
 
 def _tools(cfg) -> list[dict]:
-    allowed = list(service.READ_TOOLS) + [service.chat_with_agent, service.make_colab_bundle]
+    allowed = list(service.READ_TOOLS) + [service.chat_with_agent, service.make_colab_bundle,
+                                          service.set_preset_progress, service.scaffold_preset]
     if cfg.allow_runs:
         allowed += [service.run_task, service.stop_run]
     if cfg.allow_settings_changes:
-        allowed.append(service.update_settings)
+        allowed += [service.update_settings, service.apply_settings_preset]
     return [service.tool_schema(f) for f in allowed]
 
 

@@ -1,0 +1,43 @@
+id: p14_llmops_platform
+order: 14
+level: 3
+title: "پلتفرم LLMOps: gateway، هزینه، ارزیابی در CI و پایش"
+title_en: "LLMOps platform: gateway, cost, CI evaluation, observability"
+tracks: [production, eval]
+weeks: "3–4"
+real_world: "تیم پلتفرم AI در هر شرکت متوسط به بالا: همه‌ی تیم‌ها از یک gateway به مدل‌ها وصل می‌شوند؛ هزینه، کیفیت و امنیت مرکزی کنترل می‌شود."
+problem: "هزینه‌ی پنهان، تغییر prompt که کیفیت را بی‌صدا خراب می‌کند، مدل جدید که رفتار را عوض می‌کند، و نبود دید روی اینکه چه اتفاقی افتاده."
+goal: "یک لایه‌ی مشترک: کش، router، ledger هزینه، نسخه‌ی prompt، tracing، و eval که هر PR را قبل از merge می‌سنجد؛ روی پروژه‌ی support-agent پیاده شود."
+prerequisites: [p08_support_agent]
+data:
+  - {name: "traceهای همین repo", url: "results/traces.jsonl", license: "—", note: "و سناریوهای مرحله‌ی ۶ به‌عنوان مجموعه‌ی regression"}
+stack: {llm: "Ollama + یک مدل ابری (Claude) برای router", embeddings: "—", extras: ["Langfuse (self-host) یا OpenTelemetry", "GitHub Actions"]}
+components: [cache, cost_ledger, model_router, prompt_registry, tracing, ci_eval, sim_user_eval, bootstrap_ci, ab_testing, drift, serving, loadtest, auth_ratelimit, streaming, run_registry]
+stages:
+  - title: "gateway و ledger"
+    learn: ["هزینه به ازای feature و کاربر", "کش برای درخواست‌های قطعی"]
+    build: ["labkit.ops.Metered دور LLMهای support-agent", "گزارش هزینه/تأخیر به تفکیک feature"]
+    measure: "هزینه به ازای گفتگو، cache hit rate"
+    pitfall: "کش جواب غیرقطعی (temperature>0) یا شخصی‌شده = نشت داده بین کاربران."
+  - title: "router مدل"
+    learn: ["اول مدل ارزان، ارتقا با شرط قابل اندازه‌گیری"]
+    build: ["labkit.ops.Router: مدل محلی، ارتقا به Claude وقتی output check شکست خورد"]
+    measure: "escalation rate، کیفیت و هزینه در برابر همیشه-قوی"
+    pitfall: "اگر بیشتر درخواست‌ها ارتقا پیدا کنند، router فقط تأخیر اضافه کرده."
+  - title: "prompt و eval در CI"
+    learn: ["هر prompt یک نسخه؛ هر تغییر یک اجرای eval", "regression suite"]
+    build: ["PromptRegistry برای promptهای agent", "GitHub Action: ۳۰ سناریوی مرحله‌ی ۶ با ScriptedLLM/مدل کوچک، شکست اگر task success افت کند"]
+    measure: "زمان eval در CI، تشخیص regression عمدی"
+    pitfall: "eval غیرقطعی در CI تست flaky می‌سازد؛ seed و temperature 0، یا آستانه با CI."
+  - title: "tracing و پایش"
+    learn: ["trace هر نوبت: گام‌ها، ابزارها، تأخیر، هزینه", "هشدار drift و افت کیفیت"]
+    build: ["Langfuse محلی یا OpenTelemetry", "داشبورد p95، هزینه، handoff rate، PSI"]
+    measure: "زمان پیدا کردن علت یک خطای کاشته‌شده"
+    pitfall: "trace بدون پنهان‌سازی PII خودش نشت داده است."
+metrics: ["cost per conversation", "cache hit rate", "escalation rate", "eval runtime in CI", "p95 latency"]
+params: {cache_ttl_s: 3600, router_cheap: "qwen2.5:7b", router_strong: "claude-sonnet-5-5", ci_scenarios: 30, max_regression: 0.03}
+guardrails: ["rate limit به ازای کاربر", "کلیدها فقط در gateway، نه در اپلیکیشن‌ها"]
+production: ["canary برای prompt/مدل جدید", "بودجه‌ی ماهانه با هشدار"]
+interview: ["هزینه‌ی LLM را چطور کنترل کردی؟", "چطور می‌فهمی تغییر prompt کیفیت را خراب کرد؟", "چه چیزی را trace می‌کنی؟"]
+advanced: ["LiteLLM یا Portkey به‌عنوان gateway", "prompt caching سمت API و batch API", "online eval با نمونه‌برداری از ترافیک"]
+cv: "Built an LLMOps layer (metered gateway, cache, cheap-to-strong routing, versioned prompts, CI regression evals, tracing); cut cost per conversation by {save} with no significant quality drop."

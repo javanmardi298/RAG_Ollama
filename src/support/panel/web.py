@@ -250,6 +250,41 @@ def desktop_uninstall():
     return claude_desktop.uninstall()
 
 
+# ---------- project presets and settings presets ----------
+
+@app.get("/api/presets")
+def presets_list(level: int = 0, track: str = ""):
+    return service.list_presets(level, track)
+
+
+@app.get("/api/presets/{preset_id}")
+def preset_get(preset_id: str):
+    try:
+        return service.get_preset(preset_id)
+    except KeyError:
+        raise HTTPException(404)
+
+
+@app.post("/api/presets/{preset_id}/progress")
+def preset_progress(preset_id: str, stage: int = Body(...), done: bool = Body(True)):
+    return service.set_preset_progress(preset_id, stage, done, origin="panel")
+
+
+@app.post("/api/presets/{preset_id}/scaffold")
+def preset_scaffold(preset_id: str):
+    return service.scaffold_preset(preset_id, origin="panel")
+
+
+@app.get("/api/settings_presets")
+def settings_presets_list():
+    return service.list_settings_presets()
+
+
+@app.post("/api/settings_presets/{preset_id}")
+def settings_preset_apply(preset_id: str):
+    return service.apply_settings_preset(preset_id, origin="panel")
+
+
 # ---------- LLM judge labels (stage 6b) ----------
 
 @app.get("/api/judge/labels")

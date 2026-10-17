@@ -1,0 +1,75 @@
+# Building blocks the project presets need, and where each one lives.
+#   ready     already in this repository (support/ or the panel), tested
+#   labkit    added in src/labkit/ for the presets, tested
+#   external  use a well-known tool; the preset says which and why (not re-implemented here)
+components:
+  # ---------- data and documents ----------
+  doc_loaders:        {name: "خواندن سند (txt/md/html/pdf/docx)", category: data, status: labkit, where: labkit.loaders}
+  ocr:                {name: "OCR برای اسکن و عکس", category: data, status: external, where: "Tesseract / docTR / PaddleOCR"}
+  table_extraction:   {name: "استخراج جدول از PDF", category: data, status: external, where: "pdfplumber / Camelot / Docling"}
+  leakage_free_split: {name: "تقسیم بدون نشت (group split)", category: data, status: ready, where: support.data}
+  synthetic_data:     {name: "داده‌ی ساختگی با موارد مرزی", category: data, status: ready, where: support.orders}
+  # ---------- retrieval ----------
+  chunking:           {name: "chunking (fixed / recursive / heading)", category: retrieval, status: labkit, where: labkit.chunking}
+  code_chunking:      {name: "chunking کد با AST", category: retrieval, status: labkit, where: labkit.chunking.python_code}
+  bm25:               {name: "BM25", category: retrieval, status: ready, where: support.rag.BM25}
+  dense:              {name: "dense retrieval (embedding)", category: retrieval, status: ready, where: labkit.retrieval.Index}
+  hybrid_rrf:         {name: "hybrid با RRF", category: retrieval, status: ready, where: support.rag.rrf}
+  metadata_filter:    {name: "فیلتر metadata (زبان، دسترسی، تاریخ)", category: retrieval, status: labkit, where: labkit.retrieval.Index.search}
+  reranker:           {name: "reranker (cross-encoder)", category: retrieval, status: labkit, where: labkit.retrieval.Index.search}
+  mmr:                {name: "MMR (تنوع نتایج)", category: retrieval, status: labkit, where: labkit.retrieval.Index._mmr}
+  query_rewriting:    {name: "بازنویسی query / multi-query", category: retrieval, status: labkit, where: labkit.retrieval.multi_query_search}
+  vector_db:          {name: "پایگاه برداری", category: retrieval, status: external, where: "FAISS (محلی) / Qdrant / pgvector"}
+  knowledge_graph:    {name: "گراف دانش (triples، multi-hop)", category: retrieval, status: labkit, where: labkit.graph}
+  # ---------- generation and grounding ----------
+  citations:          {name: "جواب با ارجاع به منبع", category: generation, status: ready, where: support.rag.answer_question}
+  grounding_check:    {name: "بررسی عدد/ادعای ساختگی", category: generation, status: ready, where: support.guardrails.check_output}
+  structured_output:  {name: "خروجی ساختاریافته + اعتبارسنجی + repair", category: generation, status: labkit, where: labkit.structured}
+  prompt_registry:    {name: "نسخه‌گذاری prompt", category: generation, status: labkit, where: labkit.ops.PromptRegistry}
+  # ---------- classification and decisions ----------
+  intent_classifier:  {name: "طبقه‌بند intent (TF-IDF / embedding / LLM)", category: decision, status: ready, where: support.intents}
+  calibration:        {name: "calibration (temperature scaling، ECE)", category: decision, status: ready, where: support.intents}
+  selective_decision: {name: "آستانه‌ی ریسک و ارجاع به انسان", category: decision, status: ready, where: support.decision}
+  # ---------- agents and workflows ----------
+  tool_agent:         {name: "agent با tool calling", category: agent, status: ready, where: support.agent}
+  confirmation:       {name: "تأیید صریح قبل از عمل", category: agent, status: ready, where: support.agent}
+  idempotency:        {name: "idempotency عمل‌ها", category: agent, status: ready, where: "support.tools / labkit.workflow"}
+  langgraph:          {name: "گراف حالت LangGraph + checkpointer", category: agent, status: ready, where: support.lc.graph}
+  workflow_engine:    {name: "موتور workflow (retry، resume، audit)", category: agent, status: labkit, where: labkit.workflow}
+  human_approval:     {name: "تأیید انسانی در workflow", category: agent, status: labkit, where: labkit.workflow}
+  memory:             {name: "حافظه‌ی گفتگو (خلاصه + facts)", category: agent, status: labkit, where: labkit.memory}
+  sql_guard:          {name: "محافظ Text-to-SQL", category: agent, status: labkit, where: labkit.sqlguard}
+  web_search:         {name: "ابزار جستجوی وب", category: agent, status: external, where: "SearXNG (محلی) / Tavily / Brave Search API"}
+  sandbox_exec:       {name: "اجرای کد در sandbox", category: agent, status: external, where: "Docker با شبکه‌ی بسته / E2B"}
+  multi_agent:        {name: "supervisor و agentهای متخصص", category: agent, status: external, where: "LangGraph supervisor (روی support.lc بساز)"}
+  mcp:                {name: "ابزارها از طریق MCP", category: agent, status: ready, where: support.panel.mcp_server}
+  # ---------- safety ----------
+  input_guardrails:   {name: "guardrail ورودی (injection، red flags)", category: safety, status: ready, where: support.guardrails.check_input}
+  pii_masking:        {name: "پنهان کردن PII", category: safety, status: ready, where: support.guardrails.mask_pii}
+  redteam_set:        {name: "مجموعه‌ی red-team", category: safety, status: ready, where: eval/redteam.yaml}
+  safety_classifier:  {name: "classifier امنیتی LLM", category: safety, status: external, where: "Llama Guard / ShieldGemma روی Ollama"}
+  attack_scanner:     {name: "اسکنر حمله‌ی خودکار", category: safety, status: external, where: "garak / PyRIT"}
+  # ---------- evaluation ----------
+  retrieval_metrics:  {name: "recall@k، MRR، nDCG", category: eval, status: labkit, where: labkit.metrics}
+  extraction_metrics: {name: "F1 هر فیلد، exact match", category: eval, status: labkit, where: labkit.metrics}
+  sql_exec_accuracy:  {name: "execution accuracy برای SQL", category: eval, status: labkit, where: labkit.sqlguard.execution_match}
+  sim_user_eval:      {name: "ارزیابی با کاربر شبیه‌سازی‌شده", category: eval, status: ready, where: support.evaluation}
+  bootstrap_ci:       {name: "فاصله‌ی اطمینان bootstrap", category: eval, status: ready, where: support.evaluation}
+  llm_judge:          {name: "LLM judge اعتبارسنجی‌شده (kappa)", category: eval, status: ready, where: support.evaluation}
+  run_registry:       {name: "ثبت اجرا و مقایسه", category: eval, status: ready, where: support.panel.registry}
+  # ---------- production ----------
+  serving:            {name: "سرو با FastAPI + Docker", category: production, status: ready, where: app/main.py}
+  loadtest:           {name: "load test و p95", category: production, status: ready, where: scripts/loadtest.py}
+  drift:              {name: "drift با PSI", category: production, status: ready, where: support.monitoring}
+  cache:              {name: "کش پاسخ", category: production, status: labkit, where: labkit.ops.Cache}
+  cost_ledger:        {name: "ثبت توکن، هزینه و تأخیر", category: production, status: labkit, where: labkit.ops.Ledger}
+  model_router:       {name: "router مدل ارزان ← قوی", category: production, status: labkit, where: labkit.ops.Router}
+  tracing:            {name: "tracing", category: production, status: external, where: "OpenTelemetry / Langfuse (محلی) / LangSmith"}
+  streaming:          {name: "پاسخ stream (SSE)", category: production, status: external, where: "FastAPI StreamingResponse (app/main_lc.py نمونه دارد)"}
+  auth_ratelimit:     {name: "احراز هویت و rate limit", category: production, status: external, where: "FastAPI middleware / API gateway"}
+  ci_eval:            {name: "ارزیابی در CI", category: production, status: ready, where: .github/workflows/tests.yml}
+  # ---------- experiments and training ----------
+  ab_testing:         {name: "A/B با SRM و guardrail", category: ml, status: ready, where: support.experiments}
+  lora:               {name: "fine-tune با LoRA", category: ml, status: ready, where: scripts/stage9_lora_colab.py}
+  dpo:                {name: "preference tuning (DPO)", category: ml, status: external, where: "Hugging Face TRL"}
+  distillation:       {name: "distillation از LLM به مدل کوچک", category: ml, status: external, where: "برچسب‌زنی با LLM + LoRA (همین repo)"}

@@ -1,0 +1,370 @@
+<title>نقشه‌ی راه مهندسی AI</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a metro map. Three lanes (basic → intermediate → advanced), each project a station; the detail panel opens beside the map. */
+:root {
+  --bg: #f3f5f4; --surface: #ffffff; --ink: #14201d; --muted: #5d6b67; --line: #dbe2df; --soft: #e8efec;
+  --accent: #0d7a6b; --accent-ink: #ffffff; --accent-soft: #d8eee9;
+  --lv1: #2f8f4e; --lv2: #c77d12; --lv3: #b0384a;
+  --ready: #2f8f4e; --ready-bg: #e3f3e8; --labkit: #2563a8; --labkit-bg: #e2ecf8; --ext: #a8620f; --ext-bg: #fbeedd;
+  --warn-bg: #fff3df; --code: #eef2f0;
+  --f-display: "Vazirmatn", Tahoma, sans-serif; --f-body: "Vazirmatn", Tahoma, sans-serif;
+  --f-mono: "JetBrains Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1514; --surface: #161e1c; --ink: #e3ebe8; --muted: #93a39e; --line: #26332f; --soft: #1c2724;
+  --accent: #3cc4ae; --accent-ink: #062520; --accent-soft: #163b35;
+  --lv1: #5cc47c; --lv2: #e8a646; --lv3: #e56f80;
+  --ready: #5cc47c; --ready-bg: #173123; --labkit: #6aa6ea; --labkit-bg: #172a40; --ext: #e8a646; --ext-bg: #352713;
+  --warn-bg: #33270f; --code: #1c2724; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f1514; --surface: #161e1c; --ink: #e3ebe8; --muted: #93a39e; --line: #26332f; --soft: #1c2724;
+  --accent: #3cc4ae; --accent-ink: #062520; --accent-soft: #163b35;
+  --lv1: #5cc47c; --lv2: #e8a646; --lv3: #e56f80;
+  --ready: #5cc47c; --ready-bg: #173123; --labkit: #6aa6ea; --labkit-bg: #172a40; --ext: #e8a646; --ext-bg: #352713;
+  --warn-bg: #33270f; --code: #1c2724; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.8; direction: rtl;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 48px; }
+.wrap { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+h1, h2, h3, h4 { font-family: var(--f-display); line-height: 1.4; margin: 0; text-wrap: balance; }
+.mono, code { font-family: var(--f-mono); direction: ltr; unicode-bidi: isolate; }
+code { background: var(--code); border-radius: 4px; padding: 1px 5px; font-size: 12.5px; }
+button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: end; }
+header.top h1 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 800; letter-spacing: -0.01em; }
+header.top p { margin: 4px 0 0; color: var(--muted); max-width: 70ch; }
+.meter { min-width: 220px; }
+.meter .lbl { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+.meter .num { font-family: var(--f-mono); font-size: 26px; font-weight: 600; direction: ltr; text-align: right; font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .3s; }
+.sync { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+
+nav.views { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+nav.views button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 14px; color: var(--muted); font-size: 14px; cursor: pointer; white-space: nowrap; }
+nav.views button[aria-selected="true"] { color: var(--accent); border-color: var(--accent); font-weight: 700; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 3px 12px; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.sep { width: 1px; height: 20px; background: var(--line); margin: 0 6px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); }
+.tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 0 8px; border-radius: 999px; line-height: 20px; white-space: nowrap; }
+.tag.ready { background: var(--ready-bg); color: var(--ready); } .tag.labkit { background: var(--labkit-bg); color: var(--labkit); } .tag.external { background: var(--ext-bg); color: var(--ext); }
+.tag.lv1 { color: var(--lv1); border: 1px solid currentColor; } .tag.lv2 { color: var(--lv2); border: 1px solid currentColor; } .tag.lv3 { color: var(--lv3); border: 1px solid currentColor; }
+.tag.plain { background: var(--soft); color: var(--muted); font-weight: 500; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.lanes { display: flex; flex-direction: column; gap: 18px; }
+.lane { position: relative; padding-right: 26px; }
+.lane::before { content: ""; position: absolute; right: 9px; top: 34px; bottom: 10px; width: 4px; border-radius: 2px; background: var(--lane); opacity: .55; }
+.lane h2 { font-size: 15px; display: flex; gap: 8px; align-items: center; color: var(--lane); margin-bottom: 8px; }
+.lane h2 small { color: var(--muted); font-weight: 400; font-size: 12.5px; }
+.station { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; width: 100%; text-align: right;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; cursor: pointer; color: var(--ink); font-size: 14px; }
+.station::before { content: ""; position: absolute; right: -24px; top: 16px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 3px solid var(--lane); }
+.station.done::before { background: var(--lane); }
+.station:hover { border-color: var(--lane); }
+.station[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.station .t { font-weight: 700; }
+.station .en { font-family: var(--f-mono); font-size: 11.5px; color: var(--muted); direction: ltr; text-align: right; }
+.station .meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+.station .prog { font-family: var(--f-mono); font-size: 12px; color: var(--muted); direction: ltr; align-self: start; }
+.station .mini { grid-column: 1 / -1; }
+.lane.l1 { --lane: var(--lv1); } .lane.l2 { --lane: var(--lv2); } .lane.l3 { --lane: var(--lv3); }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; position: sticky; top: calc(12px + env(safe-area-inset-top, 0px)); max-height: calc(100vh - 24px); overflow: auto; }
+.panel .head { padding: 18px 20px 10px; border-bottom: 1px solid var(--line); }
+.panel .head h3 { font-size: 21px; font-weight: 800; }
+.panel .head .sub { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 4px; }
+.ptabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.ptabs button { background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 12px; color: var(--muted); cursor: pointer; font-size: 13.5px; white-space: nowrap; }
+.ptabs button[aria-selected="true"] { color: var(--ink); border-color: var(--ink); font-weight: 700; }
+.pbody { padding: 16px 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+.blk h4 { font-size: 13px; color: var(--muted); font-weight: 700; letter-spacing: .02em; margin-bottom: 4px; }
+.blk p { margin: 0; }
+ul.l, ol.l { margin: 0; padding-right: 20px; } ul.l li, ol.l li { margin-bottom: 3px; }
+.stage { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.stage.done { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+.stage label.check { display: flex; gap: 10px; align-items: flex-start; font-weight: 700; cursor: pointer; }
+.stage input { width: 18px; height: 18px; margin-top: 5px; accent-color: var(--accent); flex: none; }
+.stage .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 13.5px; }
+.measure { font-size: 13.5px; } .measure b { color: var(--accent); }
+.pit { background: var(--warn-bg); border-radius: 8px; padding: 7px 10px; font-size: 13px; }
+.ask-row { display: flex; gap: 6px; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 5px 12px; font-size: 13px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.p { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.btn:disabled { opacity: .5; cursor: progress; }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 12px; }
+td.w { font-family: var(--f-mono); font-size: 11.5px; direction: ltr; text-align: left; color: var(--muted); }
+.cv { font-family: var(--f-mono); direction: ltr; text-align: left; font-size: 12.5px; background: var(--code); border-radius: 8px; padding: 10px 12px; }
+.claude { border: 1px dashed var(--accent); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.claude .answer { white-space: pre-wrap; font-size: 14px; }
+.claude .quick { display: flex; flex-wrap: wrap; gap: 6px; }
+textarea, input[type=text] { font-family: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; width: 100%; resize: vertical; }
+.note { font-size: 12.5px; color: var(--muted); }
+.grid-presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.copy { display: flex; gap: 6px; align-items: center; }
+.copy code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; padding: 4px 8px; }
+.matrix th.rot { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; font-size: 11px; padding: 6px 2px; }
+.matrix td.c { text-align: center; padding: 3px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.dot.ready { background: var(--ready); } .dot.labkit { background: var(--labkit); } .dot.external { background: var(--ext); }
+.empty { color: var(--muted); padding: 30px; text-align: center; }
+
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } .panel { position: static; max-height: none; } header.top { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>نقشه‌ی راه مهندسی AI</h1>
+      <p>۱۶ پروژه‌ی واقعی RAG، agent، workflow، ارزیابی و production، از پایه تا پیشرفته. هر پروژه مسئله‌ی واقعی، داده با لایسنس، مرحله‌های یادگیری، معیار، دام‌ها، سؤال مصاحبه، نسخه‌ی پیشرفته و خط رزومه دارد. اجرای واقعی در پنل محلی همین repo است.</p>
+    </div>
+    <div class="meter" aria-live="polite">
+      <div class="lbl">مرحله‌های تمام‌شده</div>
+      <div class="num" id="totalNum">0 / 0</div>
+      <div class="bar"><i id="totalBar" style="width:0%"></i></div>
+      <div class="sync" id="sync">پیشرفت فقط در همین مرورگر ذخیره می‌شود</div>
+    </div>
+  </header>
+
+  <nav class="views" role="tablist" aria-label="نما">
+    <button role="tab" id="v-map" aria-selected="true">نقشه‌ی راه</button>
+    <button role="tab" id="v-matrix" aria-selected="false">ماتریس قطعه‌ها</button>
+    <button role="tab" id="v-settings" aria-selected="false">پریست‌های پارامتر</button>
+    <button role="tab" id="v-run" aria-selected="false">اجرا روی لپ‌تاپ</button>
+  </nav>
+
+  <section id="view"></section>
+</div>
+
+<script>
+const DATA = __DATA__;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const P = Object.fromEntries(DATA.projects.map((p) => [p.id, p]));
+const STATUS_FA = DATA.status;
+const state = { view: "map", level: 0, track: "", sel: DATA.projects[0].id, ptab: "plan", done: {}, answers: {} };
+let db = null, docRef = null, sample = null;
+
+// ---------- persistence: private per-person doc in db, browser storage as fallback ----------
+const LS = "roadmap-progress-v1";
+function loadLocal() { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch { return {}; } }
+function saveLocal() { try { localStorage.setItem(LS, JSON.stringify(state.done)); } catch { /* storage blocked */ } }
+state.done = loadLocal();
+let saveTimer = null;
+function persist() {
+  saveLocal();
+  if (!docRef) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try { await docRef.set({ done: state.done, updated: Date.now() }); $("#sync").textContent = "پیشرفت در حساب claude.ai تو ذخیره شد"; }
+    catch (e) { $("#sync").textContent = "ذخیره در حساب نشد؛ در همین مرورگر نگه داشته شد"; }
+  }, 600);
+}
+(async () => {
+  try {
+    const [d, user] = await Promise.all([window.claude?.use?.("db"), window.claude?.use?.("user")]);
+    if (d && user) {
+      const uid = await user.id();
+      if (uid) {
+        db = d; docRef = db.doc("data/users/" + uid + "/progress");
+        const snap = await docRef.get();
+        if (snap.exists) {
+          const remote = snap.data().done || {};
+          for (const [k, v] of Object.entries(remote)) state.done[k] = [...new Set([...(state.done[k] || []), ...v])];
+        }
+        $("#sync").textContent = "پیشرفت در حساب claude.ai تو ذخیره می‌شود (خصوصی)";
+        render();
+      }
+    }
+  } catch { /* stay on browser storage */ }
+  try { sample = await window.claude?.use?.("sample"); if (sample) render(); } catch { sample = null; }
+})();
+
+// ---------- helpers ----------
+const doneOf = (id) => new Set(state.done[id] || []);
+function totals() {
+  const all = DATA.projects.reduce((a, p) => a + p.stages.length, 0);
+  const d = DATA.projects.reduce((a, p) => a + doneOf(p.id).size, 0);
+  return [d, all];
+}
+function compCounts(p) {
+  const c = { ready: 0, labkit: 0, external: 0 };
+  p.components.forEach((id) => c[DATA.components[id].status]++);
+  return c;
+}
+function header() {
+  const [d, all] = totals();
+  $("#totalNum").textContent = `${d} / ${all}`;
+  $("#totalBar").style.width = (all ? 100 * d / all : 0) + "%";
+}
+
+// ---------- views ----------
+function render() {
+  header();
+  document.querySelectorAll("nav.views button").forEach((b) => b.setAttribute("aria-selected", String(b.id === "v-" + state.view)));
+  const v = $("#view");
+  if (state.view === "map") v.innerHTML = mapView();
+  if (state.view === "matrix") v.innerHTML = matrixView();
+  if (state.view === "settings") v.innerHTML = settingsView();
+  if (state.view === "run") v.innerHTML = runView();
+}
+function chip(label, on, act) { return `<button class="chip" aria-pressed="${on}" data-act="${act}">${esc(label)}</button>`; }
+function mapView() {
+  const projs = DATA.projects.filter((p) => (!state.level || p.level === state.level) && (!state.track || p.tracks.includes(state.track)));
+  const lanes = [1, 2, 3].map((lv) => [lv, projs.filter((p) => p.level === lv)]).filter(([, ps]) => ps.length);
+  const filters = `<div class="filters">${chip("همه‌ی سطح‌ها", !state.level, "level:0")}${[1, 2, 3].map((l) => chip(DATA.levels[l], state.level === l, "level:" + l)).join("")}
+    <span class="sep"></span>${chip("همه‌ی مسیرها", !state.track, "track:")}${Object.entries(DATA.tracks).map(([k, t]) => chip(t, state.track === k, "track:" + k)).join("")}</div>
+    <div class="legend"><span><span class="tag ready">در سیستم</span> آماده و تست‌شده در repo</span><span><span class="tag labkit">labkit</span> تازه اضافه‌شده</span><span><span class="tag external">بیرونی</span> ابزاری که نصب/وصل می‌کنی</span></div>`;
+  const lanesHtml = lanes.length ? lanes.map(([lv, ps]) => `<div class="lane l${lv}"><h2>${esc(DATA.levels[lv])} <small>${ps.length} پروژه</small></h2>
+    ${ps.map((p) => {
+      const d = doneOf(p.id).size, c = compCounts(p);
+      return `<button class="station ${d === p.stages.length ? "done" : ""}" data-act="sel:${p.id}" aria-current="${p.id === state.sel}">
+        <span><span class="t">${p.order}. ${esc(p.title)}</span><div class="en">${esc(p.title_en)}</div></span>
+        <span class="prog">${d}/${p.stages.length}</span>
+        <span class="meta">${p.tracks.map((t) => `<span class="tag plain">${esc(DATA.tracks[t])}</span>`).join("")}<span>${esc(p.weeks)} هفته</span>
+          ${p.implemented ? `<span class="tag ready">در همین repo</span>` : ""}
+          <span class="tag ready">${c.ready}</span><span class="tag labkit">${c.labkit}</span><span class="tag external">${c.external}</span></span>
+        <span class="mini bar"><i style="width:${100 * d / p.stages.length}%"></i></span></button>`;
+    }).join("")}</div>`).join("") : `<div class="empty">پروژه‌ای با این فیلتر نیست.</div>`;
+  return `<div style="display:flex;flex-direction:column;gap:12px">${filters}<div class="layout"><div class="lanes">${lanesHtml}</div><aside class="panel" aria-live="polite">${panel(P[state.sel])}</aside></div></div>`;
+}
+function panel(p) {
+  const d = doneOf(p.id);
+  const tabs = [["plan", "مسئله و برنامه"], ["stages", `مرحله‌ها ${d.size}/${p.stages.length}`], ["parts", "قطعه‌ها و داده"], ["career", "مصاحبه و رزومه"]];
+  let body = "";
+  if (state.ptab === "plan") body = `
+    <div class="blk"><h4>کاربرد واقعی</h4><p>${esc(p.real_world)}</p></div>
+    <div class="blk"><h4>مسئله</h4><p>${esc(p.problem)}</p></div>
+    <div class="blk"><h4>هدف</h4><p>${esc(p.goal)}</p></div>
+    ${p.prerequisites.length ? `<div class="blk"><h4>پیش‌نیاز</h4><p>${p.prerequisites.map((q) => `<button class="btn" data-act="sel:${q}">${esc(P[q].order + ". " + P[q].title)}</button>`).join(" ")}</p></div>` : ""}
+    <div class="blk"><h4>معیارها</h4><ul class="l">${p.metrics.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>
+    <div class="blk"><h4>guardrail</h4><ul class="l">${p.guardrails.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>
+    <div class="blk"><h4>production</h4><ul class="l">${p.production.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>
+    ${Object.keys(p.params).length ? `<div class="blk"><h4>پارامترهای پیشنهادی (config.yaml)</h4><div class="tbl-wrap"><table>${Object.entries(p.params).map(([k, v]) => `<tr><td class="w">${esc(k)}</td><td class="w">${esc(JSON.stringify(v))}</td></tr>`).join("")}</table></div></div>` : ""}`;
+  if (state.ptab === "stages") body = p.stages.map((s, i) => `<div class="stage ${d.has(i) ? "done" : ""}">
+      <label class="check"><input type="checkbox" id="st-${p.id}-${i}" data-act="tick:${p.id}:${i}" ${d.has(i) ? "checked" : ""}> مرحله‌ی ${i + 1}: ${esc(s.title)}</label>
+      <div class="cols"><div><b>یاد بگیر</b><ul class="l">${s.learn.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
+        <div><b>بساز</b><ol class="l">${s.build.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></div></div>
+      <div class="measure"><b>بسنج:</b> ${esc(s.measure)}</div>
+      <div class="pit">⚠ ${esc(s.pitfall)}</div></div>`).join("");
+  if (state.ptab === "parts") body = `
+    <div class="blk"><h4>قطعه‌ها</h4><div class="tbl-wrap"><table><tr><th>قطعه</th><th>وضعیت</th><th>کجا / کدام ابزار</th></tr>
+      ${p.components.map((id) => { const c = DATA.components[id]; return `<tr><td>${esc(c.name)}</td><td><span class="tag ${c.status}">${esc(STATUS_FA[c.status])}</span></td><td class="w">${esc(c.where)}</td></tr>`; }).join("")}</table></div></div>
+    <div class="blk"><h4>داده</h4><div class="tbl-wrap"><table><tr><th>داده</th><th>لایسنس</th><th>توضیح</th></tr>
+      ${p.data.map((x) => `<tr><td>${x.url && x.url.startsWith("http") ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.name)}</a>` : esc(x.name)}</td><td>${esc(x.license)}</td><td>${esc(x.note)}</td></tr>`).join("")}</table></div>
+      <p class="note">قبل از انتشار عمومی یا استفاده‌ی تجاری لایسنس را چک کن.</p></div>
+    <div class="blk"><h4>stack</h4><div class="tbl-wrap"><table>${Object.entries(p.stack).map(([k, v]) => `<tr><td class="w">${esc(k)}</td><td>${esc(Array.isArray(v) ? (v.join("، ") || "—") : v)}</td></tr>`).join("")}</table></div></div>`;
+  if (state.ptab === "career") body = `
+    <div class="blk"><h4>سؤال‌های مصاحبه</h4><ol class="l">${p.interview.map((q) => `<li>${esc(q)}</li>`).join("")}</ol></div>
+    <div class="blk"><h4>نسخه‌ی پیشرفته (برای بعد)</h4><ul class="l">${p.advanced.map((q) => `<li>${esc(q)}</li>`).join("")}</ul></div>
+    <div class="blk"><h4>خط رزومه</h4><div class="cv">${esc(p.cv)}</div><p class="note">{...} را با عددهای اندازه‌گیری‌شده‌ی خودت پر کن.</p></div>`;
+  const ans = state.answers[p.id];
+  const claudeBox = sample ? `<div class="claude"><b>از Claude بپرس درباره‌ی این پروژه</b>
+      <div class="quick">${[["plan", "برنامه‌ی این هفته‌ام"], ["explain", "مرحله‌ی بعدی را ساده توضیح بده"], ["quiz", "از من مصاحبه بگیر"], ["gap", "چه چیزی را جا انداخته‌ام؟"]]
+        .map(([k, l]) => `<button class="btn" data-act="ask:${k}">${l}</button>`).join("")}</div>
+      <div class="ask-row"><textarea id="q-${p.id}" rows="2" placeholder="سؤال خودت…"></textarea><button class="btn p" data-act="ask:free">بپرس</button></div>
+      ${ans ? `<div class="answer" id="ans">${esc(ans)}</div>` : `<div class="answer note" id="ans">جواب اینجا می‌آید.</div>`}</div>`
+    : `<p class="note">برای پرسیدن از Claude این صفحه را در claude.ai باز کن (اینجا در دسترس نیست).</p>`;
+  return `<div class="head"><h3>${p.order}. ${esc(p.title)}</h3>
+      <div class="sub"><span class="tag lv${p.level}">${esc(DATA.levels[p.level])}</span><span class="mono">${esc(p.title_en)}</span><span>${esc(p.weeks)} هفته</span></div></div>
+    <div class="ptabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${state.ptab === k}" data-act="ptab:${k}">${esc(l)}</button>`).join("")}</div>
+    <div class="pbody">${body}${claudeBox}
+      <div class="blk"><h4>شروع روی لپ‌تاپ</h4>${p.id === "p08_support_agent"
+        ? `<p class="note">همین repo است: <code>windows\\start_panel.bat</code> ← مرحله‌ها.</p>`
+        : `<div class="copy"><code id="cmd-${p.id}">python -c "from support.panel.presets import scaffold; print(scaffold('${p.id}'))"</code><button class="btn" data-act="copy:cmd-${p.id}">کپی</button></div>
+           <p class="note">یا در پنل محلی: پروژه‌ها ← «ساخت اسکلت پروژه»، یا به Claude Desktop بگو «scaffold_preset ${p.id}».</p>`}</div></div>`;
+}
+function matrixView() {
+  const comps = Object.entries(DATA.components);
+  const cats = [...new Set(comps.map(([, c]) => c.category))];
+  const used = (id) => DATA.projects.filter((p) => p.components.includes(id)).length;
+  return `<div style="display:flex;flex-direction:column;gap:12px">
+    <p class="note">${comps.length} قطعه. هر نقطه یعنی آن پروژه از آن قطعه استفاده می‌کند؛ رنگ نقطه وضعیت قطعه در سیستم است. ستون آخر: چند پروژه به آن نیاز دارند (قطعه‌های پرکاربرد را اول یاد بگیر).</p>
+    <div class="legend"><span><span class="dot ready"></span> در سیستم</span><span><span class="dot labkit"></span> labkit</span><span><span class="dot external"></span> بیرونی</span></div>
+    <div class="tbl-wrap"><table class="matrix"><tr><th>قطعه</th>${DATA.projects.map((p) => `<th class="rot" title="${esc(p.title)}">${p.order}. ${esc(p.title_en.split(" (")[0])}</th>`).join("")}<th>#</th></tr>
+    ${cats.map((cat) => `<tr><th colspan="${DATA.projects.length + 2}" style="color:var(--accent);padding-top:12px">${esc(cat)}</th></tr>` +
+      comps.filter(([, c]) => c.category === cat).map(([id, c]) => `<tr><td><span title="${esc(c.where)}">${esc(c.name)}</span></td>${DATA.projects.map((p) =>
+        `<td class="c">${p.components.includes(id) ? `<span class="dot ${c.status}" title="${esc(STATUS_FA[c.status])}"></span>` : ""}</td>`).join("")}<td class="c mono">${used(id)}</td></tr>`).join("")).join("")}
+    </table></div></div>`;
+}
+function settingsView() {
+  return `<div style="display:flex;flex-direction:column;gap:12px"><p class="note">پریست‌های پارامتر پروژه‌ی support-agent (configs/project.yaml). در پنل محلی: «همه‌ی پارامترها» ← پریست‌ها ← «اعمال». هر پریست اعتبارسنجی می‌شود؛ مقدار نامعتبر ذخیره نمی‌شود.</p>
+    <div class="grid-presets">${DATA.settings_presets.map((s) => `<div class="card"><h3 style="font-size:16px">${esc(s.title)}</h3><p class="note" style="margin:0">${esc(s.description)}</p>
+      <div class="tbl-wrap"><table>${Object.entries(s.changes).map(([k, v]) => `<tr><td class="w">${esc(k)}</td><td class="w">${esc(JSON.stringify(v))}</td></tr>`).join("")}</table></div>
+      <div class="copy"><code id="sp-${s.id}">apply_settings_preset ${s.id}</code><button class="btn" data-act="copy:sp-${s.id}">کپی</button></div></div>`).join("")}</div></div>`;
+}
+function runView() {
+  const cmds = [["نصب یک‌باره (PowerShell)", "Set-ExecutionPolicy -Scope Process Bypass; .\\windows\\setup.ps1"], ["اجرای پنل", "windows\\start_panel.bat"],
+    ["اتصال Claude Desktop", "windows\\install_claude_desktop.bat"], ["بررسی پریست‌ها", "python -m support.panel.presets check"]];
+  return `<div class="grid-presets">${cmds.map(([t, c], i) => `<div class="card"><b>${esc(t)}</b><div class="copy"><code id="run-${i}">${esc(c)}</code><button class="btn" data-act="copy:run-${i}">کپی</button></div></div>`).join("")}
+    <div class="card" style="grid-column:1/-1"><b>این صفحه و پنل محلی چه فرقی دارند؟</b>
+      <p class="note" style="margin:0">این صفحه نقشه‌ی راه و ثبت پیشرفت است و از Claude درباره‌ی هر پروژه می‌پرسد. اجرای کد، داده، Ollama و نتایج روی لپ‌تاپ تو هستند و این صفحه به آن‌ها دسترسی ندارد. پنل محلی (<code>http://127.0.0.1:8765</code>) همین ۱۶ پروژه را دارد و می‌تواند اسکلت قابل اجرای هر کدام را بسازد؛ Claude Desktop هم از طریق MCP به همان پنل وصل می‌شود.</p></div></div>`;
+}
+
+// ---------- actions ----------
+async function ask(kind) {
+  const p = P[state.sel], d = doneOf(p.id);
+  const next = p.stages.findIndex((_, i) => !d.has(i));
+  const prompts = {
+    plan: "یک برنامه‌ی عملی برای همین هفته (۵ جلسه‌ی ۹۰ دقیقه‌ای) بنویس که از مرحله‌ی بعدیِ تمام‌نشده شروع کند. هر جلسه: هدف، کار، و خروجی قابل اندازه‌گیری.",
+    explain: "مرحله‌ی بعدی تمام‌نشده را برای کسی که تازه شروع کرده ساده توضیح بده: مفهوم، یک مثال کوچک، و اینکه چطور بفهمم درست انجام داده‌ام.",
+    quiz: "سه سؤال مصاحبه‌ی واقعی درباره‌ی این پروژه بپرس (یکی از هر کدام: مفهوم، طراحی، ارزیابی). جواب نده؛ فقط سؤال‌ها و نکته‌ای که مصاحبه‌گر در جواب دنبالش است.",
+    gap: "با توجه به مرحله‌های تمام‌شده، چه چیزهای مهمی را ممکن است جا انداخته باشم (ارزیابی، امنیت، نشت داده، هزینه، production)؟ فهرست کوتاه و اولویت‌دار.",
+  };
+  const free = $("#q-" + p.id)?.value.trim();
+  const question = kind === "free" ? free : prompts[kind];
+  if (!question) return;
+  const ctx = { title: p.title_en, level: DATA.levels[p.level], goal: p.goal, stages: p.stages.map((s, i) => ({ n: i + 1, title: s.title, done: d.has(i), measure: s.measure })),
+    next_stage: next >= 0 ? next + 1 : null, metrics: p.metrics, components: p.components.map((id) => `${DATA.components[id].name} (${DATA.status[DATA.components[id].status]})`), advanced: p.advanced };
+  const input = `تو مربی یک مهندس AI تازه‌کار هستی که این پروژه را برای یادگیری و رزومه می‌سازد و بعداً نسخه‌ی پیشرفته‌اش را لازم دارد. به فارسی، کوتاه و مشخص جواب بده؛ اسم‌های فنی را انگلیسی بنویس. اصل‌ها: آن‌چه با کد قابل تصمیم است با LLM تصمیم گرفته نشود؛ تصمیم‌ها روی dev، test یک بار؛ Automation Rate همیشه کنار خطایش.\n\nپروژه (JSON):\n${JSON.stringify(ctx)}\n\nدرخواست: ${question}`;
+  const box = $("#ans"); const btns = document.querySelectorAll(".claude .btn");
+  btns.forEach((b) => (b.disabled = true));
+  box.classList.remove("note"); box.textContent = "در حال فکر…";
+  try {
+    const out = await sample(input, { onText: ({ text }) => { box.textContent = text; }, cache: false });
+    state.answers[p.id] = out.text;
+  } catch (e) {
+    box.textContent = e?.code === "rate_limited" ? "تعداد درخواست زیاد شد؛ کمی بعد دوباره امتحان کن." : e?.code === "not_granted" ? "اجازه‌ی پرسیدن از Claude داده نشد." : "جواب نیامد: " + (e?.message || e);
+  }
+  btns.forEach((b) => (b.disabled = false));
+}
+document.addEventListener("click", async (ev) => {
+  const t = ev.target.closest("[data-act]");
+  if (t?.closest("nav.views")) return;
+  if (!t || t.type === "checkbox") return;
+  const [act, a, b] = t.dataset.act.split(":");
+  if (act === "level") { state.level = +a; render(); }
+  if (act === "track") { state.track = a; render(); }
+  if (act === "sel") { state.sel = a; state.ptab = state.ptab || "plan"; render(); if (matchMedia("(max-width: 900px)").matches) $(".panel")?.scrollIntoView({ block: "start" }); }
+  if (act === "ptab") { state.ptab = a; render(); }
+  if (act === "ask") ask(a);
+  if (act === "copy") {
+    const el = document.getElementById(a + (b ? ":" + b : ""));
+    try { await navigator.clipboard.writeText(el.textContent); t.textContent = "کپی شد"; setTimeout(() => (t.textContent = "کپی"), 1500); }
+    catch { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  }
+});
+document.addEventListener("change", (ev) => {
+  const t = ev.target;
+  if (!t.dataset?.act?.startsWith("tick:")) return;
+  const [, id, i] = t.dataset.act.split(":");
+  const set = doneOf(id); t.checked ? set.add(+i) : set.delete(+i);
+  state.done[id] = [...set].sort((x, y) => x - y);
+  persist(); render();
+});
+document.querySelectorAll("nav.views button").forEach((b) => b.addEventListener("click", () => { state.view = b.id.slice(2); render(); }));
+render();
+</script>

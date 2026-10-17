@@ -1,0 +1,44 @@
+id: p03_document_qa
+order: 3
+level: 1
+title: "پرسش و پاسخ روی اسناد سازمان با ارجاع به منبع"
+title_en: "Document Q&A with citations (HR handbook, contracts, manuals)"
+tracks: [rag, eval]
+weeks: "2–3"
+real_world: "دستیار داخلی منابع انسانی، حقوقی یا فنی: «چند روز مرخصی استعلاجی دارم؟» با ارجاع به بند و صفحه‌ی آیین‌نامه."
+problem: "اسناد PDF و Word با جدول، سرصفحه و شماره‌ی صفحه‌اند؛ جواب باید فقط از سند باشد، منبع داشته باشد و وقتی جواب نیست بگوید نمی‌دانم."
+goal: "یک pipeline کامل ingestion → chunking → بازیابی → جواب با citation بسازی و faithfulness و رد کردن سؤال بی‌جواب را اندازه بگیری."
+prerequisites: [p01_faq_search]
+data:
+  - {name: "اسناد خودت (آیین‌نامه، دفترچه‌ی محصول)", url: "", license: "—", note: "بهترین گزینه؛ ۵۰ سؤال با جواب و صفحه‌ی درست بنویس"}
+  - {name: "CUAD (قراردادها)", url: "https://huggingface.co/datasets/theatticusproject/cuad-qa", license: "CC BY 4.0", note: "۵۱۰ قرارداد با بندهای برچسب‌خورده"}
+stack: {llm: "qwen2.5:7b یا llama3.1:8b (Ollama)", embeddings: "bge-m3 (چندزبانه)", extras: ["pypdf", "python-docx"]}
+components: [doc_loaders, table_extraction, ocr, chunking, hybrid_rrf, reranker, citations, grounding_check, structured_output, retrieval_metrics, llm_judge, prompt_registry]
+stages:
+  - title: "ingestion و پاک‌سازی"
+    learn: ["سرصفحه/پاصفحه‌ی تکراری، کلمه‌ی شکسته در انتهای خط، جدول", "metadata: منبع، صفحه، عنوان بخش"]
+    build: ["labkit.loaders.load_dir روی پوشه‌ی اسناد", "۵ صفحه‌ی تصادفی را با چشم چک کن"]
+    measure: "درصد صفحه‌های خالی (اسکن؟ → OCR)"
+    pitfall: "PDF اسکن‌شده متن ندارد؛ بدون OCR سکوت می‌کند و جواب‌ها «نمی‌دانم» می‌شوند."
+  - title: "chunking و مقایسه‌ی استراتژی"
+    learn: ["chunk بر اساس عنوان، مسیر عنوان به‌عنوان زمینه", "اثر chunking روی recall"]
+    build: ["fixed، recursive و headings را روی همان سؤال‌ها مقایسه کن"]
+    measure: "recall@5 هر استراتژی"
+    pitfall: "جدول‌ها با chunking متنی خرد می‌شوند؛ جدول را جدا و کامل نگه دار."
+  - title: "جواب با citation و «نمی‌دانم»"
+    learn: ["grounding: فقط از منابع", "خروجی ساختاریافته {answerable, answer, citations}"]
+    build: ["prompt را در PromptRegistry ثبت کن", "citation باید زیرمجموعه‌ی chunkهای داده‌شده باشد؛ عددها با check_output"]
+    measure: "fact rate، citation valid rate، unanswerable refused rate"
+    pitfall: "مدل وقتی منبع نیست هم با اطمینان جواب می‌دهد؛ حتماً سؤال بی‌جواب در مجموعه‌ی ارزیابی بگذار."
+  - title: "ارزیابی faithfulness"
+    learn: ["faithfulness در برابر relevance", "LLM judge و اعتبارسنجی با برچسب انسانی"]
+    build: ["۳۰ جواب را خودت برچسب بزن (وفادار به منبع یا نه)", "judge را بساز و kappa را بسنج"]
+    measure: "kappa قاضی، نرخ جواب وفادار"
+    pitfall: "قاضی با همان مدلی که جواب داده، خطاهای مشابه را نمی‌بیند."
+metrics: ["recall@5", "faithfulness", "citation validity", "refusal on unanswerable", "latency"]
+params: {chunk_strategy: headings, chunk_words: 250, k: 5, mode: hybrid, rerank_top: 20, llm: "qwen2.5:7b", temperature: 0}
+guardrails: ["دسترسی: کاربر فقط اسنادی که حق دیدنش را دارد (metadata filter قبل از بازیابی)", "prompt injection غیرمستقیم: متن داخل سند دستور نیست"]
+production: ["به‌روزرسانی index با تغییر سند و حذف سند منسوخ", "نسخه‌ی سند در citation"]
+interview: ["چطور جلوی جواب ساختگی را گرفتی؟", "PDF اسکن‌شده و جدول را چطور مدیریت کردی؟", "faithfulness را چطور اندازه گرفتی؟"]
+advanced: ["parent-child retrieval (chunk کوچک برای جستجو، بخش بزرگ برای جواب)", "Docling برای layout و جدول", "ارزیابی با RAGAS و مقایسه با برچسب انسانی"]
+cv: "Built a cited document-QA assistant over PDF/DOCX handbooks (ingestion, heading-aware chunking, hybrid retrieval, grounding checks); faithfulness {faith}, unanswerable refusal {refusal}."

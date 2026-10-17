@@ -1,0 +1,45 @@
+id: p10_research_agent
+order: 10
+level: 3
+title: "agent پژوهشی (deep research) با ارجاع قابل‌بررسی"
+title_en: "Deep-research agent with verifiable citations"
+tracks: [agent, rag, eval]
+weeks: "3–4"
+real_world: "تحلیلگر بازار، حقوقی یا علمی: «رقبای اصلی X در اروپا و سهم بازارشان» با گزارش و منبع برای هر ادعا."
+problem: "سؤال چندمرحله‌ای، منابع متناقض یا بی‌کیفیت، حلقه‌ی بی‌پایان جستجو، و ادعایی که منبع واقعاً آن را نمی‌گوید."
+goal: "agent با برنامه‌ریزی، جستجوی تکراری، بودجه‌ی گام/هزینه، و بررسی اینکه هر ادعا در منبعش هست."
+prerequisites: [p03_document_qa, p08_support_agent]
+data:
+  - {name: "HotpotQA (distractor)", url: "https://hotpotqa.github.io/", license: "CC BY-SA 4.0", note: "سؤال چندپرشی با پاراگراف‌های پشتیبان"}
+  - {name: "FRAMES", url: "https://huggingface.co/datasets/google/frames-benchmark", license: "Apache 2.0", note: "سؤال‌های چندمنبعی واقعی"}
+  - {name: "dump ویکی‌پدیا یا SearXNG محلی", url: "https://github.com/searxng/searxng", license: "AGPL", note: "جستجوی بدون API key"}
+stack: {llm: "qwen2.5:14b یا Claude (برای برنامه‌ریزی)", embeddings: "bge-m3", extras: ["SearXNG", "trafilatura برای استخراج متن صفحه"]}
+components: [web_search, doc_loaders, chunking, hybrid_rrf, reranker, query_rewriting, tool_agent, langgraph, memory, citations, grounding_check, llm_judge, cost_ledger, model_router, tracing]
+stages:
+  - title: "حلقه‌ی ReAct با بودجه"
+    learn: ["plan → search → read → reflect", "سقف گام، توکن و هزینه؛ شرط توقف"]
+    build: ["ابزارها: search(query)، fetch(url)، note(fact, source)", "LangGraph با شمارنده‌ی گام و ledger هزینه"]
+    measure: "میانگین گام و هزینه به ازای سؤال"
+    pitfall: "بدون بودجه، agent تا ابد جستجو می‌کند."
+  - title: "تجزیه‌ی سؤال و بازیابی چندپرشی"
+    learn: ["decomposition به زیرسؤال", "multi-hop: جواب پرش اول، query پرش دوم است"]
+    build: ["زیرسؤال‌ها را بساز و هر کدام را جدا جستجو کن"]
+    measure: "supporting-fact recall روی HotpotQA"
+    pitfall: "زیرسؤال‌های موازی وقتی پرش دوم به جواب اول وابسته است کار نمی‌کند."
+  - title: "یادداشت با منبع و بررسی ادعا"
+    learn: ["هر ادعا = (متن، url، نقل‌قول)", "claim verification: آیا نقل‌قول ادعا را پشتیبانی می‌کند"]
+    build: ["گام verify: برای هر ادعا، entailment با LLM و حذف ادعای بی‌پشتوانه"]
+    measure: "citation precision (ادعاهای پشتیبانی‌شده / کل)"
+    pitfall: "url درست با نقل‌قول ساختگی؛ نقل‌قول را در متن صفحه جستجو کن (با کد)."
+  - title: "کیفیت منبع و گزارش"
+    learn: ["اعتبار منبع، تاریخ، تناقض"]
+    build: ["امتیاز منبع (دامنه، تاریخ)، گزارش تناقض‌ها", "گزارش نهایی با ارجاع"]
+    measure: "دقت جواب نهایی (EM/F1 روی HotpotQA)، judge برای کامل بودن"
+    pitfall: "منبع اول نتیجه‌ی جستجو لزوماً معتبر نیست."
+metrics: ["answer F1", "supporting-fact recall", "citation precision", "steps and cost per question"]
+params: {llm: "qwen2.5:14b", max_steps: 12, max_cost_usd: 0.5, search_k: 8, verify_claims: true}
+guardrails: ["محتوای صفحه‌ی وب داده است نه دستور (injection غیرمستقیم)", "دامنه‌های مسدود"]
+production: ["کش نتیجه‌ی جستجو و صفحه", "tracing برای دیباگ مسیر agent"]
+interview: ["agent را چطور متوقف می‌کنی؟", "چطور مطمئن شدی citation واقعی است؟", "هزینه‌ی هر گزارش چقدر است و چطور کمش کردی؟"]
+advanced: ["multi-agent: planner، searcher، critic", "Claude با web_search سرور-ساید برای مقایسه", "ارزیابی با rubric و outcome grader"]
+cv: "Built a budgeted deep-research agent (planning, multi-hop retrieval, claim verification); citation precision {cp}, answer F1 {f1} on HotpotQA at {cost} per question."

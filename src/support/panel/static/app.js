@@ -61,7 +61,8 @@ async function render() {
   const main = $("#main");
   try {
     const pages = { home: pageHome, stage: pageStage, settings: pageSettings, data: pageData, runs: pageRuns, run: pageRun,
-      chat: pageChat, judge: pageJudge, coverage: pageCoverage, setup: pageSetup, file: pageFile, compare: pageCompare };
+      chat: pageChat, judge: pageJudge, coverage: pageCoverage, setup: pageSetup, file: pageFile, compare: pageCompare,
+      presets: pagePresets, preset: pagePreset };
     await (pages[r.page] || pageHome)(main, r);
   } catch (e) {
     main.innerHTML = `<div class="card pad"><div class="adv error"><span class="ic">!</span><div>${esc(e.message)}</div></div></div>`;
@@ -100,6 +101,8 @@ function renderSide(r) {
     <h3>مرحله‌ها</h3>
     ${cat.stages.map((s) => `<div class="nav ${st[s.id] || s.status}${cur("stage", s.id)}" onclick="go('/stage/${s.id}')">
       <span class="n">${n(s.id)}</span>${esc(s.title)}<span class="t">${st[s.id] === "done" ? "✓" : st[s.id] === "running" ? "…" : ""}</span></div>`).join("")}
+    <hr><h3>نقشه‌ی راه</h3>
+    <div class="nav${cur("presets") || cur("preset")}" onclick="go('/presets')"><span class="n">🧭</span>پروژه‌ها (۱۶ پریست)</div>
     <hr><h3>ابزارها</h3>
     <div class="nav${cur("chat")}" onclick="go('/chat')"><span class="n">💬</span>چت با agent</div>
     <div class="nav${cur("settings")}" onclick="go('/settings')"><span class="n">⚙</span>همه‌ی پارامترها</div>
@@ -344,12 +347,13 @@ async function pageSettings(main, r) {
   await loadSettings();
   const sections = Object.keys(S.settings);
   const draw = () => {
-    main.innerHTML = `<div class="card pad"><div class="hd"><div><h2>همه‌ی پارامترها</h2>
+    main.innerHTML = `<div class="card pad" id="spresets"><div class="note">پریست‌ها…</div></div><div class="card pad"><div class="hd"><div><h2>همه‌ی پارامترها</h2>
       <div class="sub">configs/project.yaml · قواعد فروشگاه (۱۴/۳۰ روز، ۱۵۰ یورو) اینجا نیستند و فقط در policy_rules.yaml تغییر می‌کنند.</div></div>
       <div class="sp"></div><span class="note">${Object.keys(S.pending).length} تغییر</span>
       <button class="btn" onclick="S.pending={};render()">لغو</button><button class="btn p" id="saveBtn">ذخیره</button></div></div>
       <div class="card pad">${sectionFormHtml(sections)}</div>`;
     bindForm(main, draw); $("#saveBtn").onclick = () => saveSettings(draw);
+    settingsPresetsBlock($("#spresets"), () => loadSettings().then(draw));
     if (r.params.focus) { const el = document.getElementById("wrap_f_" + r.params.focus.replace(".", "_")); if (el) { el.scrollIntoView({ block: "center" }); el.style.outline = `2px solid ${css("--acc")}`; } }
   };
   draw();
@@ -635,6 +639,89 @@ async function pageFile(main, r) {
     <div class="note" style="margin-top:8px">فقط خواندنی. برای ویرایش، فایل را در VS Code باز کن.</div></div>`;
 }
 
+// ----- settings presets -----
+async function settingsPresetsBlock(el, after) {
+  const list = await api("/api/settings_presets");
+  el.innerHTML = `<h3 style="margin-bottom:6px">پریست‌های آماده‌ی پارامتر</h3><div class="note" style="margin-bottom:10px">هر پریست چند پارامتر را با هم عوض می‌کند؛ قبل از اعمال، تغییرها را ببین. بعد از اعمال، مرحله‌هایی که پنل می‌گوید را دوباره اجرا کن.</div>
+    <div class="grid3">${list.map((p) => `<div class="box"><b>${esc(p.title)}</b><div class="note" style="margin:4px 0">${esc(p.description)}</div>
+      ${Object.keys(p.diff).length ? `<details><summary class="note">${Object.keys(p.diff).length} تغییر</summary><table>${Object.entries(p.diff).map(([k, v]) =>
+        `<tr><td class="mono">${esc(k)}</td><td class="mono">${esc(JSON.stringify(v.current))} → ${esc(JSON.stringify(v.preset))}</td></tr>`).join("")}</table></details>
+        <button class="btn sm p" style="margin-top:6px" onclick="applySettingsPreset('${p.id}')">اعمال</button>` : `<span class="pill ok">الان فعال است</span>`}</div>`).join("")}</div>`;
+  window._afterPreset = after;
+}
+window.applySettingsPreset = async (id) => {
+  if (!confirm("این پریست اعمال شود؟")) return;
+  const r = await api(`/api/settings_presets/${id}`, {});
+  if (!r.ok) { toast("اعمال نشد: " + (r.error || JSON.stringify(r.errors)), 7000); return; }
+  toast(`${Object.keys(r.changed).length} پارامتر تغییر کرد.` + (r.stages_to_rerun.length ? ` مرحله‌های ${r.stages_to_rerun.join("، ")} را دوباره اجرا کن.` : ""), 6000);
+  refreshOverview(); window._afterPreset && window._afterPreset(); render();
+};
+
+// ----- project presets (learning roadmap) -----
+const STATUS_CLS = { ready: "ok", labkit: "info", external: "warn" };
+const LEVEL_CLS = { 1: "ok", 2: "warn", 3: "error" };
+async function pagePresets(main, r) {
+  const level = +(r.params.level || 0), track = r.params.track || "";
+  const d = await api(`/api/presets?level=${level}&track=${track}`);
+  const chip = (lab, href, on) => `<span class="pill ${on ? "info" : ""}" style="cursor:pointer;border:1px solid var(--line)" onclick="go('${href}')">${esc(lab)}</span>`;
+  const byLevel = [1, 2, 3].map((lv) => [lv, d.projects.filter((p) => p.level === lv)]).filter(([, ps]) => ps.length);
+  main.innerHTML = `<div class="card pad"><div class="hd"><div><h2>نقشه‌ی راه: ۱۶ پروژه‌ی واقعی</h2>
+      <div class="sub">از پایه تا پیشرفته. هر پروژه: کاربرد واقعی، داده، قطعه‌ها، مرحله‌های یادگیری، معیار، دام‌ها، سؤال مصاحبه، نسخه‌ی پیشرفته و خط رزومه. «ساخت اسکلت» یک پوشه‌ی قابل اجرا در projects/ می‌سازد.</div></div></div>
+    <div class="row" style="margin-top:10px">${chip("همه‌ی سطح‌ها", `/presets?track=${track}`, !level)}${[1, 2, 3].map((lv) => chip(d.levels[lv], `/presets?level=${lv}&track=${track}`, level === lv)).join("")}
+      <span class="sp"></span>${chip("همه‌ی مسیرها", `/presets?level=${level}`, !track)}${Object.entries(d.tracks).map(([k, v]) => chip(v, `/presets?level=${level}&track=${k}`, track === k)).join("")}</div>
+    <div class="row note" style="margin-top:8px"><span class="pill ok">در سیستم</span> آماده و تست‌شده <span class="pill info">labkit</span> تازه اضافه شده <span class="pill warn">بیرونی</span> ابزار شناخته‌شده که باید نصب/وصل کنی</div></div>
+    ${byLevel.map(([lv, ps]) => `<div class="card pad"><h3 style="margin-bottom:10px"><span class="pill ${LEVEL_CLS[lv]}">${d.levels[lv]}</span></h3><div class="grid3">
+      ${ps.map((p) => `<div class="stagecard" onclick="go('/preset/${p.id}')"><div class="row"><span class="num">${p.order}</span><b>${esc(p.title)}</b></div>
+        <div class="note mono" style="text-align:left">${esc(p.title_en)}</div>
+        <div class="row" style="margin:6px 0">${p.tracks.map((t) => `<span class="pill">${esc(d.tracks[t])}</span>`).join("")}<span class="note">${esc(p.weeks)} هفته</span>${p.implemented ? `<span class="pill ok">در همین repo</span>` : ""}</div>
+        <div style="height:6px;background:var(--code);border-radius:3px;overflow:hidden"><div style="height:6px;width:${(100 * p.done / p.stages).toFixed(0)}%;background:var(--ok)"></div></div>
+        <div class="row note" style="margin-top:4px"><span>${p.done}/${p.stages} مرحله</span><span class="sp"></span>
+          <span class="pill ok">${p.components.ready}</span><span class="pill info">${p.components.labkit}</span><span class="pill warn">${p.components.external}</span></div></div>`).join("")}</div></div>`).join("")}`;
+}
+async function pagePreset(main, r) {
+  const p = await api(`/api/presets/${r.arg}`);
+  const tab = S.tab["p_" + p.id] || "plan";
+  const done = new Set(p.done_stages);
+  main.innerHTML = `<div class="card"><div class="pad hd"><div>
+      <h2>${p.order}. ${esc(p.title)}</h2><div class="sub">${esc(p.title_en)} · <span class="pill ${LEVEL_CLS[p.level]}">${esc(p.level_name)}</span> · ${esc(p.weeks)} هفته · ${p.done_stages.length}/${p.stages.length} مرحله</div>
+      ${p.prerequisites.length ? `<div class="note" style="margin-top:4px">پیش‌نیاز: ${p.prerequisites.map((q) => `<a onclick="go('/preset/${q}')">${q}</a>`).join("، ")}</div>` : ""}
+      ${p.unlocks.length ? `<div class="note">بعد از این: ${p.unlocks.map((q) => `<a onclick="go('/preset/${q}')">${q}</a>`).join("، ")}</div>` : ""}</div>
+      <div class="sp"></div>
+      ${p.implemented ? `<button class="btn p" onclick="go('/stage/${p.implemented.stages[0]}')">باز کردن مرحله‌ها در این repo</button>` : ""}
+      ${p.id !== "p08_support_agent" ? (p.scaffolded ? `<span class="pill ok">اسکلت ساخته شده: projects/${p.id}</span><button class="btn" onclick="go('/file?path=projects/${p.id}')">فایل‌ها</button>`
+        : `<button class="btn ${p.implemented ? "" : "p"}" onclick="scaffold('${p.id}')">⇩ ساخت اسکلت پروژه</button>`) : ""}</div>
+    <div class="tabs">${[["plan", "مسئله و برنامه"], ["stages", "مرحله‌ها"], ["parts", "قطعه‌ها و داده"], ["career", "مصاحبه، پیشرفته، رزومه"]]
+      .map(([k, v]) => `<span class="${tab === k ? "on" : ""}" onclick="S.tab['p_${p.id}']='${k}';render()">${v}</span>`).join("")}</div>
+    <div class="pad" id="ptab"></div></div>`;
+  const body = $("#ptab");
+  if (tab === "plan") body.innerHTML = `<div class="grid2"><div class="box"><h4>کاربرد واقعی</h4>${esc(p.real_world)}</div><div class="box"><h4>مسئله</h4>${esc(p.problem)}</div></div>
+    <div class="box" style="margin-top:12px"><h4>هدف</h4>${esc(p.goal)}</div>
+    <div class="grid2" style="margin-top:12px"><div class="box"><h4>معیارها</h4><ul class="clean">${p.metrics.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>
+      <div class="box"><h4>پارامترهای پیشنهادی (config.yaml)</h4><pre>${esc(Object.entries(p.params).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join("\n") || "—")}</pre></div></div>
+    <div class="grid2" style="margin-top:12px"><div class="box"><h4>guardrail</h4><ul class="clean">${p.guardrails.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div>
+      <div class="box"><h4>production</h4><ul class="clean">${p.production.map((m) => `<li>${esc(m)}</li>`).join("")}</ul></div></div>`;
+  if (tab === "stages") body.innerHTML = p.stages.map((st, i) => `<div class="box" style="margin-bottom:12px;${done.has(i) ? "border-color:var(--ok)" : ""}">
+      <div class="row"><label class="switch"><input type="checkbox" ${done.has(i) ? "checked" : ""} onchange="presetDone('${p.id}', ${i}, this.checked)"></label><h4 style="margin:0">مرحله‌ی ${i + 1}: ${esc(st.title)}</h4></div>
+      <div class="grid2" style="margin-top:8px"><div><b>یاد بگیر</b><ul class="clean">${st.learn.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
+        <div><b>بساز</b><ol class="steps">${st.build.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></div></div>
+      <div class="row" style="margin-top:6px"><span class="pill info">بسنج</span><span>${esc(st.measure)}</span></div>
+      <div class="adv warn" style="margin-top:8px"><span class="ic">△</span><div>${esc(st.pitfall)}</div></div></div>`).join("");
+  if (tab === "parts") body.innerHTML = `<div class="box"><h4>قطعه‌ها</h4><table><tr><th>قطعه</th><th>وضعیت</th><th>کجا / کدام ابزار</th></tr>
+      ${p.component_details.map((c) => `<tr><td>${esc(c.name)} <span class="note mono">${c.id}</span></td><td><span class="pill ${STATUS_CLS[c.status]}">${esc(c.status_name)}</span></td><td class="mono" style="text-align:left">${esc(c.where)}</td></tr>`).join("")}</table></div>
+    <div class="box" style="margin-top:12px"><h4>داده</h4><table><tr><th>داده</th><th>لایسنس</th><th>توضیح</th></tr>${p.data.map((d) => `<tr><td>${d.url && d.url.startsWith("http") ? `<a href="${esc(d.url)}" target="_blank">${esc(d.name)}</a>` : esc(d.name)}</td><td>${esc(d.license)}</td><td>${esc(d.note)}</td></tr>`).join("")}</table>
+      <div class="note" style="margin-top:6px">لایسنس را قبل از انتشار عمومی یا استفاده‌ی تجاری چک کن.</div></div>
+    <div class="box" style="margin-top:12px"><h4>stack</h4><table>${Object.entries(p.stack).map(([k, v]) => `<tr><td class="mono">${k}</td><td>${esc(Array.isArray(v) ? v.join("، ") || "—" : v)}</td></tr>`).join("")}</table></div>`;
+  if (tab === "career") body.innerHTML = `<div class="grid2"><div class="box"><h4>سؤال‌های مصاحبه</h4><ol class="steps">${p.interview.map((q) => `<li>${esc(q)}</li>`).join("")}</ol></div>
+      <div class="box"><h4>نسخه‌ی پیشرفته (برای بعد)</h4><ul class="clean">${p.advanced.map((q) => `<li>${esc(q)}</li>`).join("")}</ul></div></div>
+    <div class="box" style="margin-top:12px"><h4>خط رزومه</h4><div class="mono" style="text-align:left">${esc(p.cv)}</div><div class="note">{...} را با عددهای واقعی خودت پر کن؛ عدد بدون اندازه‌گیری ننویس.</div></div>`;
+}
+window.presetDone = async (id, i, v) => { const r = await api(`/api/presets/${id}/progress`, { stage: i, done: v }); toast(`${r.done.length}/${r.total} مرحله`, 1500); };
+window.scaffold = async (id) => {
+  const r = await api(`/api/presets/${id}/scaffold`, {});
+  if (!r.ok) { toast(r.error, 6000); return; }
+  alert(`ساخته شد: ${r.path}\n\nفایل‌ها: ${r.files.join(", ")}\n\nقدم بعد: ${r.next}`); render();
+};
+
 // ---------------- right column: advice + Claude ----------------
 function pageContext() {
   const r = route();
@@ -719,9 +806,9 @@ async function boot() {
   $("#toggleClaude").onclick = () => { const w = $("#wrap"); w.classList.toggle("noclaude"); STORE.set("hideClaude", w.classList.contains("noclaude")); };
   S.catalog = await api("/api/catalog");
   renderRight();
+  render();                                  // show the page now; the overview (preflight, Ollama check) follows
   await refreshOverview();
   if (!S.overview?.connections?.claude?.ready && S.overview?.connections?.desktop?.installed && !STORE.get("claudeMode", null)) { S.claudeMode = "desktop"; drawClaude(); }
-  await render();
   setInterval(refreshOverview, 6000);
 }
 window.S = S; window.render = render;

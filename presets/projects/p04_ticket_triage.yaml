@@ -1,0 +1,45 @@
+id: p04_ticket_triage
+order: 4
+level: 1
+title: "طبقه‌بندی و مسیریابی تیکت پشتیبانی"
+title_en: "Support ticket triage and routing"
+tracks: [ml, eval]
+weeks: "1–2"
+real_world: "هر helpdesk: تیکت ورودی باید به تیم درست برود، اولویتش مشخص شود و پیام‌های نامربوط کنار بروند."
+problem: "intentهای زیاد، پیام‌های نویزی و پیام‌های خارج از حوزه؛ و اینکه مدل بداند کی مطمئن نیست."
+goal: "سه روش (TF-IDF، embedding، LLM) را منصفانه مقایسه کنی، calibration انجام دهی و برای هر تیم آستانه‌ی جدا بگذاری."
+prerequisites: []
+data:
+  - {name: "Bitext customer support", url: "https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset", license: "CDLA-Sharing-1.0", note: "۲۷ intent، flag برای غلط تایپی و محاوره"}
+  - {name: "CLINC150 (oos)", url: "https://github.com/clinc/oos-eval", license: "CC BY 3.0", note: "پیام‌های خارج از حوزه"}
+stack: {llm: "qwen2.5:7b (برای مقایسه)", embeddings: "paraphrase-multilingual-MiniLM-L12-v2", extras: ["scikit-learn"]}
+components: [leakage_free_split, intent_classifier, calibration, selective_decision, run_registry, ci_eval]
+implemented: {project: support-agent, stages: [0, 1, 4]}
+stages:
+  - title: "تقسیم بدون نشت"
+    learn: ["near-duplicate و StratifiedGroupKFold"]
+    build: ["مرحله‌ی ۰ پروژه‌ی support-agent در پنل"]
+    measure: "اختلاف سهم intent بین بخش‌ها"
+    pitfall: "تقسیم تصادفی روی داده‌ی template-محور نمره را باد می‌کند."
+  - title: "سه مدل، یک معیار"
+    learn: ["macro-F1", "سرعت به‌عنوان بخشی از مقایسه"]
+    build: ["مرحله‌ی ۱ پروژه‌ی support-agent"]
+    measure: "macro-F1، ms/پیام، دقت به تفکیک flag"
+    pitfall: "LLM روی نمونه ارزیابی می‌شود؛ حجم نمونه را گزارش کن."
+  - title: "calibration و آستانه"
+    learn: ["ECE، temperature scaling", "risk-coverage"]
+    build: ["مرحله‌ی ۴ پروژه‌ی support-agent"]
+    measure: "ECE قبل/بعد، coverage در بودجه‌ی خطا"
+    pitfall: "آستانه روی test انتخاب نشود."
+  - title: "اولویت و چندبرچسبی (فراتر از support-agent)"
+    learn: ["multi-label (یک پیام، دو درخواست)", "اولویت ترتیبی (ordinal)"]
+    build: ["برچسب اولویت قاعده‌محور بساز (کلمه‌های خشم، مبلغ، تهدید حقوقی) و مدل را با آن آموزش بده"]
+    measure: "F1 هر برچسب، recall اولویت بالا"
+    pitfall: "recall تیکت‌های فوری مهم‌تر از دقت کلی است؛ معیار را با هزینه‌ی واقعی انتخاب کن."
+metrics: ["macro-F1", "ECE", "oos recall", "coverage at error budget"]
+params: {winner: tfidf, error_budget_low: 0.05, error_budget_high: 0.01}
+guardrails: ["پیام‌های تهدید حقوقی و امنیت حساب همیشه به انسان"]
+production: ["پایش توزیع intent (PSI)", "بازآموزی دوره‌ای با برچسب اپراتورها"]
+interview: ["چرا calibration برای مسیریابی مهم است؟", "out-of-scope را چطور مدیریت کردی؟", "کی LLM و کی مدل کلاسیک؟"]
+advanced: ["SetFit با داده‌ی کم", "conformal prediction", "active learning: کدام تیکت را برای برچسب‌زنی بفرستیم"]
+cv: "Compared TF-IDF, embedding and LLM ticket classifiers on a leakage-free split with temperature scaling; macro-F1 {f1}, ECE {ece}."

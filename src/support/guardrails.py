@@ -22,6 +22,7 @@ _NUMBER = re.compile(r"\d+(?:[.,]\d+)?")
 INJECTION_PATTERNS = [
     r"ignore (all |any |the )?(previous|above|prior) (instructions|rules)",
     r"ignorier\w* (alle |die )?(vorherigen|obigen)? ?(anweisungen|regeln)",
+    r"(دستور|قوانین|قواعد)\S*\s+(قبلی|بالا)\S*\s+(را\s+)?(نادیده|فراموش)",
     r"(reveal|show|print) (me )?(your|the) (system )?prompt",
     r"system ?prompt",
     r"you are now", r"du bist jetzt",

@@ -1,0 +1,11 @@
+id: quick_smoke
+title: "تست سریع زنجیره (چند دقیقه)"
+description: "برای اینکه ببینی همه‌ی مرحله‌ها بدون خطا اجرا می‌شوند، نه برای گزارش عدد. نمونه‌ها خیلی کوچک‌اند."
+changes:
+  intents.run_embeddings: false
+  intents.llm_sample_per_intent: 2
+  evaluation.n_random_scenarios: 10
+  evaluation.n_run: 5
+  evaluation.n_bootstrap: 500
+  robustness.translate: false
+  serving.loadtest_requests: 10
