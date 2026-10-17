@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "support_agent": "./scripts/lc_studio.py:graph"
+  },
+  "env": ".env"
+}

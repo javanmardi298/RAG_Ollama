@@ -1,0 +1,494 @@
+<title>Support Agent · Stage 0</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column (RTL) with a parcel-label motif; code and tables stay LTR in their own scroll boxes. */
+:root {
+  --bg: #f4f6f5;
+  --paper: #ffffff;
+  --fg: #18221f;
+  --muted: #56645f;
+  --rule: #d6dedb;
+  --accent: #0d6b66;
+  --accent-soft: #e1efed;
+  --amber: #9a6410;
+  --amber-soft: #f7ecd9;
+  --code-bg: #eaf0ee;
+  --font-display: "Vazirmatn", "Tahoma", sans-serif;
+  --font-body: "Vazirmatn", "Tahoma", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111715; --paper: #18201d; --fg: #e2e9e6; --muted: #98a8a2; --rule: #2b3632;
+    --accent: #52c4ba; --accent-soft: #19302d; --amber: #e2a94f; --amber-soft: #2f2615; --code-bg: #1d2623;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111715; --paper: #18201d; --fg: #e2e9e6; --muted: #98a8a2; --rule: #2b3632;
+  --accent: #52c4ba; --accent-soft: #19302d; --amber: #e2a94f; --amber-soft: #2f2615; --code-bg: #1d2623;
+  color-scheme: dark;
+}
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16.5px; line-height: 1.95;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 64px;
+}
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.45; margin: 0; }
+h1 { font-size: 2rem; font-weight: 900; }
+h2 { font-size: 1.45rem; font-weight: 900; display: flex; gap: 12px; align-items: baseline; }
+h2 .no { font-family: var(--font-mono); font-size: .85rem; color: var(--accent); font-weight: 600; }
+h3 { font-size: 1.1rem; font-weight: 700; margin-top: 8px; }
+p, li { margin: 0; }
+section { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+ul, ol { padding-inline-start: 1.4em; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+strong { font-weight: 700; }
+code { font-family: var(--font-mono); font-size: .86em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; direction: ltr; unicode-bidi: isolate; }
+pre { direction: ltr; text-align: left; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0; font-family: var(--font-mono); font-size: .82rem; line-height: 1.65; }
+pre code { background: none; padding: 0; font-size: inherit; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+
+/* header styled like a shipping label */
+.label { background: var(--paper); border: 2px solid var(--fg); border-radius: 10px; padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 14px; }
+.label .meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-family: var(--font-mono); font-size: .78rem; color: var(--muted); direction: ltr; justify-content: flex-end; border-bottom: 1px dashed var(--rule); padding-bottom: 10px; }
+.label .lead { color: var(--muted); }
+
+.toc { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 18px; list-style: none; padding: 0; font-size: .95rem; }
+.toc a { text-decoration: none; color: var(--fg); }
+.toc a span { font-family: var(--font-mono); color: var(--accent); font-size: .8rem; margin-inline-end: 8px; }
+
+.note { border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.note .tag { font-size: .78rem; font-weight: 700; letter-spacing: .02em; }
+.why { background: var(--accent-soft); }
+.why .tag { color: var(--accent); }
+.remember { background: var(--amber-soft); }
+.remember .tag { color: var(--amber); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; line-height: 1.7; }
+th, td { padding: 9px 12px; border-bottom: 1px solid var(--rule); text-align: start; vertical-align: top; }
+th { font-weight: 700; background: var(--code-bg); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: .82rem; direction: ltr; text-align: end; }
+.pick { color: var(--accent); font-weight: 700; }
+
+.links { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.links li { display: flex; gap: 10px; align-items: baseline; }
+.kind { flex: none; font-size: .72rem; font-weight: 700; color: var(--muted); border: 1px solid var(--rule); border-radius: 4px; padding: 0 6px; }
+
+/* order lifecycle */
+.flow { direction: ltr; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-family: var(--font-mono); font-size: .82rem; }
+.chip { border: 1.5px solid var(--fg); border-radius: 999px; padding: 3px 12px; background: var(--paper); }
+.chip.end { border-style: dashed; }
+.arrow { color: var(--muted); }
+.flowbox { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+details { border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); padding: 10px 14px; }
+details[open] { padding-bottom: 14px; }
+summary { cursor: pointer; font-weight: 700; }
+details > div { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+.steps { counter-reset: s; list-style: none; padding: 0; gap: 12px; }
+.steps > li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; gap: 10px; }
+.steps > li::before { content: counter(s); font-family: var(--font-mono); font-weight: 600; color: var(--paper); background: var(--accent); border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; font-size: .8rem; margin-top: 4px; }
+.steps > li > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+@media (max-width: 480px) { body { font-size: 15.5px; } h1 { font-size: 1.6rem; } }
+</style>
+
+<main dir="rtl" lang="fa">
+
+<header class="label">
+  <div class="meta"><span>stage 0 / 9</span><span>reference_date 2026-10-01</span><span>seed 7</span><span>CPU only</span></div>
+  <h1>مرحله‌ی ۰ · داده، دیتابیس سفارش‌ها و قواعد فروشگاه</h1>
+  <p class="lead">در این مرحله هنوز مدلی آموزش نمی‌دهیم. همه‌ی ورودی‌هایی را می‌سازیم که مرحله‌های بعد به آن‌ها تکیه می‌کنند: داده‌ی intent تمیز و بدون نشت، یک دیتابیس سفارش واقعی‌نما، متن سیاست‌های فروشگاه به انگلیسی و آلمانی، و تست‌هایی که درستی همه‌ی این‌ها را چک می‌کنند. بیشتر شکست‌های پروژه‌های LLM از همین‌جا شروع می‌شود، پس این مرحله را دست‌کم نگیر.</p>
+</header>
+
+<nav aria-label="فهرست">
+  <ul class="toc">
+    <li><a href="#out"><span>0.1</span>خروجی‌های این مرحله</a></li>
+    <li><a href="#metrics"><span>0.2</span>اول متریک، بعد کد</a></li>
+    <li><a href="#arch"><span>0.3</span>workflow یا agent</a></li>
+    <li><a href="#dataset"><span>0.4</span>انتخاب دیتاست</a></li>
+    <li><a href="#eda"><span>0.5</span>نگاه به داده</a></li>
+    <li><a href="#routing"><span>0.6</span>جدول مسیر‌دهی intent</a></li>
+    <li><a href="#leak"><span>0.7</span>تکراری‌ها و نشت داده</a></li>
+    <li><a href="#split"><span>0.8</span>تقسیم train / dev / test</a></li>
+    <li><a href="#db"><span>0.9</span>دیتابیس سفارش‌ها</a></li>
+    <li><a href="#policy"><span>0.10</span>قواعد فروشگاه</a></li>
+    <li><a href="#edge"><span>0.11</span>موارد مرزی</a></li>
+    <li><a href="#tests"><span>0.12</span>تست‌ها و تکرارپذیری</a></li>
+    <li><a href="#forgot"><span>0.13</span>چیزهایی که جا می‌افتد</a></li>
+    <li><a href="#run"><span>0.14</span>اجرا، قدم‌به‌قدم</a></li>
+    <li><a href="#interview"><span>0.15</span>سؤال‌های مصاحبه</a></li>
+    <li><a href="#refs"><span>0.16</span>منابع</a></li>
+  </ul>
+</nav>
+
+<section id="out">
+  <h2><span class="no">0.1</span>خروجی‌های این مرحله</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>فایل</th><th>چیست</th><th>چه کسی استفاده می‌کند</th></tr></thead>
+    <tbody>
+      <tr><td><code>data/processed/intents_*.csv</code></td><td>داده‌ی intent تمیز، در سه بخش train / dev / test</td><td>مرحله‌ی ۱ (classifier)</td></tr>
+      <tr><td><code>data/shop.db</code></td><td>دیتابیس SQLite با مشتری، محصول، سفارش و بازپرداخت</td><td>مرحله‌ی ۳ (ابزارها)، ۴ و ۶</td></tr>
+      <tr><td><code>configs/policy_rules.yaml</code></td><td>عددهای قواعد فروشگاه، تنها منبع حقیقت</td><td>ابزارها، guardrail، تست، ارزیابی</td></tr>
+      <tr><td><code>policies/en|de/*.md</code></td><td>متن سیاست‌ها برای پاسخ‌دادن</td><td>مرحله‌ی ۲ (RAG)</td></tr>
+      <tr><td><code>configs/intents.yaml</code></td><td>هر intent به کجا می‌رود و چقدر ریسک دارد</td><td>router و لایه‌ی تصمیم</td></tr>
+      <tr><td><code>results/data_summary.json</code></td><td>همه‌ی عددهای این مرحله</td><td>README و رزومه</td></tr>
+      <tr><td><code>tests/</code></td><td>۱۸ تست برای داده، دیتابیس و قواعد</td><td>خودت، قبل از هر commit</td></tr>
+    </tbody>
+  </table></div>
+  <p>زمان تقریبی: اجرا حدود ۱۰ دقیقه، خواندن و فهمیدن این صفحه و لینک‌ها ۴ تا ۶ ساعت. همه‌چیز روی CPU لپ‌تاپ اجرا می‌شود و به Colab نیازی نیست.</p>
+</section>
+
+<section id="metrics">
+  <h2><span class="no">0.2</span>اول متریک، بعد کد</h2>
+  <p>اگر قبل از ساختن مشخص نکنی «موفقیت» یعنی چه، ناخودآگاه همان چیزی را بهینه می‌کنی که اندازه‌گیری‌اش راحت‌تر است. برای همین در <code>docs/design.md</code> متریک‌ها را قبل از هر خط مدل نوشتیم. سه تا از آن‌ها مستقیم در آگهی شغلی آمده‌اند: Automation Rate، Containment و CSAT.</p>
+  <h3>چرا Automation Rate تنها کافی نیست</h3>
+  <p>فرض کن ۱۰۰۰ مکالمه داریم. bot ۷۰۰ تا را بدون انسان تمام می‌کند، پس Automation Rate برابر ۷۰٪ است. حالا از همین ۷۰۰ تا، ۳۵ مورد باید به انسان می‌رفت: مثلاً bot یک بازپرداخت ۴۰۰ یورویی را خودکار انجام داده یا سفارشی را لغو کرده که ارسال شده بود. این می‌شود <strong>False Automation Rate</strong> برابر ۵٪.</p>
+  <p>اگر فقط Automation Rate را بالا ببری، کافی است bot همیشه خودش جواب بدهد. Automation به ۹۵٪ می‌رسد ولی False Automation شاید به ۲۰٪ برسد، یعنی پول اشتباه برگشته و مشتری عصبانی است. برای همین این دو را همیشه کنار هم گزارش می‌کنیم. در مرحله‌ی ۴ منحنی این دو را در برابر هم رسم می‌کنیم و آستانه را از روی آن انتخاب می‌کنیم.</p>
+  <h3>Containment با Automation چه فرقی دارد</h3>
+  <p>Containment یعنی مکالمه به انسان نرسید. ولی اگر مشتری خسته شود و چت را ببندد، آن مکالمه هم «contained» حساب می‌شود، در حالی که مشکلش حل نشده. برای همین در مرحله‌ی ۶ کنار Containment، «حل‌شده» را جدا اندازه می‌گیریم. در مصاحبه اگر این تفاوت را بگویی، نشان می‌دهد با متریک‌های واقعی پشتیبانی آشنایی.</p>
+  <div class="note why"><span class="tag">چرا این ترتیب</span><p>متریک‌ها تعیین می‌کنند چه داده‌ای لازم است. چون False Automation را می‌خواهیم، باید بدانیم کدام مکالمه «باید» به انسان می‌رفت. پس باید قواعد را دقیق و ماشین‌خوان بنویسیم (بخش ۰.۱۰) و موارد مرزی بسازیم (بخش ۰.۱۱). اگر متریک را آخر کار تعریف می‌کردیم، این داده‌ها را نداشتیم.</p></div>
+</section>
+
+<section id="arch">
+  <h2><span class="no">0.3</span>workflow یا agent: تصمیم معماری</h2>
+  <p>Anthropic در مقاله‌ی Building effective agents دو نوع سیستم را جدا می‌کند. در <strong>workflow</strong>، مسیر اجرای LLM و ابزارها را کد از قبل تعیین کرده است. در <strong>agent</strong>، خود مدل در یک حلقه تصمیم می‌گیرد کدام ابزار را کی صدا بزند. توصیه‌ی اصلی‌اش این است که ساده‌ترین راهی را انتخاب کن که در ارزیابی قبول می‌شود، و فقط وقتی پیچیدگی اضافه کن که لازم است.</p>
+  <p>طراحی ما ترکیبی است. بیرون یک workflow ثابت داریم: guardrail، تشخیص intent، و router که پیام را به RAG، ابزار، انسان یا «خارج از حوزه» می‌فرستد. فقط داخل مسیر ابزار یک حلقه‌ی agent کوچک داریم که می‌تواند چند نوبت با مشتری حرف بزند و چند ابزار صدا بزند.</p>
+  <pre><code>message → guardrails(in) → intent + confidence → router
+                                              ├─ rag      → policy retrieval → answer + citation
+                                              ├─ tool     → verify identity → read order → decide → (confirm) → act
+                                              ├─ handoff  → summary for the human agent
+                                              └─ out_of_scope → polite redirect
+answer → guardrails(out) → customer        (every turn is logged as a trace)</code></pre>
+  <div class="tablewrap"><table>
+    <thead><tr><th>گزینه</th><th>خوبی</th><th>بدی</th><th>اینجا</th></tr></thead>
+    <tbody>
+      <tr><td class="pick">workflow بیرونی + agent داخل مسیر ابزار</td><td>هر مسیر جدا تست می‌شود؛ قواعد پولی در کد چک می‌شوند</td><td>کد بیشتر از یک agent تنها</td><td class="pick">انتخاب ما</td></tr>
+      <tr><td>یک agent با همه‌ی ابزارها (ReAct)</td><td>انعطاف زیاد، کد کم</td><td>تضمین رعایت قواعد و دیباگ سخت؛ خطا در زنجیره‌ی تصمیم‌ها جمع می‌شود</td><td>در مرحله‌ی ۳ به عنوان baseline مقایسه می‌کنیم</td></tr>
+      <tr><td>فریم‌ورک (LangGraph و مشابه)</td><td>state، retry و checkpoint آماده</td><td>لایه‌ی انتزاعی؛ وقتی مفهوم را نمی‌دانی، باگ پنهان می‌شود</td><td>اول با Python ساده می‌فهمیم، بعد اختیاری</td></tr>
+      <tr><td>فقط قانون و درخت تصمیم (بدون LLM)</td><td>قابل‌پیش‌بینی و ارزان</td><td>با زبان آزاد و نویزی کار نمی‌کند</td><td>بخشی از guardrail و لایه‌ی تصمیم می‌شود</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="links">
+    <li><span class="kind">بلاگ</span><a href="https://www.anthropic.com/research/building-effective-agents">Anthropic: Building effective agents</a> (حتماً کامل بخوان؛ پایه‌ی مرحله‌ی ۳)</li>
+    <li><span class="kind">بلاگ</span><a href="https://eugeneyan.com/writing/llm-patterns/">Eugene Yan: Patterns for building LLM-based systems</a> (evals، RAG، guardrails در یک نقشه)</li>
+  </ul>
+</section>
+
+<section id="dataset">
+  <h2><span class="no">0.4</span>انتخاب دیتاست: چرا Bitext و نه بقیه</h2>
+  <p>برای مرحله‌ی ۱ به پیام‌های مشتری با برچسب intent در حوزه‌ی پشتیبانی فروشگاه نیاز داریم. داده‌ی واقعی شرکت‌ها عمومی نیست، پس بین دیتاست‌های عمومی انتخاب می‌کنیم:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>دیتاست</th><th>چیست</th><th>چرا به کار ما می‌آید یا نمی‌آید</th></tr></thead>
+    <tbody>
+      <tr><td class="pick">Bitext Customer Support</td><td>حدود ۲۷ هزار پیام، ۲۷ intent در ۱۰ دسته، انگلیسی، با ستون flags برای پدیده‌های زبانی</td><td>دقیقاً حوزه‌ی ما (cancel_order، track_order، get_refund). ولی از روی template ساخته شده، تک‌نوبتی است، پیام خارج از حوزه ندارد و فقط انگلیسی است.</td></tr>
+      <tr><td>ABCD (ASAPP)</td><td>بیش از ۱۰ هزار مکالمه‌ی انسان‌به‌انسان، ۵۵ intent، با اقدام‌هایی که سیاست شرکت محدودشان کرده</td><td>واقع‌گرایانه‌ترین داده‌ی چندنوبتی با policy. برای مرحله‌ی ۱ سنگین است؛ ایده‌هایش را در مرحله‌ی ۳ و ۶ استفاده می‌کنیم.</td></tr>
+      <tr><td>CLINC150</td><td>۱۵۰ intent در چند حوزه به‌علاوه‌ی یک کلاس out-of-scope</td><td>Bitext پیام خارج از حوزه ندارد. پیام‌های out-of-scope را از این‌جا قرض می‌گیریم.</td></tr>
+      <tr><td>Banking77</td><td>۷۷ intent ریزدانه‌ی بانکی</td><td>معیار خوب برای classification ریزدانه، ولی حوزه‌اش بانک است.</td></tr>
+      <tr><td>MASSIVE (Amazon)</td><td>یک میلیون جمله در ۵۱ زبان (شامل آلمانی)، ۶۰ intent</td><td>آلمانی دارد ولی حوزه‌اش دستیار صوتی است (آلارم، موسیقی)، نه پشتیبانی.</td></tr>
+      <tr><td>MultiWOZ، SGD</td><td>گفت‌وگوی وظیفه‌محور (رزرو هتل و رستوران)</td><td>برای dialogue state tracking کلاسیک؛ حوزه‌اش به ما نمی‌خورد.</td></tr>
+      <tr><td>τ-bench (Sierra)</td><td>بنچمارک agent در حوزه‌ی retail و airline با policy، ابزار و کاربر شبیه‌سازی‌شده</td><td>نزدیک‌ترین چیز به سیستم نهایی ما. الگوی ارزیابی مرحله‌ی ۶ را از آن می‌گیریم.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note why"><span class="tag">تصمیم</span><p>Bitext برای intent، دیتابیس و قواعد ساخته‌شده توسط خودمان برای ابزارها، CLINC150 برای out-of-scope، و ایده‌ی ABCD و τ-bench برای مکالمه‌های چندنوبتی. یک دیتاست کامل وجود ندارد؛ مهم این است که در README بنویسی هر تکه از کجا آمده و چه کمبودی دارد.</p></div>
+  <h3>لایسنس</h3>
+  <p>Bitext با لایسنس CDLA-Sharing-1.0 منتشر شده: باید منبع را ذکر کنی و اگر داده‌ی مشتق‌شده منتشر کنی، باید با همان لایسنس باشد. برای همین داده را در GitHub نمی‌گذاریم (<code>data/</code> در <code>.gitignore</code> است) و فقط کدی را منتشر می‌کنیم که آن را دانلود می‌کند. WANDS لایسنس MIT دارد. این توضیح ساده‌شده است و مشاوره‌ی حقوقی نیست.</p>
+  <ul class="links">
+    <li><span class="kind">داده</span><a href="https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset">Bitext روی Hugging Face</a> (dataset card را بخوان، مخصوصاً بخش flags)</li>
+    <li><span class="kind">مقاله</span><a href="https://aclanthology.org/2021.naacl-main.239/">ABCD: Action-Based Conversations Dataset</a> · <a href="https://github.com/asappresearch/abcd">کد و داده</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/1909.02027">CLINC150: Intent Classification and Out-of-Scope Prediction</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/2204.08582">MASSIVE: 51-language NLU dataset</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/2406.12045">τ-bench: Tool-Agent-User Interaction</a> · <a href="https://github.com/sierra-research/tau-bench">کد</a></li>
+  </ul>
+</section>
+
+<section id="eda">
+  <h2><span class="no">0.5</span>قبل از مدل‌سازی به داده نگاه کن</h2>
+  <p>نوت‌بوک سه سؤال می‌پرسد. هر کدام بعداً تصمیمی را عوض می‌کند:</p>
+  <ul>
+    <li><strong>تعادل کلاس‌ها:</strong> در Bitext هر intent حدود ۱۰۰۰ پیام دارد. در دنیای واقعی این‌طور نیست: track_order معمولاً خیلی بیشتر از بقیه است. وقتی کلاس‌ها نامتعادل‌اند، accuracy گمراه‌کننده می‌شود و باید macro-F1 گزارش کنیم (میانگین F1 همه‌ی intentها با وزن برابر). در مرحله‌ی ۱ این را با مثال عددی می‌بینی.</li>
+    <li><strong>طول پیام:</strong> اگر پیام‌ها خیلی کوتاه باشند، مدل‌های کلمه‌محور (TF-IDF) خوب کار می‌کنند. اگر بلند و پیچیده باشند، embedding و LLM برتری پیدا می‌کنند.</li>
+    <li><strong>پدیده‌های زبانی (flags):</strong> Bitext برای هر پیام حروفی گذاشته که نشان می‌دهد چه نوع تنوعی دارد.</li>
+  </ul>
+  <div class="tablewrap"><table>
+    <thead><tr><th>حرف</th><th>معنی</th><th>کاربرد در پروژه</th></tr></thead>
+    <tbody>
+      <tr><td class="num">Z</td><td>غلط املایی و نقطه‌گذاری اشتباه</td><td>دقت روی ورودی نویزی (مرحله‌ی ۷)</td></tr>
+      <tr><td class="num">Q</td><td>زبان محاوره‌ای</td><td>همان «noisy conversational inputs» آگهی</td></tr>
+      <tr><td class="num">K</td><td>فقط کلیدواژه («refund order»)</td><td>پیام‌های کوتاه و مبهم؛ کاندید پرسیدن سؤال تکمیلی</td></tr>
+      <tr><td class="num">W</td><td>زبان توهین‌آمیز</td><td>guardrail و لحن پاسخ (مرحله‌ی ۵)</td></tr>
+      <tr><td class="num">N</td><td>نفی («I don't want to cancel»)</td><td>یکی از سخت‌ترین موارد برای مدل‌های کلمه‌محور</td></tr>
+      <tr><td class="num">B, I, C</td><td>ساختار ساده، پرسشی، هم‌پایه</td><td>مقایسه‌ی پایه</td></tr>
+      <tr><td class="num">P, E, M, L</td><td>ادب، مخفف، تنوع صرفی، مترادف</td><td>تحلیل خطا</td></tr>
+    </tbody>
+  </table></div>
+  <p>این ستون باعث می‌شود به جای یک عدد کلی بگوییم «دقت روی پیام‌های غلط‌دار ۸ امتیاز پایین‌تر است». این نوع جمله در README و مصاحبه خیلی بیشتر از یک عدد کلی اثر دارد.</p>
+</section>
+
+<section id="routing">
+  <h2><span class="no">0.6</span>جدول مسیردهی intent</h2>
+  <p>هر intent در <code>configs/intents.yaml</code> دو ویژگی دارد: <code>route</code> (ابزار، RAG، انسان، خارج از حوزه) و <code>risk</code> (کم، متوسط، زیاد). ریسک در مرحله‌ی ۴ استفاده می‌شود: کار پرریسک مثل لغو یا بازپرداخت یا تأیید مشتری لازم دارد، یا اگر مدل مطمئن نیست مستقیم به انسان می‌رود.</p>
+  <pre><code>cancel_order:        {route: tool,    risk: high}
+track_order:         {route: tool,    risk: low}
+check_refund_policy: {route: rag,     risk: low}
+contact_human_agent: {route: handoff, risk: low}
+newsletter_subscription: {route: out_of_scope, risk: low}</code></pre>
+  <div class="note why"><span class="tag">چرا در فایل config و نه در کد</span><p>این جدول تصمیم محصول است، نه تصمیم فنی. Product Manager باید بتواند آن را بخواند و عوض کند. نوت‌بوک هم چک می‌کند هر intent داده در این فایل باشد، تا اگر Bitext نسخه‌ی جدیدی با intent تازه بدهد، همان روز بفهمیم.</p></div>
+  <h3>چرا اصلاً intent جدا تشخیص بدهیم؟</h3>
+  <p>راه مدرن‌تر این است که LLM مستقیم ابزار مناسب را انتخاب کند و intent جدا نداشته باشیم. سه دلیل داریم که intent را نگه داریم: یک عدد قابل‌اندازه‌گیری می‌دهد (macro-F1)، یک confidence می‌دهد که لایه‌ی handoff به آن نیاز دارد، و آمار intentها نشان می‌دهد کدام نوع درخواست بیشترین حجم را دارد. این آخری همان «identify high-impact automation opportunities» در آگهی است. در مرحله‌ی ۱ هر دو راه را مقایسه می‌کنیم.</p>
+  <p>گزینه‌ی دیگر classification سلسله‌مراتبی است: اول دسته (ORDER، REFUND) و بعد intent. وقتی تعداد intentها صدتایی می‌شود مفید است؛ با ۲۷ intent لازم نیست.</p>
+</section>
+
+<section id="leak">
+  <h2><span class="no">0.7</span>تکراری‌ها و نشت داده</h2>
+  <p><strong>نشت داده (data leakage)</strong> یعنی اطلاعاتی که موقع پیش‌بینی واقعی در دسترس نیست، موقع آموزش به مدل برسد. رایج‌ترین شکلش این است که جمله‌ای که در test هست، در train هم باشد. آن‌وقت نمره‌ی test حافظه را اندازه می‌گیرد، نه فهم را، و در production مدل خیلی بدتر از عدد گزارش‌شده کار می‌کند.</p>
+  <p>Bitext از template ساخته شده، پس این خطر زیاد است. این دو جمله عملاً یکی هستند:</p>
+  <pre><code>"I want to cancel order {{Order Number}}"
+"i want to cancel order {{Order ID}}!!"</code></pre>
+  <p>اگر یکی در train و دیگری در test باشد، مدل فقط تطبیق داده، چیزی یاد نگرفته. برای همین یک «کلید» برای هر جمله می‌سازیم که این تفاوت‌های سطحی را نادیده بگیرد:</p>
+  <pre><code>_PLACEHOLDER = re.compile(r"\{\{.*?\}\}")
+_PUNCT = str.maketrans({c: " " for c in string.punctuation})
+
+def normalize(text: str) -> str:
+    text = _PLACEHOLDER.sub(" ph ", str(text).lower())   # {{Order Number}} → ph
+    return " ".join(text.translate(_PUNCT).split())      # drop punctuation, squeeze spaces</code></pre>
+  <p>بعد سه کار می‌کنیم: سطرهای خالی را حذف می‌کنیم؛ کلیدهایی که با دو intent مختلف برچسب خورده‌اند را حذف می‌کنیم (برچسب مبهم، مدل را گیج می‌کند و ارزیابی را غیرمنصفانه)؛ و تکراری‌های کامل را یکی می‌کنیم. تابع <code>clean_intents</code> تعداد هر کدام را گزارش می‌دهد تا در README بنویسی.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>روش پیدا کردن تکراری</th><th>چه چیزی را می‌گیرد</th><th>هزینه</th><th>کی</th></tr></thead>
+    <tbody>
+      <tr><td>فقط تکراری دقیق</td><td>جمله‌های عیناً یکسان</td><td>تقریباً صفر</td><td>کافی نیست برای داده‌ی template</td></tr>
+      <tr><td class="pick">کلید نرمال‌شده (ما)</td><td>تفاوت حروف، نقطه‌گذاری، placeholder</td><td>خیلی کم، کاملاً شفاف</td><td class="pick">نقطه‌ی شروع</td></tr>
+      <tr><td>MinHash / LSH</td><td>جمله‌هایی که بیشتر کلمه‌هایشان مشترک است</td><td>متوسط، برای میلیون‌ها سطر مقیاس‌پذیر</td><td>داده‌ی بزرگ یا وب</td></tr>
+      <tr><td>شباهت embedding</td><td>بازنویسی‌ها با کلمه‌های متفاوت</td><td>زیاد؛ انتخاب آستانه سخت است و ممکن است جمله‌های متفاوت را هم یکی کند</td><td>وقتی نمره‌ی dev مشکوک بالاست</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>MinHash</strong> در یک جمله: هر جمله را به مجموعه‌ای از تکه‌های چندکلمه‌ای تبدیل می‌کند و با چند تابع hash یک «امضای» کوتاه می‌سازد، طوری که احتمال یکسان بودن دو امضا برابر شباهت Jaccard دو مجموعه باشد. LSH این امضاها را در سطل‌هایی می‌ریزد تا فقط جمله‌های هم‌سطل با هم مقایسه شوند. مقاله‌ی Lee و همکاران نشان داد حتی در داده‌های بزرگ آموزش LLM، بخش قابل‌توجهی از test در train هم وجود دارد.</p>
+  <div class="note remember"><span class="tag">یادت باشد</span><p>اگر در مرحله‌ی ۱ یک مدل ساده‌ی TF-IDF روی dev نمره‌ی ۹۹٪ گرفت، اول خوشحال نشو. اول چک کن نشت داری یا نه. نمره‌ی خیلی بالا روی داده‌ی template معمولاً علامت نشت است.</p></div>
+  <ul class="links">
+    <li><span class="kind">مستند</span><a href="https://scikit-learn.org/stable/common_pitfalls.html">scikit-learn: Common pitfalls (بخش Data leakage)</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/2107.06499">Lee et al.: Deduplicating Training Data Makes Language Models Better</a></li>
+  </ul>
+</section>
+
+<section id="split">
+  <h2><span class="no">0.8</span>تقسیم train / dev / test</h2>
+  <p>سه بخش، سه نقش متفاوت:</p>
+  <ul>
+    <li><strong>train:</strong> مدل از آن یاد می‌گیرد.</li>
+    <li><strong>dev</strong> (یا validation): همه‌ی تصمیم‌های تو با آن گرفته می‌شود: انتخاب مدل، آستانه‌ی confidence، نسخه‌ی prompt.</li>
+    <li><strong>test:</strong> قفل است. در هر مرحله فقط یک بار، آخر کار، برای گزارش عدد نهایی باز می‌شود. اگر بر اساس test تصمیم بگیری، test هم کم‌کم به dev تبدیل می‌شود و عددش خوش‌بینانه می‌شود.</li>
+  </ul>
+  <p>نسبت ما حدود ۷۰/۱۵/۱۵ است. با حدود ۱۰۰۰ پیام برای هر intent، حدود ۱۴۰ پیام test برای هر intent می‌ماند که برای F1 هر intent کافی است.</p>
+  <h3>stratified و grouped با هم</h3>
+  <p><strong>stratified</strong> یعنی سهم هر intent در هر سه بخش تقریباً یکسان باشد. <strong>grouped</strong> یعنی همه‌ی جمله‌هایی که کلید یکسان دارند فقط در یک بخش باشند. کلاس <code>StratifiedGroupKFold</code> در scikit-learn هر دو را با هم انجام می‌دهد: گروه‌ها را دست‌نخورده بین foldها پخش می‌کند و تلاش می‌کند توزیع کلاس‌ها در هر fold شبیه کل داده باشد. ما یک fold از ۷ را test برمی‌داریم (حدود ۱۴٪)، بعد از باقی، یک fold از ۶ را dev:</p>
+  <pre><code>outer = StratifiedGroupKFold(n_splits=7, shuffle=True, random_state=seed)
+rest_idx, test_idx = next(outer.split(df, df["intent"], groups=df["key"]))
+inner = StratifiedGroupKFold(n_splits=6, shuffle=True, random_state=seed)
+train_idx, dev_idx = next(inner.split(rest, rest["intent"], groups=rest["key"]))
+assert_no_leakage(splits)   # fails loudly if any key appears in two splits</code></pre>
+  <div class="tablewrap"><table>
+    <thead><tr><th>روش تقسیم</th><th>کی مناسب است</th></tr></thead>
+    <tbody>
+      <tr><td>تصادفی ساده</td><td>داده‌ی بزرگ، متعادل و بدون تکراری؛ اینجا نشت می‌دهد</td></tr>
+      <tr><td>فقط stratified</td><td>کلاس‌های نامتعادل ولی بدون تکراری</td></tr>
+      <tr><td class="pick">stratified + grouped</td><td class="pick">داده‌ی template یا چند نمونه از یک منبع (ما)</td></tr>
+      <tr><td>k-fold cross-validation</td><td>داده‌ی کم؛ برای LLM گران است چون باید k بار اجرا شود</td></tr>
+      <tr><td>بر اساس زمان</td><td>لاگ واقعی مکالمه‌ها: train روی گذشته، test روی آینده. این شبیه‌ترین حالت به production است و drift را هم نشان می‌دهد. اگر در شرکت لاگ واقعی داشتی، این را انتخاب کن.</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="links">
+    <li><span class="kind">مستند</span><a href="https://scikit-learn.org/stable/modules/cross_validation.html">scikit-learn: Cross-validation (بخش‌های stratified و group)</a></li>
+    <li><span class="kind">مستند</span><a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedGroupKFold.html">StratifiedGroupKFold</a></li>
+    <li><span class="kind">ویدیو</span><a href="https://www.youtube.com/results?search_query=C2W1L01+Train+Dev+Test+sets+Andrew+Ng">Andrew Ng: Train / Dev / Test sets (C2W1L01)</a> (حدود ۱۲ دقیقه؛ نقش هر بخش)</li>
+  </ul>
+</section>
+
+<section id="db">
+  <h2><span class="no">0.9</span>دیتابیس سفارش‌ها</h2>
+  <p>agent باید بتواند وضعیت سفارش را بخواند و آن را لغو یا بازپرداخت کند. داده‌ی واقعی سفارش عمومی نیست (و به خاطر حریم خصوصی هم نباید باشد)، پس آن را شبیه‌سازی می‌کنیم. نام محصولات از WANDS می‌آید که در پروژه‌ی جستجوی محصول داری؛ قیمت، مشتری و تاریخ‌ها را می‌سازیم.</p>
+  <h3>چرا SQLite</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>گزینه</th><th>خوبی</th><th>بدی</th></tr></thead>
+    <tbody>
+      <tr><td>فایل JSON یا DataFrame</td><td>ساده‌ترین</td><td>نه قید (constraint) دارد نه تراکنش؛ هیچ شباهتی به backend واقعی ندارد</td></tr>
+      <tr><td class="pick">SQLite</td><td>یک فایل، داخل خود Python، SQL واقعی، قید، کلید خارجی، تراکنش</td><td>برای نوشتن هم‌زمان زیاد ساخته نشده</td></tr>
+      <tr><td>PostgreSQL</td><td>همان چیزی که شرکت‌ها دارند</td><td>نصب و سرور جدا؛ برای یادگیری این مرحله زیادی است</td></tr>
+      <tr><td>API ساختگی (mock REST)</td><td>شبیه‌ترین به معماری واقعی</td><td>کار اضافه‌ی زیاد؛ در مرحله‌ی ۸ با FastAPI جلوی همین دیتابیس می‌سازیم</td></tr>
+    </tbody>
+  </table></div>
+  <p>ابزارهای مرحله‌ی ۳ روی query‌های SQL ساخته می‌شوند. اگر بعداً به Postgres بروی، فقط لایه‌ی اتصال عوض می‌شود.</p>
+  <h3>قیدها: حالت غیرممکن نباید قابل ذخیره باشد</h3>
+  <pre><code>status TEXT NOT NULL CHECK (status IN
+       ('processing', 'shipped', 'delivered', 'cancelled', 'returned')),
+customer_id TEXT NOT NULL REFERENCES customers(customer_id),
+price_eur REAL NOT NULL CHECK (price_eur > 0)</code></pre>
+  <p><code>CHECK</code> جلوی وضعیت اشتباه مثل «delivred» را می‌گیرد؛ <code>REFERENCES</code> (کلید خارجی) نمی‌گذارد سفارشی برای مشتری‌ای ثبت شود که وجود ندارد. اگر بعداً agent باگی داشته باشد و بخواهد داده‌ی غلط بنویسد، دیتابیس خطا می‌دهد. یک نکته‌ی مهم SQLite: کلید خارجی به‌صورت پیش‌فرض خاموش است و باید در هر اتصال با <code>PRAGMA foreign_keys = ON</code> روشنش کرد. در مرحله‌ی ۳ این را در تابع اتصال می‌گذاریم.</p>
+  <h3>شبیه‌سازی چرخه‌ی عمر سفارش</h3>
+  <div class="flowbox">
+    <div class="flow"><span class="chip">processing</span><span class="arrow">→</span><span class="chip">shipped</span><span class="arrow">→</span><span class="chip">delivered</span><span class="arrow">→</span><span class="chip end">returned</span></div>
+    <div class="flow"><span class="chip">processing</span><span class="arrow">→</span><span class="chip end">cancelled</span></div>
+  </div>
+  <p>راه ساده و غلط این است که برای هر سفارش یک status تصادفی و چند تاریخ تصادفی انتخاب کنی. نتیجه سفارشی است که «delivered» است ولی تاریخ ارسال ندارد، یا قبل از سفارش ارسال شده. ما در عوض رویدادها را به ترتیب شبیه‌سازی می‌کنیم: سفارش ثبت شد، ۱ تا ۳ روز بعد ارسال شد، ۲ تا ۸ روز بعد رسید، و status برابر آخرین رویدادی است که تا «امروز» اتفاق افتاده. این‌طوری ناسازگاری اصلاً پیش نمی‌آید. به این الگو state machine می‌گویند. ۴٪ از بسته‌ها هم هیچ‌وقت نمی‌رسند تا موارد «تأخیر» واقعی داشته باشیم.</p>
+  <h3>چرا «امروز» ثابت است</h3>
+  <p>در <code>policy_rules.yaml</code> مقدار <code>reference_date: 2026-10-01</code> را گذاشتیم و در کل پروژه به جای <code>date.today()</code> از آن استفاده می‌کنیم. اگر از تاریخ واقعی استفاده کنی، فردا سفارشی که امروز «۱۴ روز از تحویلش گذشته» ۱۵ روزه می‌شود، تست‌ها خراب می‌شوند و عدد ارزیابی هر روز فرق می‌کند.</p>
+  <h3>بذر تصادفی (seed)</h3>
+  <p>همه‌ی تصادف‌ها از یک <code>np.random.default_rng(7)</code> می‌آیند. این روش جدید numpy است و از <code>np.random.seed()</code> بهتر است، چون یک شیء مستقل می‌سازد و کتابخانه‌ی دیگری نمی‌تواند وسط کار حالتش را عوض کند. تست <code>test_build_is_deterministic</code> دو بار دیتابیس را می‌سازد و چک می‌کند بایت‌به‌بایت یکسان باشند.</p>
+  <h3>قیمت‌ها</h3>
+  <p>WANDS قیمت ندارد. قیمت را از توزیع log-normal می‌گیریم: بیشتر محصولات ارزان‌اند و تعداد کمی خیلی گران. توزیع قیمت در فروشگاه‌های واقعی همین شکل چوله به راست را دارد؛ توزیع یکنواخت یا نرمال این را نشان نمی‌دهد. نتیجه‌ی مهم: بخش قابل‌توجهی از سفارش‌ها بالای ۱۵۰ یورو است، پس موارد «بازپرداخت نیاز به بررسی انسان دارد» به‌طور طبیعی وجود دارند.</p>
+  <h3>داده‌ی شخصی ساختگی</h3>
+  <p>اسم‌ها ترکیبی از اسم‌های رایج در آلمان است و ایمیل‌ها روی دامنه‌ی <code>example.com</code> ساخته می‌شوند. این دامنه طبق RFC 2606 برای مثال رزرو شده و مال هیچ‌کس نیست، پس هیچ ایمیل واقعی‌ای در داده نیست. کتابخانه‌ی Faker هم همین کار را می‌کند؛ اینجا با دو لیست کوتاه کار راه افتاد و یک وابستگی کمتر داریم.</p>
+  <ul class="links">
+    <li><span class="kind">مستند</span><a href="https://www.sqlite.org/whentouse.html">SQLite: Appropriate uses (کی SQLite و کی سرور)</a></li>
+    <li><span class="kind">مستند</span><a href="https://docs.python.org/3/library/sqlite3.html">Python sqlite3 (به‌خصوص بخش placeholderها برای جلوگیری از SQL injection)</a></li>
+    <li><span class="kind">مستند</span><a href="https://numpy.org/doc/stable/reference/random/generator.html">numpy random Generator</a></li>
+    <li><span class="kind">استاندارد</span><a href="https://datatracker.ietf.org/doc/html/rfc2606">RFC 2606: دامنه‌های رزروشده</a></li>
+  </ul>
+</section>
+
+<section id="policy">
+  <h2><span class="no">0.10</span>قواعد فروشگاه: یک منبع حقیقت، دو مصرف‌کننده</h2>
+  <p>قواعد فروشگاه دو مصرف‌کننده دارد. <strong>کد</strong> (ابزارها، guardrail، ارزیابی) به عدد دقیق نیاز دارد: «آیا ۳۱ روز از ۳۰ بیشتر است؟». <strong>RAG</strong> به متن نیاز دارد تا به مشتری جواب بدهد و منبع نشان دهد. اگر عدد را در دو جا جدا بنویسی، روزی یکی عوض می‌شود و دیگری نه، و bot چیزی می‌گوید که با کاری که می‌کند تناقض دارد.</p>
+  <p>راه‌حل: عددها فقط در <code>configs/policy_rules.yaml</code> هستند. متن‌های انگلیسی و آلمانی از روی همین عددها نوشته شده‌اند و تست <code>test_policy_sync.py</code> چک می‌کند هر عدد مهم در هر دو زبان آمده باشد.</p>
+  <pre><code>returns:
+  legal_withdrawal_days: 14   # EU right of withdrawal, counted from delivery
+  store_return_days: 30       # our voluntary, longer window
+  excluded: [custom_made]
+refunds:
+  auto_approve_max_eur: 150   # above this, a human must approve</code></pre>
+  <h3>ریشه‌ی واقعی قواعد</h3>
+  <p>قاعده‌ی ۱۴ روز ساختگی نیست. طبق قانون اتحادیه‌ی اروپا (دستورالعمل 2011/83)، مصرف‌کننده‌ای که آنلاین خرید کرده حداقل ۱۴ روز بعد از دریافت کالا حق انصراف بدون دلیل دارد. کالای سفارشی که طبق خواسته‌ی مشتری ساخته شده از این حق مستثناست. ما این را به‌صورت ساده‌شده آورده‌ایم و فروشگاه ساختگی ما داوطلبانه آن را به ۳۰ روز رسانده. در مصاحبه با یک شرکت آلمانی، اشاره به Widerrufsrecht نشان می‌دهد حوزه را می‌شناسی.</p>
+  <div class="note remember"><span class="tag">یادت باشد</span><p>متن آلمانی را من نوشته‌ام. وقتی سطح آلمانی‌ات بالاتر رفت یا یک آلمانی‌زبان در دسترس بود، یک بار بخوانیدش. در RAG چندزبانه، کیفیت متن منبع مستقیم روی کیفیت جواب اثر دارد.</p></div>
+  <ul class="links">
+    <li><span class="kind">مرجع</span><a href="https://www.evz.de/en/shopping-internet/online-shopping/right-of-withdrawal.html">Europäisches Verbraucherzentrum: Right of withdrawal</a></li>
+  </ul>
+</section>
+
+<section id="edge">
+  <h2><span class="no">0.11</span>موارد مرزی (boundary value analysis)</h2>
+  <p>باگ‌ها معمولاً روی مرز قاعده‌ها هستند. قاعده می‌گوید «تا ۳۰ روز». برنامه‌نویس یک جا می‌نویسد <code>days &lt; 30</code> و جای دیگر <code>days &lt;= 30</code>. با داده‌ی تصادفی شاید هیچ‌وقت سفارشی دقیقاً روز ۳۰ نداشته باشی و باگ پنهان می‌ماند. در تست نرم‌افزار به این روش boundary value analysis می‌گویند: درست روی مرز، یکی قبل و یکی بعد را تست کن.</p>
+  <p>تابع <code>edge_cases()</code> این سفارش‌ها را عمداً می‌سازد و ستون <code>scenario</code> اسمشان را نگه می‌دارد:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>scenario</th><th>وضعیت</th><th>جواب درست agent</th></tr></thead>
+    <tbody>
+      <tr><td><code>return_day_legal_limit</code></td><td>دقیقاً ۱۴ روز از تحویل</td><td>بازگشت مجاز</td></tr>
+      <tr><td><code>return_day_store_limit</code></td><td>دقیقاً ۳۰ روز</td><td>بازگشت مجاز</td></tr>
+      <tr><td><code>return_one_day_too_late</code></td><td>۳۱ روز</td><td>رد مؤدبانه، با توضیح</td></tr>
+      <tr><td><code>refund_at_auto_limit</code></td><td>۱۵۰٫۰۰ یورو</td><td>خودکار</td></tr>
+      <tr><td><code>refund_just_above_auto_limit</code></td><td>۱۵۰٫۰۱ یورو</td><td>handoff به انسان</td></tr>
+      <tr><td><code>custom_made_recent</code></td><td>کالای سفارشی، ۳ روز پیش</td><td>بازگشت ممنوع مگر معیوب باشد</td></tr>
+      <tr><td><code>damage_report_last_day</code> / <code>too_late</code></td><td>۷ و ۸ روز بعد از تحویل</td><td>قبول / ارجاع</td></tr>
+      <tr><td><code>shipped_delayed</code> / <code>not_yet_delayed</code></td><td>۱۲ و ۸ روز بعد از ارسال</td><td>پیگیری تأخیر / صبر</td></tr>
+      <tr><td><code>processing_can_cancel</code></td><td>هنوز ارسال نشده</td><td>لغو مجاز</td></tr>
+    </tbody>
+  </table></div>
+  <p>این جدول در مرحله‌ی ۴ و ۶ به test case تبدیل می‌شود. برای هر scenario یک مکالمه می‌نویسیم و چک می‌کنیم agent همان کار درست را کرده است. Policy Compliance را این‌طوری با کد اندازه می‌گیریم، نه با نظر یک LLM.</p>
+  <ul class="links">
+    <li><span class="kind">مرجع</span><a href="https://en.wikipedia.org/wiki/Boundary-value_analysis">Boundary-value analysis</a></li>
+  </ul>
+</section>
+
+<section id="tests">
+  <h2><span class="no">0.12</span>تست‌ها و تکرارپذیری</h2>
+  <p>در پروژه‌ی ML خطای داده بی‌صدا است. کد خطا نمی‌دهد، فقط عدد آخر کمی غلط است و هیچ‌کس نمی‌فهمد چرا. تست‌ها «ناوردا»هایی را چک می‌کنند که همیشه باید درست باشند:</p>
+  <ul>
+    <li>تاریخ‌ها ترتیب درست دارند و هیچ رویدادی بعد از «امروز» نیست.</li>
+    <li>status با تاریخ‌ها جور است (سفارش shipped شماره‌ی رهگیری دارد، cancelled تاریخ ارسال ندارد).</li>
+    <li>همه‌ی statusها و موارد مرزی وجود دارند.</li>
+    <li>وضعیت بازپرداخت با سقف ۱۵۰ یورو جور است.</li>
+    <li>ساخت دیتابیس قطعی است.</li>
+    <li>هیچ کلیدی در دو بخش از تقسیم نیست؛ برچسب‌های متناقض حذف می‌شوند.</li>
+    <li>متن انگلیسی و آلمانی همان عددهای config را دارند.</li>
+  </ul>
+  <p>تست‌ها با داده‌ی کوچک ساختگی کار می‌کنند و به دانلود نیاز ندارند، پس بعداً در GitHub Actions هم اجرا می‌شوند. پیش از هر commit بزن: <code>pytest -q</code>.</p>
+  <h3>خلاصه‌ی داده (data card)</h3>
+  <p>آخر نوت‌بوک فایل <code>results/data_summary.json</code> ساخته می‌شود: تعداد سطرها، نتیجه‌ی پاک‌سازی، اندازه‌ی هر بخش، تعداد سفارش‌ها در هر وضعیت، seed، تاریخ مرجع و نسخه‌ی کتابخانه‌ها. هر عددی که در README یا رزومه می‌نویسی باید از یک فایل در <code>results/</code> بیاید، نه از حافظه. ایده‌ی کامل‌ترش «Datasheets for Datasets» است.</p>
+  <ul class="links">
+    <li><span class="kind">مستند</span><a href="https://docs.pytest.org/en/stable/getting-started.html">pytest: Get started</a> (fixture و parametrize را ببین؛ در تست‌ها استفاده شده‌اند)</li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/1803.09010">Gebru et al.: Datasheets for Datasets</a></li>
+  </ul>
+</section>
+
+<section id="forgot">
+  <h2><span class="no">0.13</span>چیزهایی که معمولاً جا می‌افتد</h2>
+  <p>این‌ها را اضافه کردم یا برایشان برنامه گذاشتم، چون در نقشه‌ی اولیه نبودند ولی برای یک سیستم پشتیبانی واقعی لازم‌اند:</p>
+  <ol>
+    <li><strong>احراز هویت قبل از نشان دادن سفارش.</strong> بدون آن، هر کسی با حدس شماره‌ی سفارش اطلاعات دیگران را می‌بیند. در config نوشتیم که bot باید شماره‌ی سفارش و ایمیل را با هم چک کند. در مرحله‌ی ۶ یک test case داریم که کاربر درباره‌ی سفارش شخص دیگری می‌پرسد.</li>
+    <li><strong>پیام خارج از حوزه.</strong> Bitext ندارد؛ در مرحله‌ی ۱ از CLINC150 اضافه می‌کنیم. بدون آن، classifier هر پیامی را به یکی از ۲۷ intent می‌چسباند، حتی «هوا چطوره؟».</li>
+    <li><strong>داده‌ی آلمانی برای ارزیابی.</strong> Bitext فقط انگلیسی است. در مرحله‌ی ۷ بخشی از dev و test را با LLM ترجمه می‌کنیم و حدود ۱۰۰ نمونه را دستی چک می‌کنیم.</li>
+    <li><strong>مکالمه‌ی چندنوبتی.</strong> Bitext تک‌پیامی است. در مرحله‌ی ۶ حدود ۱۵۰ مکالمه‌ی سناریویی و یک «کاربر شبیه‌سازی‌شده» با LLM می‌سازیم (ایده‌ی τ-bench).</li>
+    <li><strong>داده‌ی شخصی و GDPR.</strong> لاگ مکالمه‌ها اسم و ایمیل دارد. از مرحله‌ی ۳ که trace ذخیره می‌کنیم، این‌ها را قبل از ذخیره mask می‌کنیم. هیچ داده‌ی واقعی در repo نمی‌رود.</li>
+    <li><strong>test را باز نکن.</strong> تا آخر هر مرحله فقط dev.</li>
+    <li><strong>ثبت تصمیم‌ها.</strong> یک فایل <code>docs/decisions.md</code> بساز و برای هر تصمیم مهم سه خط بنویس: چه انتخاب شد، چه گزینه‌هایی بود، چرا. در مصاحبه همین فایل را مرور می‌کنی.</li>
+    <li><strong>قفل کردن نسخه‌ها.</strong> <code>requirements.txt</code> حداقل نسخه را می‌گوید. وقتی همه‌چیز کار کرد، <code>pip freeze &gt; requirements.lock.txt</code> بزن تا نسخه‌ی دقیق کار‌کننده ثبت شود.</li>
+    <li><strong>commit و tag برای هر مرحله.</strong> مثلاً <code>git tag stage-0</code>. تاریخچه‌ی repo داستان پیشرفت را نشان می‌دهد.</li>
+    <li><strong>سخت‌افزار.</strong> این مرحله روی CPU است. از مرحله‌ی ۱ بخش embedding مثل پروژه‌ی قبل روی Colab می‌رود و LLM روی Ollama.</li>
+  </ol>
+</section>
+
+<section id="run">
+  <h2><span class="no">0.14</span>اجرا، قدم‌به‌قدم</h2>
+  <ol class="steps">
+    <li><div><p>فایل zip را باز کن و در VS Code پوشه‌ی <code>support-agent</code> را باز کن. یک محیط مجازی بساز:</p>
+<pre><code>python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements.txt</code></pre></div></li>
+    <li><div><p>تست‌ها را بزن. باید ۱۸ تست سبز شود، بدون هیچ دانلودی:</p><pre><code>pytest -q</code></pre></div></li>
+    <li><div><p>اگر WANDS را از پروژه‌ی قبلی داری، مسیرش را بده تا دوباره دانلود نشود:</p>
+<pre><code>export WANDS_DIR=/path/to/product-search-rag/data/wands     # Windows: set WANDS_DIR=...</code></pre></div></li>
+    <li><div><p>نوت‌بوک <code>notebooks/00_setup_data.ipynb</code> را باز کن و سلول‌ها را یکی‌یکی اجرا کن. بار اول Bitext از Hugging Face دانلود می‌شود. اگر پیام rate limit دیدی (مثل پروژه‌ی قبل)، با <code>huggingface-cli login</code> وارد شو یا CSV را از صفحه‌ی دیتاست دستی دانلود کن و مسیرش را به <code>load_bitext("...")</code> بده.</p></div></li>
+    <li><div><p>بعد از هر سلول خروجی را با این صفحه مقایسه کن. به‌خصوص: «missing from intents.yaml» باید none باشد؛ «largest difference in an intent's share» باید زیر یک درصد باشد؛ جدول موارد مرزی باید ۱۱ سطر داشته باشد.</p></div></li>
+    <li><div><p>commit کن:</p><pre><code>git init
+git add .
+git commit -m "Stage 0: data, order database, policies, tests"
+git tag stage-0</code></pre></div></li>
+  </ol>
+  <div class="note remember"><span class="tag">بعد از اجرا</span><p>عددهای <code>results/data_summary.json</code> را برایم بفرست (مخصوصاً <code>exact_duplicates_dropped</code>، <code>conflicting_keys</code> و اندازه‌ی splitها). کد با داده‌ی ساختگی هم‌شکل تست شده، ولی عددهای واقعی Bitext را فقط روی سیستم خودت می‌بینی. مرحله‌ی ۱ را با همان عددها تنظیم می‌کنیم.</p></div>
+</section>
+
+<section id="interview">
+  <h2><span class="no">0.15</span>سؤال‌هایی که درباره‌ی این مرحله می‌پرسند</h2>
+  <details><summary>داده‌ی تو synthetic است؛ چقدر به نتایج اعتماد داری؟</summary><div><p>Bitext از template ساخته شده، پس عدد روی آن سقف خوش‌بینانه است. برای کم کردن این مشکل: تکراری‌ها را با کلید نرمال‌شده گروه کردم تا نشت نباشد، دقت را جدا روی پیام‌های غلط‌دار و محاوره‌ای (flags) گزارش می‌کنم، و یک test set جدا با پیام‌های آلمانی و نویزی ساختم. در شرکت، اولین کار من گرفتن یک نمونه از لاگ واقعی و تقسیم زمانی آن بود.</p></div></details>
+  <details><summary>چرا تقسیم تصادفی کافی نبود؟</summary><div><p>چون جمله‌های تقریباً یکسان در Bitext زیادند. با تقسیم تصادفی، نسخه‌ای از یک جمله در train و نسخه‌ی دیگرش در test می‌افتد و test حافظه را می‌سنجد. با StratifiedGroupKFold هر گروه فقط در یک بخش است و توزیع intentها هم حفظ می‌شود. یک assert هم دارم که اگر کلیدی مشترک باشد، اجرا متوقف می‌شود.</p></div></details>
+  <details><summary>چرا قواعد را هم در YAML نوشتی هم در متن؟</summary><div><p>کد به عدد دقیق نیاز دارد و RAG به متن. عددها فقط در YAML هستند و یک تست چک می‌کند متن‌ها همان عددها را دارند. این‌طوری چیزی که bot می‌گوید با کاری که می‌کند تناقض پیدا نمی‌کند.</p></div></details>
+  <details><summary>چه متریکی را از همه مهم‌تر می‌دانی؟</summary><div><p>Automation Rate همراه با False Automation Rate. اولی هدف کسب‌وکار است و دومی هزینه‌ی اشتباه. هر کدام به‌تنهایی قابل دستکاری است؛ با هم معنی دارند. Containment را هم جدا از «حل‌شده» اندازه می‌گیرم چون مشتری‌ای که چت را رها کرده هم contained حساب می‌شود.</p></div></details>
+  <details><summary>چرا «امروز» را ثابت گذاشتی؟</summary><div><p>تا ساخت داده و همه‌ی ارزیابی‌ها تکرارپذیر باشد. با تاریخ واقعی، سفارشی که امروز روز ۳۰ است فردا روز ۳۱ است و تست‌ها و عددها هر روز عوض می‌شوند.</p></div></details>
+</section>
+
+<section>
+  <h2><span class="no">→</span>مرحله‌ی بعد: classification intent</h2>
+  <p>سه روش را روی همین داده مقایسه می‌کنیم: TF-IDF با logistic regression (baseline)، embedding با logistic regression، و LLM بدون آموزش (zero-shot و few-shot) با Ollama. پیام‌های out-of-scope را اضافه می‌کنیم و یاد می‌گیری macro-F1، confusion matrix و calibration چه می‌گویند. هر سه روش از نظر دقت، سرعت، هزینه و رفتار روی پیام‌های غلط‌دار کنار هم گذاشته می‌شوند.</p>
+</section>
+
+<hr>
+
+<section id="refs">
+  <h2><span class="no">0.16</span>منابع این صفحه</h2>
+  <ul class="links">
+    <li><span class="kind">بلاگ</span><a href="https://hamel.dev/blog/posts/evals/">Hamel Husain: Your AI Product Needs Evals</a> (پایه‌ی فکری متریک‌ها و مرحله‌ی ۶)</li>
+    <li><span class="kind">بلاگ</span><a href="https://www.anthropic.com/research/building-effective-agents">Anthropic: Building effective agents</a></li>
+    <li><span class="kind">بلاگ</span><a href="https://eugeneyan.com/writing/llm-patterns/">Eugene Yan: Patterns for building LLM-based systems</a></li>
+    <li><span class="kind">داده</span><a href="https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset">Bitext customer support dataset</a></li>
+    <li><span class="kind">مقاله</span><a href="https://aclanthology.org/2021.naacl-main.239/">ABCD (NAACL 2021)</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/1909.02027">CLINC150 (EMNLP 2019)</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/2204.08582">MASSIVE (ACL 2023)</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/2406.12045">τ-bench (ICLR 2025)</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/2107.06499">Deduplicating Training Data Makes Language Models Better</a></li>
+    <li><span class="kind">مقاله</span><a href="https://arxiv.org/abs/1803.09010">Datasheets for Datasets</a></li>
+    <li><span class="kind">مستند</span><a href="https://scikit-learn.org/stable/common_pitfalls.html">scikit-learn: Common pitfalls</a> · <a href="https://scikit-learn.org/stable/modules/cross_validation.html">Cross-validation</a></li>
+    <li><span class="kind">مستند</span><a href="https://www.sqlite.org/whentouse.html">SQLite: Appropriate uses</a> · <a href="https://docs.python.org/3/library/sqlite3.html">Python sqlite3</a></li>
+    <li><span class="kind">مرجع</span><a href="https://www.evz.de/en/shopping-internet/online-shopping/right-of-withdrawal.html">EVZ: Right of withdrawal</a></li>
+  </ul>
+</section>
+
+</main>

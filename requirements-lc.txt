@@ -1,0 +1,11 @@
+# LangChain / LangGraph versions of the stages (on top of requirements.txt)
+langchain>=1.0
+langchain-core>=1.0
+langgraph>=1.0
+langgraph-checkpoint-sqlite>=3.0
+langchain-ollama>=1.0
+langchain-community>=0.4      # BM25Retriever
+rank_bm25>=0.2.2
+langchain-huggingface>=1.0    # HuggingFaceEmbeddings
+langsmith>=0.4                # optional: tracing and evaluation (needs an API key)
+langgraph-cli[inmem]>=0.4     # optional: `langgraph dev` + LangGraph Studio
