@@ -1,0 +1,11 @@
+question,expected,answerable
+how long do I have to send back a sofa,returns,yes
+can I return a custom-made table,returns,yes
+when will my money be refunded,refunds,yes
+how many days does standard delivery take,shipping,yes
+is a broken leg after two months covered,warranty,yes
+what do I need to send for a warranty claim,warranty,yes
+do you sell gift cards,,no
+what is the CEO's phone number,,no
+can I pay with bitcoin,,no
+hello,,direct

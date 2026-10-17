@@ -1,0 +1,77 @@
+id: p30_agent_skills
+order: 30
+level: 1
+title: 'Agent Skills: بسته‌بندی دانش و روال کار با SKILL.md'
+title_en: 'Agent Skills: packaging know-how and procedures with SKILL.md'
+tracks:
+- agent
+- workflow
+weeks: '1'
+real_world: روال‌های تکراری تیم (گزارش، بازبینی کد، استخراج فاکتور) به‌صورت skill برای Claude Code / Agent SDK و ده‌ها پلتفرم دیگر.
+problem: prompt های بلند برای هر کار context را پر می‌کنند؛ دانش تیم در ذهن افراد می‌ماند.
+goal: سه skill با SKILL.md (توضیح کوتاه + دستورالعمل + اسکریپت/مرجع) بسازی که با progressive disclosure فقط وقتی لازم است بارگذاری شوند، و اثرشان را روی موفقیت وظیفه و توکن بسنجی.
+prerequisites: []
+data:
+- name: Agent Skills (مستند)
+  url: https://agentskills.io/
+  license: باز
+  note: قالب SKILL.md
+- name: روال‌های همین repo
+  url: ''
+  license: —
+  note: مثلاً اجرای مرحله‌ها و خواندن نتایج
+stack:
+  llm: Claude Code / Agent SDK یا هر کلاینت سازگار
+  embeddings: —
+  extras:
+  - پوشه‌ی skills/
+components:
+- agent_skills
+- prompt_registry
+- run_registry
+stages:
+- title: اولین skill
+  learn:
+  - 'frontmatter: name، description (کی استفاده شود)'
+  - 'progressive disclosure: فقط توضیح در context'
+  build:
+  - skill «گزارش نتایج پروژه» با اسکریپت
+  measure: skill در کار درست فعال می‌شود و در کار نامرتبط نه
+  pitfall: description مبهم = فعال‌شدن اشتباه.
+- title: skill با اسکریپت و مرجع
+  learn:
+  - فایل‌های کمکی، اسکریپت قطعی به جای استدلال LLM
+  build:
+  - skill استخراج فاکتور با schema و اسکریپت اعتبارسنجی
+  measure: موفقیت و توکن با/بدون skill
+  pitfall: اسکریپت اجرایی skill را مثل کد بازبینی کن (امنیت).
+- title: ارزیابی و نگهداری
+  learn:
+  - نسخه‌گذاری، تست
+  build:
+  - ۱۰ وظیفه‌ی آزمون برای هر skill
+  measure: نرخ فعال‌سازی درست و موفقیت
+  pitfall: skill شخص ثالث را بدون خواندن نصب نکن.
+metrics:
+- activation precision/recall
+- task success with vs without skill
+- tokens per task
+params:
+  skills_dir: skills/
+  skills:
+  - project-report
+  - invoice-extract
+  - run-stage
+guardrails:
+- skill ها اسرار نداشته باشند؛ اسکریپت‌ها فقط‌خواندنی مگر لازم
+production:
+- مخزن skill تیمی با بازبینی کد
+interview:
+- skill چه فرقی با prompt و ابزار MCP دارد؟
+- progressive disclosure چیست؟
+- skill را چطور ارزیابی کردی؟
+advanced:
+- skill + MCP server با هم
+- تولید خودکار skill از trace
+- skill برای sub-agent ها
+cv: 'Packaged team procedures as Agent Skills (SKILL.md with scripts and references): task success {before}→{after} with {tok} fewer tokens per task.'

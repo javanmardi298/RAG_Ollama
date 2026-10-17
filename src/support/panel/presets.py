@@ -25,7 +25,7 @@ PROJECTS_DIR = ROOT / "projects"
 TEMPLATES = Path(__file__).parent / "templates"
 LEVELS = {1: "پایه", 2: "میانی", 3: "پیشرفته"}
 TRACKS = {"rag": "RAG و بازیابی", "agent": "Agent", "workflow": "Workflow", "eval": "ارزیابی", "ml": "یادگیری ماشین",
-          "production": "Production"}
+          "production": "Production", "world_models": "JEPA و World Model"}
 STATUS = {"ready": "در سیستم", "labkit": "اضافه‌شده در labkit", "external": "ابزار بیرونی"}
 
 # Which starter template a scaffolded project gets.
@@ -33,7 +33,13 @@ TEMPLATE_FOR = {"p01_faq_search": "rag", "p02_product_search": "rag", "p03_docum
                 "p05_invoice_extraction": "extraction", "p06_text_to_sql": "sql", "p07_email_triage_workflow": "workflow",
                 "p12_multi_agent_claims": "workflow", "p10_research_agent": "agent", "p11_code_assistant": "agent",
                 "p13_graphrag": "graph", "p14_llmops_platform": "ops", "p15_finetune_distill": "finetune",
-                "p16_llm_security": "redteam"}
+                "p16_llm_security": "redteam",
+                "p17_jepa_basics": "jepa", "p18_collapse_sigreg": "jepa", "p19_world_model_planning": "world_model",
+                "p20_surprise_monitoring": "world_model", "p21_vjepa2_video": "vjepa2",
+                "p22_agentic_rag": "agentic_rag", "p23_contextual_multimodal_rag": "rag",
+                "p24_agent_reliability": "reliability", "p25_prompt_optimization": "optimize",
+                "p26_mcp_a2a": "mcp", "p27_context_engineering": "context", "p28_secure_agent": "capsec",
+                "p29_agentic_rl": "finetune", "p30_agent_skills": "skills"}
 
 
 class _M(BaseModel):

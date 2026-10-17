@@ -1,0 +1,92 @@
+id: p19_world_model_planning
+order: 19
+level: 2
+title: world model نهفته و تصمیم‌گیری با برنامه‌ریزی (CEM + MPC)
+title_en: Latent world model and decision-making by planning (CEM + MPC)
+tracks:
+- world_models
+- ml
+- agent
+weeks: 1–2
+real_world: ربات‌هایی که قبل از حرکت نتیجه را «تصور» می‌کنند (V-JEPA 2-AC، DINO-WM، TD-MPC2)؛ برنامه‌ریزی مسیر و کنترل فرایند.
+problem: یادگیری سیاست با RL داده و پاداش زیاد می‌خواهد؛ اغلب فقط داده‌ی تعامل بدون پاداش و یک تصویر هدف داریم.
+goal: از تعامل تصادفی (بدون پاداش) یک world model نهفته یاد بگیری، با CEM در فضای نهفته به سمت تصویر هدف برنامه بریزی، و با planner تصادفی (کف) و oracle (سقف) مقایسه کنی.
+prerequisites:
+- p18_collapse_sigreg
+data:
+- name: DotWorld (داخل jepa_lab)
+  url: ''
+  license: —
+  note: نقطه در تصویر ۱۲×۱۲، داده‌ی تعامل تصادفی
+- name: V-JEPA 2 (مقاله)
+  url: https://arxiv.org/abs/2506.09985
+  license: arXiv
+  note: V-JEPA 2-AC و برنامه‌ریزی با انرژی L1
+- name: LeWorldModel
+  url: https://arxiv.org/abs/2603.19312
+  license: arXiv
+  note: JEPA انتها-به-انتها از پیکسل با SIGReg
+stack:
+  llm: —
+  embeddings: MLP encoder/predictor
+  extras:
+  - torch
+components:
+- latent_world_model
+- sigreg
+- cem_mpc
+- run_registry
+stages:
+- title: آموزش بدون پاداش
+  learn:
+  - z' ≈ z + predictor(z, a)
+  - loss در فضای نهفته + SIGReg
+  build:
+  - python run.py --stage train
+  - probe موقعیت (R²)
+  measure: R² موقعیت و effective_rank
+  pitfall: بدون SIGReg z ثابت می‌شود و loss صفر — collapse.
+- title: برنامه‌ریزی
+  learn:
+  - 'CEM: نمونه، rollout نهفته، elite، به‌روزرسانی'
+  - 'MPC: فقط اولین عمل، دوباره برنامه'
+  build:
+  - planner های cem/random/oracle
+  - horizon و samples را جاروب کن
+  measure: نرخ موفقیت، گام تا هدف، زمان هر تصمیم
+  pitfall: فقط موفقیت را گزارش نکن؛ زمان تصمیم هم مهم است.
+- title: سخت‌تر کردن دنیا
+  learn:
+  - عدم قطعیت مدل، موانع، عمل گسسته
+  build:
+  - یک مانع به DotWorld اضافه کن
+  - noise دوربین
+  measure: افت موفقیت با سختی
+  pitfall: مدلی که روی داده‌ی تصادفی آموزش دیده ممکن است حالت‌های نادیده را بد پیش‌بینی کند.
+metrics:
+- planning success rate (cem vs random vs oracle)
+- mean steps to goal
+- seconds per decision
+- position probe R²
+params:
+  epochs: 40
+  z_dim: 16
+  sigreg_weight: 1.0
+  horizon: 6
+  samples: 256
+  elites: 32
+  iters: 4
+  episodes: 30
+guardrails:
+- عمل‌ها همیشه clip به حد مجاز (MAX_STEP)؛ در ربات واقعی محدودیت ایمنی در کد، نه در مدل
+production:
+- بودجه‌ی زمانی هر تصمیم؛ fallback به سیاست امن اگر planner به‌موقع تمام نشد
+interview:
+- world model چه فرقی با سیاست (policy) دارد؟
+- CEM و MPC را توضیح بده
+- بدون پاداش چطور هدف را مشخص کردی؟
+advanced:
+- DINO-WM روی PushT
+- TD-MPC2 با پاداش
+- گرادیان در فضای نهفته به جای CEM
+cv: 'Built a reward-free latent world model with SIGReg and CEM-MPC planning to goal images: {cem} success vs {random} random / {oracle} oracle; showed collapse without regularisation.'

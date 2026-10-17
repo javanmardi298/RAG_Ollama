@@ -1,0 +1,82 @@
+id: p25_prompt_optimization
+order: 25
+level: 2
+title: بهینه‌سازی خودکار prompt (GEPA / DSPy) بدون overfitting
+title_en: Automatic prompt optimisation (GEPA / DSPy) without overfitting
+tracks:
+- eval
+- ml
+weeks: 1–2
+real_world: تنظیم prompt طبقه‌بندی تیکت، استخراج و agent با داده به جای حدس؛ GEPA (ICLR 2026) و DSPy در صنعت رایج شده‌اند.
+problem: 'prompt نویسی دستی کند و سلیقه‌ای است؛ بهینه‌سازی خودکار روی داده‌ی کم overfit می‌کند (گزارش: رشد prompt از 2.4k به 8.8k کاراکتر و افت دقت تست).'
+goal: با train/val/test جدا، بهینه‌ساز GEPA-style (بازتاب روی خطاها + پارتو + جریمه‌ی طول) را اجرا کنی و بهبود را روی test با CI گزارش کنی.
+prerequisites:
+- p04_ticket_triage
+data:
+- name: داده‌ی p04 (تیکت) یا intent های Bitext همین repo
+  url: ''
+  license: —
+  note: train 50 / val 100 / test 300
+- name: GEPA (مقاله)
+  url: https://arxiv.org/abs/2507.19457
+  license: arXiv
+  note: Reflective prompt evolution
+stack:
+  llm: qwen2.5:7b (وظیفه) + مدل قوی‌تر برای پیشنهاد
+  embeddings: —
+  extras:
+  - labkit.optimize
+  - dspy (اختیاری)
+components:
+- prompt_optimizer
+- dspy
+- prompt_registry
+- bootstrap_ci
+- run_registry
+- cost_ledger
+stages:
+- title: تقسیم و baseline
+  learn:
+  - train برای بازتاب، val برای انتخاب، test فقط یک بار
+  build:
+  - prompt دستی روی هر سه
+  measure: دقت با CI
+  pitfall: انتخاب روی test = نشت.
+- title: بهینه‌سازی
+  learn:
+  - بازتاب روی خطاها، جبهه‌ی پارتو، جریمه‌ی طول
+  build:
+  - labkit.optimize.optimize با llm_proposer، budget=8
+  measure: منحنی val و طول prompt
+  pitfall: رشد بی‌رویه‌ی prompt = حفظ کردن مثال‌ها.
+- title: گزارش و ثبت
+  learn:
+  - نسخه‌گذاری prompt
+  build:
+  - prompt برنده را در PromptRegistry ثبت و روی test بسنج
+  - همان کار با DSPy GEPA (اختیاری)
+  measure: بهبود test با CI + هزینه‌ی بهینه‌سازی
+  pitfall: بهبود val بدون test گزارش نشود.
+metrics:
+- test accuracy with CI
+- prompt length
+- optimisation cost (calls, tokens)
+params:
+  budget: 8
+  length_penalty: 0.02
+  train: 50
+  val: 100
+  test: 300
+guardrails:
+- prompt پیشنهادی هرگز قواعد امنیتی را حذف نکند؛ تست red-team بعد از بهینه‌سازی
+production:
+- بهینه‌سازی دوره‌ای با داده‌ی تازه + A/B قبل از انتشار
+interview:
+- GEPA چطور کار می‌کند؟
+- overfitting در بهینه‌سازی prompt را چطور کنترل کردی؟
+- DSPy چه چیزی اضافه می‌کند؟
+advanced:
+- بهینه‌سازی چندهدفه (دقت، هزینه، تأخیر)
+- بهینه‌سازی prompt های agent چندمرحله‌ای
+- مقایسه با fine-tune کوچک
+cv: 'Optimised prompts with a GEPA-style reflective search (Pareto selection, length penalty, held-out validation): test accuracy {before}→{after} (95% CI {ci}) at {cost} optimisation calls.'

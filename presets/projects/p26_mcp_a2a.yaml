@@ -1,0 +1,84 @@
+id: p26_mcp_a2a
+order: 26
+level: 2
+title: ساخت MCP server (spec 2026) و همکاری agent ها با A2A
+title_en: Build an MCP server (2026 spec) and agent-to-agent with A2A
+tracks:
+- agent
+- production
+weeks: 1–2
+real_world: اتصال ابزارهای سازمان به Claude Desktop/Code و هر کلاینت MCP؛ همکاری agent های تیم‌های مختلف با A2A (Linux Foundation).
+problem: هر ابزار برای هر کلاینت یک اتصال جدا می‌خواهد؛ agent های مستقل راه استاندارد برای کشف و فراخوانی هم ندارند.
+goal: یک MCP server با ابزار، resource و prompt بسازی (با مجوزهای امن مثل پنل همین repo)، آن را به Claude Desktop وصل کنی، و یک agent را از طریق A2A با Agent Card در دسترس agent دیگر بگذاری.
+prerequisites:
+- p10_research_agent
+data:
+- name: MCP specification
+  url: https://modelcontextprotocol.io/specification
+  license: MIT
+  note: 'نسخه‌ی 2026-07-28: هسته‌ی stateless، حذف session'
+- name: A2A protocol
+  url: https://a2a-protocol.org/
+  license: Apache 2.0
+  note: v1.0، Agent Card امضاشده
+stack:
+  llm: Claude (Desktop) یا مدل محلی
+  embeddings: —
+  extras:
+  - mcp (Python SDK)
+  - a2a-sdk
+components:
+- mcp_server_sdk
+- mcp
+- a2a
+- tool_agent
+- confirmation
+- auth_ratelimit
+- tracing
+stages:
+- title: MCP server
+  learn:
+  - tools / resources / prompts
+  - stdio در برابر Streamable HTTP، stateless
+  build:
+  - 'run.py: سه ابزار فقط‌خواندنی + یک ابزار نوشتنی با تأیید'
+  - اتصال به Claude Desktop (claude_desktop_config.json)
+  measure: ابزارها در Claude دیده و درست صدا زده می‌شوند
+  pitfall: ابزار نوشتنی بدون تأیید و allow-list = خطر.
+- title: امنیت
+  learn:
+  - کمترین دسترسی، مسیرهای مجاز، اسرار از env
+  - tool poisoning و توضیح ابزارهای مخرب
+  build:
+  - allow-list مسیر، رد خواندن .env (مثل support.panel)
+  measure: تست‌های منفی (خواندن .env، مسیر بیرون)
+  pitfall: به توضیح ابزارهای شخص ثالث اعتماد نکن.
+- title: A2A
+  learn:
+  - Agent Card، task، streaming
+  - MCP = ابزار برای agent؛ A2A = agent با agent
+  build:
+  - agent p10 را با A2A در دسترس بگذار و از agent دیگر صدا بزن
+  measure: یک task انتها-به-انتها
+  pitfall: 'اعتماد بین agent ها: امضا و احراز هویت.'
+metrics:
+- tool-call success rate
+- negative security tests passed
+- end-to-end A2A task latency
+params:
+  transport: stdio
+  write_tools_need_confirmation: true
+guardrails:
+- هرگز ابزار shell عمومی؛ فقط عمل‌های تعریف‌شده
+- Claude نباید بتواند مجوزهای خودش را تغییر دهد (مثل support.panel)
+production:
+- Streamable HTTP پشت auth، rate limit، لاگ هر فراخوانی
+interview:
+- MCP و A2A چه فرقی دارند؟
+- چه تغییری در spec 2026 آمد؟
+- MCP server را چطور امن کردی؟
+advanced:
+- OAuth برای MCP راه‌دور
+- انتشار در MCP registry
+- A2A با چند agent و orchestrator
+cv: Built a least-privilege MCP server (tools/resources/prompts, confirmation for writes) used from Claude Desktop, and exposed an agent over A2A with a signed Agent Card.

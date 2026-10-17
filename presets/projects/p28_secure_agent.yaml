@@ -1,0 +1,83 @@
+id: p28_secure_agent
+order: 28
+level: 3
+title: 'agent امن با طراحی: provenance و policy در کد (CaMeL)'
+title_en: 'Secure-by-design agent: provenance tracking and code policies (CaMeL)'
+tracks:
+- agent
+- eval
+- production
+weeks: '2'
+real_world: دستیار ایمیل/خرید که محتوای غیرقابل‌اعتماد (ایمیل، وب) می‌خواند و می‌تواند پول جابه‌جا کند یا ایمیل بفرستد.
+problem: prompt injection غیرمستقیم با فیلتر قابل حل کامل نیست؛ حمله‌ی تطبیقی فیلتر را دور می‌زند.
+goal: 'جریان داده را جدا کنی: planner فقط درخواست کاربر را می‌بیند، محتوای غیرقابل‌اعتماد بدون ابزار پردازش و برچسب منبع می‌خورد، و policy در کد آرگومان‌های حساس را چک می‌کند؛ نرخ موفقیت حمله و افت کارایی
+  را بسنجی.'
+prerequisites:
+- p16_llm_security
+data:
+- name: AgentDojo
+  url: https://github.com/ethz-spylab/agentdojo
+  license: MIT
+  note: معیار injection برای agent
+- name: CaMeL (مقاله)
+  url: https://arxiv.org/abs/2503.18813
+  license: arXiv
+  note: Defeating prompt injections by design
+stack:
+  llm: مدل agent + مدل quarantined بدون ابزار
+  embeddings: —
+  extras:
+  - labkit.capsec
+components:
+- capability_security
+- input_guardrails
+- confirmation
+- tool_agent
+- redteam_set
+- attack_scanner
+stages:
+- title: مدل تهدید و baseline
+  learn:
+  - injection مستقیم/غیرمستقیم، exfiltration
+  build:
+  - ۲۰ حمله روی agent فعلی
+  measure: نرخ موفقیت حمله (ASR) و موفقیت وظیفه
+  pitfall: فقط حمله‌های شناخته‌شده = اطمینان کاذب.
+- title: provenance و policy
+  learn:
+  - Value با منبع، derive (انتشار آلودگی)، Policy
+  build:
+  - 'labkit.capsec: گیرنده‌ی پرداخت/ایمیل باید از کاربر یا DB باشد'
+  measure: ASR بعد از policy
+  pitfall: policy خیلی سخت = agent بی‌فایده؛ موفقیت وظیفه را هم گزارش کن.
+- title: ارزیابی و هزینه
+  learn:
+  - CaMeL حدود ۲.۸ برابر توکن گزارش کرده
+  build:
+  - AgentDojo یا مجموعه‌ی خودت؛ هزینه‌ی توکن
+  measure: ASR، utility، توکن
+  pitfall: حفاظت از جریان کنترل ≠ درستی متن پاسخ.
+metrics:
+- attack success rate
+- task utility
+- token overhead
+params:
+  needs_confirmation:
+  - send_money
+  - send_email
+  trusted_sources:
+  - user
+  - db:*
+guardrails:
+- policy در کد و تست‌شده، نه در prompt
+production:
+- لاگ تمام نقض‌های policy و بازبینی هفتگی
+interview:
+- چرا فیلتر injection کافی نیست؟
+- CaMeL چطور جریان داده را جدا می‌کند؟
+- هزینه‌ی امنیت چقدر بود؟
+advanced:
+- مفسر کامل CaMeL
+- policy های وابسته به زمینه
+- ترکیب با classifier امنیتی
+cv: 'Built a provenance-tracking agent with code-level tool policies (CaMeL-style): attack success {asr}→{asr2} on {n} injection tasks at {util} utility and {tok}x tokens.'

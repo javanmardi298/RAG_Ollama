@@ -1,0 +1,103 @@
+id: p22_agentic_rag
+order: 22
+level: 2
+title: 'Agentic RAG: مسیر‌یابی، نمره‌دهی شواهد، بازنویسی، راستی‌آزمایی و امتناع'
+title_en: 'Agentic RAG: route, grade evidence, rewrite, verify and abstain'
+tracks:
+- rag
+- agent
+- eval
+weeks: '2'
+real_world: دستیار دانش سازمانی و پشتیبانی که باید بداند کی جواب ندهد؛ الگوهای CRAG، Self-RAG و Adaptive-RAG.
+problem: RAG ساده همیشه جواب می‌دهد، حتی وقتی بازیابی شکست خورده؛ سؤال‌های ساده را هم گران پاسخ می‌دهد.
+goal: یک حلقه‌ی agentic بسازی که سؤال را مسیر‌یابی کند (مستقیم/بازیابی)، شواهد را نمره بدهد، در صورت نیاز query را بازنویسی کند، پاسخ را با شواهد چک کند و در نبود شواهد امتناع کند؛ و آن را با RAG ساده مقایسه
+  کنی.
+prerequisites:
+- p03_document_qa
+data:
+- name: اسناد p03 یا policies/ همین repo
+  url: ''
+  license: —
+  note: به‌علاوه‌ی ۳۰ سؤال بی‌جواب (out-of-scope)
+- name: CRAG benchmark (Meta)
+  url: https://github.com/facebookresearch/CRAG
+  license: CC BY-NC 4.0
+  note: سؤال‌های واقعی با پاسخ مرجع
+stack:
+  llm: qwen2.5:7b (grader/router با temperature=0)
+  embeddings: bge-m3 / multilingual-e5
+  extras:
+  - labkit.agentic_rag
+components:
+- agentic_rag
+- hybrid_rrf
+- reranker
+- query_rewriting
+- citations
+- grounding_check
+- selective_decision
+- retrieval_metrics
+- llm_judge
+- cost_ledger
+stages:
+- title: baseline و مجموعه‌ی ارزیابی
+  learn:
+  - سؤال قابل‌پاسخ، بی‌جواب، چندمرحله‌ای
+  - معیار امتناع درست
+  build:
+  - RAG ساده (p03) روی ۱۰۰ سؤال
+  - ۳۰ سؤال بی‌جواب اضافه کن
+  measure: accuracy، نرخ امتناع درست/غلط، هزینه
+  pitfall: فقط سؤال‌های قابل‌پاسخ = ارزیابی بیش از حد خوش‌بینانه.
+- title: حلقه‌ی agentic
+  learn:
+  - grade → rewrite (corrective) → verify → abstain
+  - بودجه‌ی دور (max_rounds)
+  build:
+  - labkit.agentic_rag.AgenticRAG با llm_grader/llm_rewriter/llm_verifier
+  - trace هر سؤال را ذخیره کن
+  measure: همان معیارها + میانگین دور و توکن
+  pitfall: حلقه‌ی بی‌سقف هزینه را منفجر می‌کند؛ max_rounds را نگه دار.
+- title: مسیر‌یابی
+  learn:
+  - 'Adaptive-RAG: سؤال ساده بدون بازیابی، پیچیده با چند دور'
+  - long-context در برابر RAG
+  build:
+  - llm_router + یک مسیر long-context برای اسناد کوچک
+  measure: هزینه/تأخیر به ازای دقت ثابت
+  pitfall: router غلط سؤال سخت را بی‌شواهد جواب می‌دهد؛ خطای router را جدا بسنج.
+- title: ارزیابی منصفانه
+  learn:
+  - مقایسه با bootstrap CI
+  - judge اعتبارسنجی‌شده
+  build:
+  - 'ablation: بدون grade، بدون verify، بدون rewrite'
+  measure: سهم هر جزء در دقت و هزینه
+  pitfall: بهبود کوچک بدون CI را اعلام نکن.
+metrics:
+- answer accuracy
+- correct abstention rate
+- wrong-answer rate on unanswerable
+- rounds and tokens per question
+- p95 latency
+params:
+  llm: qwen2.5:7b
+  max_rounds: 3
+  min_relevant: 1
+  k: 5
+  router: true
+guardrails:
+- ارجاع فقط به chunk های بازیابی‌شده (labkit فیلتر می‌کند)
+- اسناد بازیابی‌شده داده‌اند نه دستور (injection غیرمستقیم)
+production:
+- کش grade/verify، بودجه‌ی توکن برای هر سؤال، لاگ trace
+interview:
+- Agentic RAG چه فرقی با RAG ساده دارد و هزینه‌اش چیست؟
+- امتناع را چطور ارزیابی کردی؟
+- کدام جزء بیشترین اثر را داشت؟
+advanced:
+- گراف LangGraph با checkpointer
+- جست‌وجوی وب به‌عنوان fallback (CRAG)
+- آموزش grader کوچک با distillation
+cv: 'Built an agentic RAG loop (routing, evidence grading, corrective rewriting, verification, abstention): accuracy {acc} vs {base} baseline, wrong answers on unanswerable questions {wrong}→{wrong2}, at
+  {tokens} tokens/question.'

@@ -73,3 +73,29 @@ components:
   lora:               {name: "fine-tune با LoRA", category: ml, status: ready, where: scripts/stage9_lora_colab.py}
   dpo:                {name: "preference tuning (DPO)", category: ml, status: external, where: "Hugging Face TRL"}
   distillation:       {name: "distillation از LLM به مدل کوچک", category: ml, status: external, where: "برچسب‌زنی با LLM + LoRA (همین repo)"}
+  # ---------- 2026 research additions (docs/research_2026.md) ----------
+  agentic_rag:        {name: "Agentic RAG (route → grade → rewrite → verify → abstain)", category: retrieval, status: labkit, where: labkit.agentic_rag.AgenticRAG}
+  contextual_retrieval: {name: "contextual retrieval (جمله‌ی زمینه برای هر chunk)", category: retrieval, status: labkit, where: labkit.contextual.contextualize}
+  late_interaction:   {name: "late interaction / ColPali (RAG روی تصویر صفحه)", category: retrieval, status: external, where: "ColPali / ColQwen + byaldi یا Vespa / Qdrant multivector"}
+  long_context_route: {name: "مسیر long-context در برابر RAG", category: retrieval, status: labkit, where: labkit.agentic_rag.llm_router}
+  context_budget:     {name: "مدیریت context (بودجه، prefix پایدار، پاک‌کردن tool result کهنه)", category: generation, status: labkit, where: labkit.context.pack}
+  prompt_optimizer:   {name: "بهینه‌سازی prompt (GEPA-style، پارتو + جریمه‌ی طول)", category: generation, status: labkit, where: labkit.optimize.optimize}
+  dspy:               {name: "DSPy (برنامه‌نویسی prompt، GEPA/MIPRO)", category: generation, status: external, where: "dspy (pip install dspy)"}
+  self_consistency:   {name: "self-consistency و best-of-n", category: generation, status: labkit, where: labkit.reasoning.self_consistency}
+  pass_k:             {name: "pass^k (پایایی agent در k اجرا)", category: eval, status: labkit, where: labkit.metrics.reliability_report}
+  trajectory_eval:    {name: "ارزیابی مسیر agent (ابزار درست، ترتیب، حالت نهایی DB)", category: eval, status: external, where: "tau-bench style: حالت نهایی DB را با gold مقایسه کن (support.evaluation الگو است)"}
+  capability_security: {name: "امنیت با طراحی (CaMeL: provenance + policy در کد)", category: safety, status: labkit, where: labkit.capsec.Policy}
+  mcp_server_sdk:     {name: "ساخت MCP server (spec 2026-07-28، stateless)", category: agent, status: ready, where: support.panel.mcp_server}
+  a2a:                {name: "A2A v1.0 (Agent Card امضاشده، agent↔agent)", category: agent, status: external, where: "a2a-sdk (Linux Foundation)"}
+  agent_skills:       {name: "Agent Skills (SKILL.md، progressive disclosure)", category: agent, status: external, where: "پوشه‌ی skills/ با SKILL.md (Claude Code، Agent SDK و ~۴۰ پلتفرم)"}
+  otel_genai:         {name: "OpenTelemetry GenAI semantic conventions", category: production, status: external, where: "opentelemetry-sdk + gen_ai.* attributes (هنوز Development)"}
+  grpo_trl:           {name: "RL با پاداش قابل‌بررسی (GRPO / RLVR)", category: ml, status: external, where: "Hugging Face TRL GRPOTrainer / Unsloth"}
+  # ---------- JEPA and world models (docs/jepa.md) ----------
+  jepa_ssl:           {name: "JEPA: پیش‌بینی embedding بخش پنهان (I-JEPA کوچک)", category: world_model, status: labkit, where: jepa_lab.ssl.train}
+  sigreg:             {name: "SIGReg و تشخیص collapse (LeJEPA)", category: world_model, status: labkit, where: jepa_lab.sigreg.sigreg}
+  linear_probe:       {name: "linear probe روی encoder منجمد", category: world_model, status: labkit, where: jepa_lab.ssl.linear_probe}
+  latent_world_model: {name: "world model نهفته‌ی شرطی به عمل", category: world_model, status: labkit, where: jepa_lab.world_model.train_world_model}
+  cem_mpc:            {name: "برنامه‌ریزی CEM + MPC در فضای نهفته", category: world_model, status: labkit, where: jepa_lab.world_model.cem_plan}
+  surprise_detection: {name: "surprise = خطای پیش‌بینی (کشف ناهنجاری)", category: world_model, status: labkit, where: jepa_lab.world_model.surprise_auc}
+  vjepa2:             {name: "V-JEPA 2 از پیش آموزش‌دیده (ویدیو)", category: world_model, status: external, where: "transformers: facebook/vjepa2-* (scripts/jepa5_vjepa2_colab.py)"}
+  pretrained_vision:  {name: "backbone بینایی آماده برای مقایسه", category: world_model, status: external, where: "DINOv2/v3، SigLIP (transformers / timm)"}

@@ -1,0 +1,3 @@
+{"type": "object", "required": ["supplier", "number", "date", "total"],
+ "properties": {"supplier": {"type": "string"}, "number": {"type": "string"}, "date": {"type": "string", "format": "date"},
+                "net": {"type": "number"}, "tax": {"type": "number"}, "total": {"type": "number"}, "iban": {"type": "string"}}}

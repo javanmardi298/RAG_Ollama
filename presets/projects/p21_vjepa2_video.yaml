@@ -1,0 +1,87 @@
+id: p21_vjepa2_video
+order: 21
+level: 3
+title: 'V-JEPA 2 واقعی: embedding ویدیو، جست‌وجو، رخداد غیرعادی و تشخیص عمل'
+title_en: 'Pretrained V-JEPA 2: video embeddings, search, unusual events and action recognition'
+tracks:
+- world_models
+- ml
+- production
+weeks: '2'
+real_world: تحلیل ویدیوی ورزشی، فروشگاه، ایمنی کارگاه، رباتیک؛ encoder ویدیویی منجمد + probe کوچک با برچسب کم.
+problem: مدل‌های ویدیویی آموزش از صفر گران‌اند؛ باید با encoder آماده و داده‌ی برچسب‌دار کم به نتیجه رسید.
+goal: با V-JEPA 2 از پیش آموزش‌دیده embedding کلیپ بگیری، جست‌وجوی نزدیک‌ترین همسایه و surprise زمانی بسازی، و با DINOv2 فریم‌به‌فریم مقایسه کنی.
+prerequisites:
+- p20_surprise_monitoring
+data:
+- name: V-JEPA 2 (Hugging Face)
+  url: https://huggingface.co/facebook/vjepa2-vitl-fpc64-256
+  license: کارت مدل را ببین
+  note: ViT-L، ~۱.۳GB
+- name: UCF101
+  url: https://www.crcv.ucf.edu/data/UCF101.php
+  license: پژوهشی
+  note: ۱۰۱ کلاس عمل
+- name: ویدیوهای خودت
+  url: ''
+  license: —
+  note: ۱۰–۵۰ کلیپ کوتاه
+stack:
+  llm: —
+  embeddings: V-JEPA 2 ViT-L (منجمد)
+  extras:
+  - transformers
+  - torchcodec
+  - Colab GPU
+components:
+- vjepa2
+- pretrained_vision
+- linear_probe
+- surprise_detection
+- vector_db
+stages:
+- title: راه‌اندازی و embedding
+  learn:
+  - پردازشگر ویدیو، فریم در هر پنجره
+  - mean-pool توکن‌ها
+  build:
+  - scripts/jepa5_vjepa2_colab.py روی چند کلیپ
+  measure: زمان هر کلیپ روی T4
+  pitfall: نسخه‌ی transformers و نام مدل را با کارت مدل چک کن.
+- title: جست‌وجو و probe
+  learn:
+  - kNN، probe خطی با برچسب کم
+  build:
+  - ۵ کلاس از UCF101 با ۱۰ نمونه برای هر کلاس
+  measure: دقت probe در برابر DINOv2 فریم‌به‌فریم
+  pitfall: 'نشت: کلیپ‌های یک ویدیو نباید در train و test باشند (group split).'
+- title: رخداد غیرعادی
+  learn:
+  - پرش embedding بین پنجره‌های متوالی
+  build:
+  - چند ویدیو با رخداد ناگهانی، نمره بده
+  measure: آیا لحظه‌ی رخداد بالاترین نمره را دارد؟
+  pitfall: برش دوربین (cut) هم پرش می‌سازد؛ آن را جدا کن.
+metrics:
+- probe accuracy (few labels)
+- retrieval recall@5
+- seconds per clip
+- event localisation hit rate
+params:
+  encoder: facebook/vjepa2-vitl-fpc64-256
+  frames: 16
+  labels_per_class: 10
+guardrails:
+- 'حریم خصوصی: چهره و پلاک را قبل از ذخیره‌ی ویدیو پنهان کن'
+- مجوز داده و مدل را چک کن
+production:
+- batch embedding شبانه، ذخیره در vector DB، فقط probe در لحظه
+interview:
+- چرا encoder منجمد + probe؟
+- V-JEPA 2 با DINOv2 چه فرقی دارد؟
+- group split را در ویدیو چطور انجام دادی؟
+advanced:
+- fine-tune attentive probe
+- V-JEPA 2-AC روی داده‌ی ربات (کد رسمی)
+- VL-JEPA برای پرسش متنی از ویدیو
+cv: Used a frozen V-JEPA 2 encoder for few-label video classification ({acc} with {k} labels/class), retrieval and unusual-event detection; compared with frame-level DINOv2.

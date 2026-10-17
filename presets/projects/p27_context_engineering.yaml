@@ -1,0 +1,77 @@
+id: p27_context_engineering
+order: 27
+level: 2
+title: Context engineering و حافظه برای agent های طولانی
+title_en: Context engineering and memory for long-running agents
+tracks:
+- agent
+- production
+weeks: '1'
+real_world: agent هایی که ده‌ها ابزار صدا می‌زنند و context پر می‌شود؛ هزینه و کیفیت با مدیریت context تعیین می‌شود.
+problem: 'context بی‌رویه بزرگ می‌شود: هزینه بالا، کش شکسته، و دقت پایین‌تر روی جزئیات میانی (context rot).'
+goal: بودجه‌ی context، prefix پایدار برای prompt caching، کوتاه‌کردن و پاک‌کردن tool result های کهنه و حافظه‌ی خلاصه را پیاده و اثرشان را بر هزینه و دقت بسنجی.
+prerequisites:
+- p10_research_agent
+data:
+- name: trace های agent p10 یا support agent
+  url: ''
+  license: —
+  note: گفت‌وگوهای طولانی با ابزار زیاد
+stack:
+  llm: مدل agent
+  embeddings: —
+  extras:
+  - labkit.context
+  - labkit.memory
+  - labkit.ops.Ledger
+components:
+- context_budget
+- memory
+- cost_ledger
+- cache
+- tool_agent
+stages:
+- title: اندازه‌گیری
+  learn:
+  - 'توکن هر بخش: system، ابزارها، تاریخچه، tool result'
+  build:
+  - Ledger و شمارش توکن برای ۲۰ گفت‌وگوی طولانی
+  measure: توزیع توکن
+  pitfall: بدون اندازه‌گیری، بهینه‌سازی حدس است.
+- title: بسته‌بندی
+  learn:
+  - prefix پایدار (کش)، الزامی‌ها اول
+  - truncate و clear_stale_tool_results
+  build:
+  - labkit.context.pack با بودجه
+  measure: توکن و نرخ cache hit قبل/بعد
+  pitfall: خلاصه‌سازی زودهنگام جزئیات لازم را حذف می‌کند؛ compaction آخرین راه.
+- title: حافظه
+  learn:
+  - خلاصه + facts، بازیابی حافظه
+  build:
+  - labkit.memory در گفت‌وگوی چندجلسه‌ای
+  measure: دقت پرسش از جزئیات قبلی
+  pitfall: حافظه‌ی غلط بدتر از بی‌حافظگی است؛ منبع fact را نگه دار.
+metrics:
+- tokens per task
+- cache hit rate
+- task success
+- recall of earlier facts
+params:
+  budget_tokens: 8000
+  keep_last_tool_results: 3
+  max_tool_chars: 2000
+guardrails:
+- داده‌ی حساس در حافظه‌ی بلندمدت ذخیره نشود
+production:
+- پایش توکن هر درخواست، هشدار رشد
+interview:
+- context engineering چیست؟
+- prompt caching را چطور حفظ کردی؟
+- کی compaction؟
+advanced:
+- sub-agent برای کار پرتوکن
+- حافظه‌ی برداری با ابزار خواندن/نوشتن
+- ارزیابی needle-in-haystack روی agent
+cv: 'Engineered agent context (stable cached prefix, budgeted packing, stale tool-result clearing, memory): tokens/task {before}→{after}, cache hits {hit}, success unchanged ({succ}).'

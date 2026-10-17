@@ -16,7 +16,8 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 
 [tool.setuptools.package-data]
-"support.panel" = ["static/*", "roadmap_template.html", "templates/*/*", "templates/*/*/*"]
+"support.panel" = ["static/*", "roadmap_template.html", "templates/*/*", "templates/*/*/*", "templates/*/*/*/*",
+                  "templates/*/*/*/*/*"]
 
 [tool.ruff]
 line-length = 130

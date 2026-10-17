@@ -21,7 +21,7 @@ def test_all_preset_files_are_valid():
     ps = presets.projects()
     assert len(ps) >= 10
     assert {p.level for p in ps.values()} == {1, 2, 3}                  # basic, intermediate and advanced
-    assert {t for p in ps.values() for t in p.tracks} >= {"rag", "agent", "workflow", "eval", "production", "ml"}
+    assert {t for p in ps.values() for t in p.tracks} >= {"rag", "agent", "workflow", "eval", "production", "ml", "world_models"}
     for p in ps.values():
         assert p.stages and p.interview and p.advanced and p.data, p.id
         for q in p.prerequisites:
@@ -32,7 +32,7 @@ def test_every_external_component_names_a_tool_and_ready_ones_exist():
     import importlib
     for cid, c in presets.components().items():
         assert c.where, cid
-        if c.status not in ("ready", "labkit") or not c.where.startswith(("support.", "labkit.")) or " " in c.where:
+        if c.status not in ("ready", "labkit") or not c.where.startswith(("support.", "labkit.", "jepa_lab.")) or " " in c.where:
             continue
         parts = c.where.split(".")
         obj, rest = None, []
@@ -41,7 +41,7 @@ def test_every_external_component_names_a_tool_and_ready_ones_exist():
                 obj, rest = importlib.import_module(".".join(parts[:i])), parts[i:]
                 break
             except ModuleNotFoundError as e:
-                if e.name and not e.name.startswith(("support", "labkit")):
+                if e.name and not e.name.startswith(("support", "labkit", "jepa_lab")):
                     obj = "optional dependency missing"          # e.g. langgraph not installed in CI
                     break
         if isinstance(obj, str):
@@ -81,10 +81,27 @@ def test_scaffold_every_preset_and_refuse_overwrite(tmp_path):
     ("p13_graphrag", "path found"),
     ("p14_llmops_platform", "escalation rate"),
     ("p16_llm_security", "guardrail caught"),
+    ("p22_agentic_rag", "abstained correctly"),
+    ("p24_agent_reliability", "pass^k"),
+    ("p25_prompt_optimization", "TEST accuracy"),
+    ("p26_mcp_a2a", "selftest ok"),
+    ("p27_context_engineering", "clear stale results"),
+    ("p28_secure_agent", "blocked"),
+    ("p30_agent_skills", "skills valid"),
 ])
 def test_model_free_starters_run(tmp_path, pid, expect):
     presets.scaffold(pid, target=tmp_path)
     out = subprocess.run([sys.executable, "run.py"], cwd=tmp_path / pid, capture_output=True, text=True, timeout=120,
+                         env={**os.environ, "SUPPORT_ROOT": str(ROOT), "PYTHONUTF8": "1"})
+    assert out.returncode == 0, out.stderr[-2000:]
+    assert expect in out.stdout
+
+
+@pytest.mark.parametrize("pid, expect", [("p17_jepa_basics", "random_encoder"), ("p19_world_model_planning", "planner cem")])
+def test_jepa_starters_run_quick(tmp_path, pid, expect):
+    pytest.importorskip("torch")
+    presets.scaffold(pid, target=tmp_path)
+    out = subprocess.run([sys.executable, "run.py", "--quick"], cwd=tmp_path / pid, capture_output=True, text=True, timeout=300,
                          env={**os.environ, "SUPPORT_ROOT": str(ROOT), "PYTHONUTF8": "1"})
     assert out.returncode == 0, out.stderr[-2000:]
     assert expect in out.stdout

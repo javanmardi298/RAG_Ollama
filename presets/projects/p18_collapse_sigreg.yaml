@@ -1,0 +1,85 @@
+id: p18_collapse_sigreg
+order: 18
+level: 2
+title: 'فروپاشی نمایش (collapse) و درمان‌ها: EMA در برابر SIGReg'
+title_en: 'Representation collapse and its cures: EMA teacher vs SIGReg (LeJEPA)'
+tracks:
+- world_models
+- ml
+- eval
+weeks: '1'
+real_world: 'هر سیستم self-supervised یا embedding (جست‌وجو، توصیه‌گر، world model) ممکن است بی‌صدا collapse کند: loss عالی، خروجی بی‌فایده.'
+problem: loss به صفر می‌رسد ولی embedding ها به ورودی وابسته نیستند؛ معیارهای پایین‌دستی گاهی این را پنهان می‌کنند.
+goal: collapse را عمداً بسازی، با mean_std و effective_rank تشخیص بدهی، و دو درمان (EMA teacher و SIGReg) را با هم مقایسه کنی.
+prerequisites:
+- p17_jepa_basics
+data:
+- name: sklearn digits
+  url: https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_digits.html
+  license: BSD
+  note: همان داده‌ی p17
+- name: LeJEPA (مقاله)
+  url: https://arxiv.org/abs/2511.08544
+  license: arXiv
+  note: SIGReg و توجیه نظری
+stack:
+  llm: —
+  embeddings: Transformer کوچک
+  extras:
+  - torch
+components:
+- jepa_ssl
+- sigreg
+- linear_probe
+- run_registry
+stages:
+- title: ساختن collapse
+  learn:
+  - چرا loss صفر مشکوک است
+  - mean_std و effective_rank
+  build:
+  - variant=naive را اجرا کن و منحنی‌ها را ببین
+  measure: loss≈0 و mean_std≈0 را نشان بده
+  pitfall: probe با StandardScaler ممکن است collapse را پنهان کند.
+- title: درمان‌ها
+  learn:
+  - EMA + stop-gradient (BYOL، I-JEPA)
+  - 'SIGReg: Epps–Pulley روی projection های تصادفی'
+  build:
+  - ema و sigreg را با همان بودجه اجرا کن
+  - sigreg_weight را 0.05→0.9 جاروب کن
+  measure: rank، std و probe برای هر وزن
+  pitfall: وزن زیاد SIGReg پیش‌بینی را خفه می‌کند؛ وزن کم collapse را برنمی‌گرداند.
+- title: انتقال به world model
+  learn:
+  - collapse در world model یعنی تصمیم‌گیری تصادفی
+  build:
+  - world model را با sigreg_weight=0 آموزش بده (p19)
+  measure: موفقیت planning با و بدون SIGReg
+  pitfall: 'rank پایین همیشه collapse نیست: دنیای دوبعدی rank≈2 دارد.'
+metrics:
+- mean_std
+- effective_rank
+- loss
+- probe accuracy
+params:
+  epochs: 40
+  sigreg_weights:
+  - 0.05
+  - 0.2
+  - 0.5
+  - 0.8
+  ema: 0.99
+guardrails:
+- در هر آموزش embedding، mean_std و effective_rank را لاگ و هشدار بده
+production:
+- پایش collapse/drift embedding در production (همان ایده‌ی PSI در support.monitoring)
+interview:
+- collapse چیست و چطور تشخیصش می‌دهی؟
+- EMA teacher چرا کار می‌کند و ایرادش چیست؟
+- SIGReg چه چیزی را جریمه می‌کند؟
+advanced:
+- VICReg و Barlow Twins را اضافه کن
+- SIGReg روی ImageNet-100 با ViT-S
+- اثر اندازه‌ی batch روی SIGReg
+cv: Reproduced representation collapse and compared EMA-teacher vs SIGReg (LeJEPA) regularisation with collapse diagnostics (effective rank {rank}, probe {acc}).

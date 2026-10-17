@@ -1,0 +1,90 @@
+id: p23_contextual_multimodal_rag
+order: 23
+level: 2
+title: Contextual Retrieval و RAG چندوجهی (ColPali) روی PDF واقعی
+title_en: Contextual retrieval and multimodal RAG (ColPali) on real PDFs
+tracks:
+- rag
+- eval
+weeks: '2'
+real_world: 'گزارش‌های مالی، دفترچه‌ی فنی، اسلاید: جدول و نمودار و chunk بی‌زمینه («درآمد ۳٪ رشد کرد» — کدام شرکت؟ کدام فصل؟).'
+problem: chunk ها بدون زمینه بازیابی نمی‌شوند و OCR جدول/نمودار را خراب می‌کند.
+goal: contextual retrieval (جمله‌ی زمینه برای هر chunk + BM25 + reranker) را پیاده و اثرش را بسنجی؛ سپس RAG روی تصویر صفحه با late interaction (ColPali) را با OCR+متن مقایسه کنی.
+prerequisites:
+- p03_document_qa
+data:
+- name: ViDoRe benchmark
+  url: https://huggingface.co/vidore
+  license: متفاوت برای هر زیرمجموعه
+  note: بازیابی سند بصری
+- name: PDF های خودت (گزارش سالانه)
+  url: ''
+  license: —
+  note: با ۵۰ سؤال و صفحه‌ی مرجع
+stack:
+  llm: qwen2.5:7b (تولید زمینه)
+  embeddings: bge-m3؛ ColQwen2 / ColPali برای تصویر
+  extras:
+  - labkit.contextual
+  - byaldi یا Qdrant multivector
+components:
+- doc_loaders
+- chunking
+- contextual_retrieval
+- bm25
+- dense
+- hybrid_rrf
+- reranker
+- late_interaction
+- table_extraction
+- retrieval_metrics
+- cache
+stages:
+- title: baseline
+  learn:
+  - chunking و hybrid
+  build:
+  - recall@5 روی ۵۰ سؤال
+  measure: recall@5، MRR
+  pitfall: سؤال‌هایی بساز که به جدول/نمودار نیاز دارند.
+- title: contextual retrieval
+  learn:
+  - 'گزارش Anthropic: ۳۵٪ کاهش شکست با embedding زمینه‌دار، ۴۹٪ با BM25 زمینه‌دار، ۶۷٪ با reranker'
+  build:
+  - labkit.contextual.contextualize با کش
+  - زمینه را هم در BM25 و هم در embedding بگذار
+  measure: کاهش نرخ شکست بازیابی (1-recall@20)
+  pitfall: هزینه‌ی یک بار LLM برای هر chunk؛ کش و prompt caching لازم است.
+- title: RAG روی تصویر صفحه
+  learn:
+  - late interaction (MaxSim)، ColPali
+  - MUVERA برای سرعت
+  build:
+  - ایندکس تصویر صفحه با ColQwen2
+  - مقایسه با OCR+متن روی سؤال‌های جدولی
+  measure: recall@5 به تفکیک نوع سؤال
+  pitfall: حافظه‌ی multivector زیاد است؛ pooling یا MUVERA.
+metrics:
+- retrieval failure rate
+- recall@5 / MRR by question type
+- index size and build time
+- answer accuracy
+params:
+  context_model: qwen2.5:7b
+  chunk_size: 800
+  k: 20
+  rerank_top: 5
+  visual_model: vidore/colqwen2-v1.0
+guardrails:
+- اسناد محرمانه به API بیرونی نروند؛ تولید زمینه با مدل محلی
+production:
+- ساخت زمینه به‌صورت batch و افزایشی، کش با hash سند
+interview:
+- contextual retrieval چه مشکلی را حل می‌کند؟
+- late interaction چیست؟
+- کی تصویر صفحه بهتر از OCR است؟
+advanced:
+- پاسخ با مدل بینایی-زبان روی صفحه‌ی بازیابی‌شده
+- Docling برای ساختار
+- ارزیابی روی ViDoRe v2
+cv: Implemented contextual retrieval (contextual embeddings + BM25 + reranking), cutting retrieval failures by {pct}; added page-image retrieval with ColQwen2 for tables/charts (recall@5 {r}).
