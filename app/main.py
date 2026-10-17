@@ -17,20 +17,24 @@ from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from support.agent import Session, SupportAgent  # noqa: E402
+from support.agent import Session, SupportAgent  # noqa: E402  (SupportAgent: type of the sessions dict)
 from support.config import DB_PATH, RESULTS_DIR  # noqa: E402
 from support.llm import OllamaLLM  # noqa: E402
 from support.monitoring import TraceWriter  # noqa: E402
-from support.tools import ToolBox, connect  # noqa: E402
+from support.runtime import load_classifier as _load_classifier, make_agent, make_answerer  # noqa: E402
+from support.settings import settings  # noqa: E402
+from support.tools import connect  # noqa: E402
 
-MODEL = os.getenv("SUPPORT_MODEL", "qwen2.5:7b")
-OLLAMA_HOST = os.getenv("OLLAMA_HOST")          # in Docker: http://host.docker.internal:11434
-SESSION_TTL_S = 30 * 60
+# Environment variables win (Docker); otherwise configs/project.yaml.
+MODEL = os.getenv("SUPPORT_MODEL", settings().llm.chat_model)
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", settings().llm.host)   # in Docker: http://host.docker.internal:11434
+SESSION_TTL_S = settings().serving.session_ttl_min * 60
 
 app = FastAPI(title="Marketplace Support Agent")
-llm = OllamaLLM(MODEL, host=OLLAMA_HOST)
+llm = OllamaLLM(MODEL, temperature=settings().llm.temperature, host=OLLAMA_HOST)
 trace = TraceWriter(RESULTS_DIR / "traces.jsonl")
 classifier = None                                # loaded at startup (see load_classifier)
+answerer = None
 sessions: dict[str, tuple[Session, SupportAgent, float]] = {}
 
 
@@ -48,18 +52,10 @@ class ChatOut(BaseModel):
 
 @app.on_event("startup")
 def load_classifier():
-    """The intent classifier trained in stage 1, saved with joblib."""
-    global classifier
-    import joblib
-    model = joblib.load(RESULTS_DIR / "intent_model.joblib")
-    T = float((RESULTS_DIR / "temperature.txt").read_text()) if (RESULTS_DIR / "temperature.txt").exists() else 1.0
-    from support.intents import apply_temperature
-
-    def classify(text: str):
-        proba = apply_temperature(model.predict_proba([text]), T)[0]
-        i = proba.argmax()
-        return str(model.classes_[i]), float(proba[i])
-    classifier = classify
+    """The intent classifier trained in stage 1 (with its temperature) and the policy answerer, loaded once."""
+    global classifier, answerer
+    classifier = _load_classifier()
+    answerer = make_answerer(llm)
 
 
 def _get_session(session_id: str | None):
@@ -71,7 +67,7 @@ def _get_session(session_id: str | None):
     else:
         session_id = session_id or uuid.uuid4().hex
         # one DB connection per session: sqlite3 connections must not be shared across threads
-        agent = SupportAgent(llm, ToolBox(connect(DB_PATH)), classifier, trace=trace)
+        agent = make_agent(connect(DB_PATH), llm=llm, classify=classifier, answerer=answerer, trace=trace)
         s = Session(session_id)
     sessions[session_id] = (s, agent, now)
     return s, agent

@@ -12,6 +12,7 @@ import joblib  # noqa: E402
 
 from support.config import RESULTS_DIR  # noqa: E402
 from support.intents import apply_temperature  # noqa: E402
+from support.settings import tuned_thresholds
 from support.lc.graph import Deps, build_graph  # noqa: E402
 from support.lc.models import chat_model, embeddings  # noqa: E402
 from support.lc.rag_lc import build_retrievers, make_answer_fn  # noqa: E402
@@ -27,4 +28,5 @@ def classify(text):
 
 llm = chat_model()
 graph = build_graph(Deps(model=llm, classify=classify,
-                         answer_policy=make_answer_fn(llm, build_retrievers(embeddings()))))
+                         answer_policy=make_answer_fn(llm, build_retrievers(embeddings())),
+                         thresholds=tuned_thresholds()))

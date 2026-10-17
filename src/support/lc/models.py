@@ -3,8 +3,12 @@ from __future__ import annotations
 
 import os
 
-CHAT_MODEL = os.getenv("SUPPORT_MODEL", "qwen2.5:7b")
-EMBED_MODEL = os.getenv("SUPPORT_EMBED_MODEL", "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+from ..settings import settings
+
+# Environment variables win (Docker, CI); otherwise configs/project.yaml, same as the plain version.
+CHAT_MODEL = os.getenv("SUPPORT_MODEL", settings().llm.chat_model)
+EMBED_MODEL = os.getenv("SUPPORT_EMBED_MODEL", settings().embeddings.model)
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", settings().llm.host)
 
 
 def chat_model(temperature: float = 0.0, model: str = CHAT_MODEL):
@@ -14,7 +18,7 @@ def chat_model(temperature: float = 0.0, model: str = CHAT_MODEL):
     every chain and graph talks to the same BaseChatModel interface.
     """
     from langchain_ollama import ChatOllama
-    return ChatOllama(model=model, temperature=temperature, base_url=os.getenv("OLLAMA_HOST", "http://localhost:11434"))
+    return ChatOllama(model=model, temperature=temperature, base_url=OLLAMA_HOST)
 
 
 def embeddings(model: str = EMBED_MODEL):

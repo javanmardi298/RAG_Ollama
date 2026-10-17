@@ -85,10 +85,11 @@ def rrf(rankings: list[list[int]], k: int = 60) -> list[int]:
 
 
 class Retriever:
-    def __init__(self, chunks: list[Chunk], encoder=None):
+    def __init__(self, chunks: list[Chunk], encoder=None, k1: float = 1.5, b: float = 0.75, rrf_k: int = 60):
         """encoder: any object with .encode(list[str], normalize_embeddings=True) (sentence-transformers)."""
         self.chunks = chunks
-        self.bm25 = BM25([c.indexed_text for c in chunks])
+        self.bm25 = BM25([c.indexed_text for c in chunks], k1=k1, b=b)
+        self.rrf_k = rrf_k
         self.encoder = encoder
         self.emb = (encoder.encode([c.indexed_text for c in chunks], normalize_embeddings=True)
                     if encoder is not None else None)
@@ -103,7 +104,7 @@ class Retriever:
             q = self.encoder.encode([query], normalize_embeddings=True)[0]
             s = np.where(allowed, self.emb @ q, -np.inf)
             rankings.append([i for i in np.argsort(-s) if allowed[i]])
-        order = rankings[0] if len(rankings) == 1 else rrf(rankings)
+        order = rankings[0] if len(rankings) == 1 else rrf(rankings, self.rrf_k)
         return [self.chunks[i] for i in order[:k]]
 
 
@@ -130,10 +131,10 @@ def answer_question(llm, question: str, chunks: list[Chunk], lang: str) -> dict:
     return out
 
 
-def make_policy_answerer(llm, retriever: Retriever, k: int = 3):
+def make_policy_answerer(llm, retriever: Retriever, k: int = 3, mode: str = "hybrid"):
     """The function the agent calls on the RAG route. Returns no answer when any check fails -> handoff."""
     def answer(question: str, lang: str) -> dict:
-        out = answer_question(llm, question, retriever.search(question, lang, k), lang)
+        out = answer_question(llm, question, retriever.search(question, lang, k, mode), lang)
         return {"answer": out["answer"] if out["ok"] else None, "sources": out["citations"]}
     return answer
 

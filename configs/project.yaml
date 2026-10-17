@@ -1,0 +1,96 @@
+# Experiment parameters for every stage. Edit here, in the control panel, or through Claude's tools.
+# Store policy numbers are NOT here: they live in policy_rules.yaml.
+# Descriptions and allowed ranges: src/support/settings.py (also shown in the panel).
+project:
+  seed: 7
+llm:
+  host: http://localhost:11434
+  chat_model: qwen2.5:7b
+  temperature: 0.0
+  user_sim_model: qwen2.5:7b
+  user_sim_temperature: 0.7
+  judge_model: qwen2.5:7b
+embeddings:
+  model: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+  device: auto
+  batch_size: 128
+data:
+  bitext_csv: ''
+  wands_dir: ''
+  clinc_json: ''
+  n_customers: 400
+  n_products: 1500
+  n_orders: 2500
+  test_oos_max: 300
+intents:
+  tfidf_C: 5.0
+  embedding_C: 10.0
+  run_embeddings: true
+  run_llm: true
+  llm_few_shot_k: 8
+  llm_sample_per_intent: 8
+  winner: tfidf
+rag:
+  k: 3
+  mode: hybrid
+  rrf_k: 60
+  bm25_k1: 1.5
+  bm25_b: 0.75
+decision:
+  error_budget_low: 0.05
+  error_budget_medium: 0.02
+  error_budget_high: 0.01
+  cost_wrong_action: 20.0
+  cost_handoff: 1.0
+  use_tuned_thresholds: true
+agent:
+  max_tool_steps: 5
+evaluation:
+  n_random_scenarios: 60
+  n_run: 20
+  max_turns: 8
+  n_bootstrap: 2000
+robustness:
+  max_noise_level: 3
+  german_per_intent: 10
+  translate: true
+serving:
+  port: 8000
+  session_ttl_min: 30
+  loadtest_users: 5
+  loadtest_requests: 40
+  p95_target_ms: 4000
+monitoring:
+  psi_alert: 0.25
+  handoff_ratio_alert: 1.5
+  window: 200
+experiments:
+  name: prompt_v2
+  baseline_rate: 0.6
+  min_detectable_lift: 0.03
+  alpha: 0.05
+  power: 0.8
+  srm_threshold: 0.001
+  max_false_automation_increase: 0.005
+  control_n: 4200
+  control_automated: 2520
+  control_false_automation: 63
+  treatment_n: 4180
+  treatment_automated: 2650
+  treatment_false_automation: 71
+lora:
+  base_model: xlm-roberta-base
+  r: 16
+  alpha: 32
+  dropout: 0.1
+  learning_rate: 0.0005
+  epochs: 3
+  batch_size: 32
+claude:
+  model: claude-opus-5-5
+  effort: high
+  max_tokens: 16000
+  refusal_fallback: true
+  max_tool_rounds: 12
+  allow_runs: true
+  allow_settings_changes: true

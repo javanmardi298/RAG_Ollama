@@ -11,7 +11,7 @@ from sklearn.model_selection import StratifiedGroupKFold
 from .config import RAW_DIR, SEED
 
 BITEXT_HF = "bitext/Bitext-customer-support-llm-chatbot-training-dataset"
-WANDS_URL = "https://github.com/wayfair/WANDS/raw/main/dataset/product.csv"
+WANDS_URL = "https://raw.githubusercontent.com/wayfair/WANDS/main/dataset/product.csv"
 
 _PLACEHOLDER = re.compile(r"\{\{.*?\}\}")
 _PUNCT = str.maketrans({c: " " for c in string.punctuation})

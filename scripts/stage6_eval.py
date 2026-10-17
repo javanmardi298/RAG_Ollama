@@ -1,36 +1,44 @@
 # Stage 6: end-to-end evaluation with simulated customers. Slow (LLM on both sides): start with 20 scenarios.
+# Parameters: configs/project.yaml -> evaluation.*, llm.user_sim_model, decision.use_tuned_thresholds
 # %%
-import json, shutil, sys, tempfile, joblib
+import json, shutil, sys, tempfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]; sys.path.insert(0, str(ROOT / "src"))
-from support.agent import Session, SupportAgent
+from support.agent import Session
 from support.config import DB_PATH, RESULTS_DIR
 from support.evaluation import build_scenarios, run_scenario, summarize, UserSimulator, save_results
-from support.intents import apply_temperature
-from support.llm import OllamaLLM
-from support.rag import Retriever, load_chunks, make_policy_answerer
-from support.tools import ToolBox, connect
+from support.runtime import load_classifier, make_agent, make_answerer, make_llm
+from support.settings import settings, tuned_thresholds
+from support.tools import connect
 
-model = joblib.load(RESULTS_DIR / "intent_model.joblib"); T = float((RESULTS_DIR / "temperature.txt").read_text())
-def classify(text):
-    p = apply_temperature(model.predict_proba([text]), T)[0]
-    return str(model.classes_[p.argmax()]), float(p.max())
+E = settings().evaluation
+classify = load_classifier()
+agent_llm = make_llm("agent")
+answerer = make_answerer(agent_llm)
+print("thresholds:", tuned_thresholds() or "built-in defaults (run stage 4 to tune them)")
 
-agent_llm = OllamaLLM("qwen2.5:7b")
-user_llm = OllamaLLM("qwen2.5:7b", temperature=0.7)    # a different model here makes the test harder to game
-answerer = make_policy_answerer(agent_llm, Retriever(load_chunks()))
 
-def make_agent():
+def fresh_agent():
     tmp = Path(tempfile.mkdtemp()) / "shop.db"
     shutil.copy(DB_PATH, tmp)                            # every scenario starts from the same clean database
     con = connect(tmp)
-    return SupportAgent(agent_llm, ToolBox(con), classify, answerer), Session("eval"), con
+    return make_agent(con, llm=agent_llm, classify=classify, answerer=answerer), Session("eval"), con
 
-scenarios = build_scenarios(connect(), n_random=60)
-print(len(scenarios), "scenarios")
+
+scenarios = build_scenarios(connect(), n_random=E.n_random_scenarios)
+# Boundary cases and security probes first: they are the ones most worth simulating when n_run is small.
+scenarios.sort(key=lambda sc: sc.note == "random")
+print(len(scenarios), "scenarios, simulating", min(E.n_run, len(scenarios)))
 
 # %%
-sim = UserSimulator(user_llm)
-results = [run_scenario(make_agent, sim, sc) for sc in scenarios[:20]]
+sim = UserSimulator(make_llm("user_sim"))
+results = []
+for i, sc in enumerate(scenarios[:E.n_run], 1):
+    results.append(run_scenario(fresh_agent, sim, sc, max_turns=E.max_turns))
+    print(f"[{i}/{min(E.n_run, len(scenarios))}] {sc.scenario_id} expected={sc.expected} outcome={results[-1]['outcome']}")
 save_results(results, RESULTS_DIR / "stage6_runs.jsonl")
-print(json.dumps(summarize(results), indent=2))
+summary = summarize(results, n_boot=E.n_bootstrap)
+summary["same_model_both_sides"] = settings().llm.user_sim_model == settings().llm.chat_model
+summary["thresholds"] = tuned_thresholds()
+print(json.dumps(summary, indent=2))
+(RESULTS_DIR / "stage6_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

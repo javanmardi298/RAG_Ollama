@@ -8,6 +8,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from support.agent import Session
 from support.config import DATA_DIR, RESULTS_DIR
 from support.intents import apply_temperature
+from support.settings import tuned_thresholds
 from support.lc.graph import Deps, GraphSupportAgent, build_graph
 from support.lc.models import chat_model, embeddings
 from support.lc.rag_lc import build_retrievers, make_answer_fn
@@ -21,7 +22,8 @@ def classify(text):
 llm = chat_model()
 checkpointer = SqliteSaver(sqlite3.connect(DATA_DIR / "checkpoints.db", check_same_thread=False))
 graph = build_graph(Deps(model=llm, classify=classify,
-                         answer_policy=make_answer_fn(llm, build_retrievers(embeddings()))), checkpointer)
+                         answer_policy=make_answer_fn(llm, build_retrievers(embeddings())),
+                         thresholds=tuned_thresholds()), checkpointer)
 (RESULTS_DIR / "graph.mmd").write_text(graph.get_graph().draw_mermaid())   # paste into mermaid.live to see the graph
 
 agent = GraphSupportAgent(graph, trace=TraceWriter(RESULTS_DIR / "traces_lc.jsonl"))

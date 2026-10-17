@@ -8,5 +8,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install pandas numpy scipy scikit-learn pyyaml pytest
-      - run: pytest -q          # no data download and no model needed
+      - run: pip install pandas numpy scipy scikit-learn pyyaml pydantic matplotlib fastapi httpx mcp psutil pytest
+      - run: pytest -q          # no data download, no model and no API key needed

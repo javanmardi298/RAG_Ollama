@@ -17,7 +17,18 @@ PROCESSED_DIR = DATA_DIR / "processed"
 RESULTS_DIR = ROOT / "results"
 DB_PATH = DATA_DIR / "shop.db"
 
-SEED = 7
+
+
+def _project_seed(default: int = 7) -> int:
+    """The seed lives in configs/project.yaml (project.seed) so the panel can show and change it."""
+    path = CONFIG_DIR / "project.yaml"
+    if path.exists():
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return int((data.get("project") or {}).get("seed", default))
+    return default
+
+
+SEED = _project_seed()
 
 
 @lru_cache

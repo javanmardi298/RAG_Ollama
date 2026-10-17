@@ -80,8 +80,10 @@ class Session:
 class SupportAgent:
     def __init__(self, llm, toolbox: ToolBox, classify: Classifier,
                  answer_policy: Callable[[str, str], dict] | None = None,
-                 trace: Callable[[dict], None] | None = None, thresholds: dict | None = None):
+                 trace: Callable[[dict], None] | None = None, thresholds: dict | None = None,
+                 max_tool_steps: int = MAX_TOOL_STEPS):
         self.llm, self.tools, self.classify = llm, toolbox, classify
+        self.max_tool_steps = max_tool_steps
         self.thresholds = thresholds          # from stage 4 (results/thresholds.json); None = defaults
         self.answer_policy = answer_policy
         self.trace = trace or (lambda event: None)
@@ -137,7 +139,7 @@ class SupportAgent:
         system = {"role": "system", "content": SYSTEM_PROMPT.format(
             language="German" if s.language == "de" else "English")}
         convo = [system] + s.messages
-        for _ in range(MAX_TOOL_STEPS):
+        for _ in range(self.max_tool_steps):
             reply = self.llm.chat(convo, tools=TOOL_SCHEMAS if tools_allowed else None)
             if not reply.tool_calls:
                 return self._checked(s, reply.content, convo)

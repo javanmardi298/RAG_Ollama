@@ -2,7 +2,18 @@
 
 An LLM-powered customer-support agent for an online store: it understands what the customer wants, answers policy questions from the store's documents, looks up and changes orders through tools, and decides when to hand over to a human. Every part is evaluated.
 
-> Status: code for **all stages (0-9)** is in place with 66 unit tests, in two versions: plain Python (`src/support/`) and LangChain / LangGraph (`src/support/lc/`). Fill in the result tables below by running each stage. See `docs/design.md` for the plan and metrics, and the PDF guide for explanations.
+> Status: code for **all stages (0-9)** is in place with 99 unit tests, in two versions: plain Python (`src/support/`) and LangChain / LangGraph (`src/support/lc/`), plus a **local control panel** that runs every stage, manages all parameters and connects to **Claude** (Claude Desktop via MCP, or the API). Fill in the result tables below by running each stage. See `docs/design.md` for the plan and metrics, `docs/panel.md` for the panel, and the PDF guide for explanations.
+
+## Control panel (Windows)
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\windows\setup.ps1            # venv, packages, .env, Ollama model, tests
+windows\start_panel.bat         # http://127.0.0.1:8765
+windows\install_claude_desktop.bat   # optional: Claude Desktop gets the same tools (MCP)
+```
+Other systems: `pip install -r requirements.txt -r requirements-panel.txt && pip install -e . && python -m support.panel`.
+
+The panel shows, per stage: what to learn (concepts, why this method, steps, pitfalls, interview questions, the advanced next step), its parameters as a validated form (`configs/project.yaml`), allow-listed tasks with live logs, results with charts, and run-to-run comparison. A code-based advisor lists what is missing or stale. Every run is recorded with its settings, git commit and headline metrics (`results/panel.db`).
 
 ## Results (fill from `results/`)
 | Metric | Value |
@@ -33,9 +44,10 @@ An LLM-powered customer-support agent for an online store: it understands what t
 ```bash
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-pytest -q                                              # 66 tests, no data or model needed
-jupyter lab notebooks/00_setup_data.ipynb             # stage 0
-# then scripts/stage1_intents.py ... scripts/stage9_ab.py (each '# %%' is a cell in VS Code)
+pytest -q                                              # 99 tests, no data or model needed
+python scripts/stage0_data.py                         # stage 0 (or notebooks/00_setup_data.ipynb)
+# then scripts/stage1_intents.py ... scripts/stage9_ab.py (each '# %%' is a cell in VS Code), or run them from the panel
+# all parameters (models, k, error budgets, sample sizes...) are in configs/project.yaml
 ```
 To reuse WANDS from the product-search project: `export WANDS_DIR=/path/to/product-search-rag/data/wands` before starting Jupyter.
 
@@ -51,15 +63,18 @@ Policy, tools, guardrails, decisions and evaluation are framework-free and share
 
 ## Layout
 ```
-configs/      policy_rules.yaml (single source of truth), intents.yaml (routing)
+configs/      policy_rules.yaml (single source of truth for policy), intents.yaml (routing),
+              project.yaml (every experiment parameter, validated by src/support/settings.py)
 policies/     store policies in en/ and de/
 src/support/  shared code used by every stage
 src/support/lc/  LangChain / LangGraph orchestration of the same stages
+src/support/panel/  control panel, MCP server for Claude Desktop, Claude API chat (docs/panel.md)
 scripts/      one runnable script per stage
 app/          FastAPI service (stage 8)
 eval/         hand-written policy questions
 notebooks/    stage 0 notebook
-tests/        66 unit tests (no model or download needed)
+tests/        99 unit tests (no model or download needed)
+windows/      setup.ps1, start_panel.bat, install_claude_desktop.bat
 results/      numbers reported in this README
 docs/         design and decisions
 ```

@@ -41,8 +41,9 @@ CREATE TABLE IF NOT EXISTS tickets (
 NEEDS_CONFIRMATION = {"cancel_order", "start_return", "report_damage", "change_address"}
 
 
-def connect(path: str | Path = DB_PATH) -> sqlite3.Connection:
-    con = sqlite3.connect(path)
+def connect(path: str | Path = DB_PATH, check_same_thread: bool = True) -> sqlite3.Connection:
+    """check_same_thread=False only where one connection is used from several threads under a lock (panel chat)."""
+    con = sqlite3.connect(path, check_same_thread=check_same_thread)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA foreign_keys = ON")      # SQLite has foreign keys OFF by default
     con.executescript(AUDIT_SCHEMA)
