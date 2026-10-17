@@ -62,7 +62,7 @@ async function render() {
   try {
     const pages = { home: pageHome, stage: pageStage, settings: pageSettings, data: pageData, runs: pageRuns, run: pageRun,
       chat: pageChat, judge: pageJudge, coverage: pageCoverage, setup: pageSetup, file: pageFile, compare: pageCompare,
-      presets: pagePresets, preset: pagePreset };
+      presets: pagePresets, preset: pagePreset, doc: pageDoc };
     await (pages[r.page] || pageHome)(main, r);
   } catch (e) {
     main.innerHTML = `<div class="card pad"><div class="adv error"><span class="ic">!</span><div>${esc(e.message)}</div></div></div>`;
@@ -102,7 +102,8 @@ function renderSide(r) {
     ${cat.stages.map((s) => `<div class="nav ${st[s.id] || s.status}${cur("stage", s.id)}" onclick="go('/stage/${s.id}')">
       <span class="n">${n(s.id)}</span>${esc(s.title)}<span class="t">${st[s.id] === "done" ? "✓" : st[s.id] === "running" ? "…" : ""}</span></div>`).join("")}
     <hr><h3>نقشه‌ی راه</h3>
-    <div class="nav${cur("presets") || cur("preset")}" onclick="go('/presets')"><span class="n">🧭</span>پروژه‌ها (۱۶ پریست)</div>
+    <div class="nav${cur("presets") || cur("preset")}" onclick="go('/presets')"><span class="n">🧭</span>پروژه‌ها و پریست‌ها</div>
+    ${DOCS.map(([path, ic, title]) => `<div class="nav${r.page === "doc" && r.params.path === path ? " cur" : ""}" onclick="go('/doc?path=${path}')"><span class="n">${ic}</span>${title}</div>`).join("")}
     <hr><h3>ابزارها</h3>
     <div class="nav${cur("chat")}" onclick="go('/chat')"><span class="n">💬</span>چت با agent</div>
     <div class="nav${cur("settings")}" onclick="go('/settings')"><span class="n">⚙</span>همه‌ی پارامترها</div>
@@ -637,6 +638,59 @@ async function pageFile(main, r) {
   main.innerHTML = `<div class="card pad"><div class="hd"><h2 class="mono">${esc(f.path)}</h2><div class="sp"></div><button class="btn" onclick="history.back()">بازگشت</button></div>
     <div style="margin-top:10px">${f.entries ? `<ul class="clean mono">${f.entries.map((e) => `<li><a onclick="go('/file?path=${encodeURIComponent(f.path.replace(/\/$/, "") + "/" + e)}')">${esc(e)}</a></li>`).join("")}</ul>` : `<pre>${esc(f.text)}</pre>${f.truncated ? `<div class="note">(کوتاه شده)</div>` : ""}`}</div>
     <div class="note" style="margin-top:8px">فقط خواندنی. برای ویرایش، فایل را در VS Code باز کن.</div></div>`;
+}
+
+// ----- documents (tutorials, research notes) rendered from markdown -----
+const DOCS = [["docs/jepa.md", "🧠", "آموزش JEPA و World Model"], ["docs/research_2026.md", "🔬", "پژوهش ۲۰۲۶: چه چیزی تثبیت شده"],
+  ["docs/panel.md", "📘", "راهنمای پنل"]];
+function mdInline(t) {
+  return esc(t)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\[([^\]]+)\]\(([\w./-]+\.md)\)/g, (m, label, href) => `<a onclick="go('/doc?path=docs/${href.replace(/^(\.\/|docs\/)/, "")}')">${label}</a>`);
+}
+function mdToHtml(md) {
+  const out = []; const lines = md.split("\n"); let i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (l.startsWith("```")) {
+      const buf = []; i++;
+      while (i < lines.length && !lines[i].startsWith("```")) buf.push(lines[i++]);
+      out.push(`<pre dir="ltr">${esc(buf.join("\n"))}</pre>`); i++; continue;
+    }
+    if (/^\|.*\|\s*$/.test(l)) {
+      const rows = [];
+      while (i < lines.length && /^\|.*\|\s*$/.test(lines[i])) rows.push(lines[i++]);
+      const cells = (r) => r.trim().slice(1, -1).split("|").map((c) => c.trim());
+      const body = rows.filter((r, j) => !(j === 1 && /^[|\s:-]+$/.test(r)));
+      out.push(`<div class="mdtable"><table><tr>${cells(body[0]).map((c) => `<th>${mdInline(c)}</th>`).join("")}</tr>${body.slice(1)
+        .map((r) => `<tr>${cells(r).map((c) => `<td>${mdInline(c)}</td>`).join("")}</tr>`).join("")}</table></div>`);
+      continue;
+    }
+    if (/^\s*([-*]|\d+\.)\s+/.test(l)) {
+      const ordered = /^\s*\d+\./.test(l); const items = [];
+      while (i < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i])) {
+        const t = lines[i++].replace(/^\s*([-*]|\d+\.)\s+/, "");
+        items.push(t.startsWith("[ ] ") ? `☐ ${mdInline(t.slice(4))}` : t.startsWith("[x] ") ? `☑ ${mdInline(t.slice(4))}` : mdInline(t));
+      }
+      out.push(`<${ordered ? "ol" : "ul"}>${items.map((t) => `<li>${t}</li>`).join("")}</${ordered ? "ol" : "ul"}>`); continue;
+    }
+    const h = l.match(/^(#{1,4})\s+(.*)/);
+    if (h) out.push(`<h${h[1].length + 1}>${mdInline(h[2])}</h${h[1].length + 1}>`);
+    else if (l.startsWith(">")) out.push(`<blockquote>${mdInline(l.replace(/^>\s?/, ""))}</blockquote>`);
+    else if (/^---+\s*$/.test(l)) out.push("<hr>");
+    else if (l.trim()) out.push(`<p>${mdInline(l)}</p>`);
+    i++;
+  }
+  return out.join("\n");
+}
+async function pageDoc(main, r) {
+  const path = r.params.path || "docs/jepa.md";
+  const f = await api(`/api/file?path=${encodeURIComponent(path)}`);
+  main.innerHTML = `<div class="card pad mddoc"><div class="hd"><span class="note mono">${esc(f.path)}</span><div class="sp"></div>
+    <button class="btn sm" onclick="go('/presets?track=world_models')">پریست‌های JEPA</button></div>${mdToHtml(f.text || "")}
+    ${f.truncated ? `<div class="note">(کوتاه شده)</div>` : ""}</div>`;
 }
 
 // ----- settings presets -----

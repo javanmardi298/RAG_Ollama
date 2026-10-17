@@ -156,3 +156,12 @@ svg text { font-family: inherit; }
   .side { position: static; max-height: none; }
   .top .brand { font-size: 14px; }
 }
+
+/* markdown documents (#/doc) */
+.mddoc { line-height: 1.9; }
+.mddoc h2 { margin: 18px 0 8px; } .mddoc h3 { margin: 16px 0 6px; } .mddoc h4, .mddoc h5 { margin: 12px 0 4px; }
+.mddoc p { margin: 6px 0; } .mddoc ul, .mddoc ol { margin: 6px 22px 6px 0; }
+.mddoc code { background: var(--soft, rgba(127,127,127,.12)); padding: 0 4px; border-radius: 4px; direction: ltr; unicode-bidi: embed; }
+.mddoc blockquote { border-inline-start: 3px solid var(--accent, #6b8afd); margin: 8px 0; padding: 4px 10px; opacity: .9; }
+.mddoc .mdtable { overflow-x: auto; margin: 8px 0; } .mddoc table { min-width: 100%; }
+.mddoc pre { overflow-x: auto; }

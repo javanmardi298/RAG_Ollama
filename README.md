@@ -11,7 +11,9 @@ Set-ExecutionPolicy -Scope Process Bypass
 windows\start_panel.bat         # http://127.0.0.1:8765
 windows\install_claude_desktop.bat   # optional: Claude Desktop gets the same tools (MCP)
 ```
-**Learning roadmap:** 16 real-world project presets from basic to advanced (FAQ search, product search, document QA, ticket triage, invoice extraction workflow, Text-to-SQL, email workflow, this agent, multilingual RAG, deep-research agent, code assistant, multi-agent claims, GraphRAG, LLMOps, fine-tuning/distillation, LLM security) in `presets/`, each with stages, data, metrics, pitfalls, interview questions and a runnable starter scaffolded into `projects/`. Building blocks they need beyond the agent live in `src/labkit/`.
+**Learning roadmap:** 30 real-world project presets from basic to advanced in `presets/`: FAQ search, product search, document QA, ticket triage, invoice extraction workflow, Text-to-SQL, email workflow, this agent, multilingual RAG, deep-research agent, code assistant, multi-agent claims, GraphRAG, LLMOps, fine-tuning/distillation, LLM security; 2026 techniques (agentic RAG, contextual and multimodal RAG, pass^k reliability, GEPA-style prompt optimisation, MCP + A2A, context engineering, CaMeL-style security, GRPO, agent skills); and a JEPA / world-model track (p17–p21). Each preset has stages, data, metrics, pitfalls, interview questions and a runnable starter scaffolded into `projects/`. Building blocks they need beyond the agent live in `src/labkit/` and `src/jepa_lab/`.
+
+**New in this version:** [docs/research_2026.md](docs/research_2026.md) (what is established vs hype, with sources, and where each idea is implemented) and [docs/jepa.md](docs/jepa.md) (step-by-step JEPA / world-model tutorial: I-JEPA on digits, collapse and SIGReg, a reward-free latent world model that plans with CEM-MPC, surprise-based anomaly detection, pretrained V-JEPA 2; `pip install -r requirements-jepa.txt`, CPU is enough). Both open inside the panel.
 
 Other systems: `pip install -r requirements.txt -r requirements-panel.txt && pip install -e . && python -m support.panel`.
 
@@ -72,13 +74,16 @@ src/support/  shared code used by every stage
 src/support/lc/  LangChain / LangGraph orchestration of the same stages
 src/support/panel/  control panel, MCP server for Claude Desktop, Claude API chat (docs/panel.md)
 src/labkit/   building blocks for the presets: loaders, chunking, retrieval, metrics, structured output,
-              SQL guard, workflow engine, cache/ledger/router/prompts, knowledge graph, memory
-presets/      16 project presets, components.yaml (what is ready / in labkit / external), settings presets
+              SQL guard, workflow engine, cache/ledger/router/prompts, knowledge graph, memory,
+              agentic RAG, contextual retrieval, context packing, prompt optimiser, self-consistency,
+              provenance-based tool policies (capsec), pass^k
+src/jepa_lab/ JEPA and world-model experiments (PyTorch, CPU): ssl, sigreg, world_model
+presets/      30 project presets, components.yaml (what is ready / in labkit / external), settings presets
 scripts/      one runnable script per stage
 app/          FastAPI service (stage 8)
 eval/         hand-written policy questions
 notebooks/    stage 0 notebook
-tests/        140 unit tests (no model or download needed)
+tests/        166 unit tests (no model or download needed)
 windows/      setup.ps1, start_panel.bat, install_claude_desktop.bat
 results/      numbers reported in this README
 docs/         design and decisions

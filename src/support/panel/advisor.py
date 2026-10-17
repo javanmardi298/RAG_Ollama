@@ -153,6 +153,10 @@ def advice(checks: list[dict] | None = None) -> list[dict]:
         elif judge["kappa"] < 0.6:
             items.append(_item("warn", 6, f"توافق judge کم است (kappa {judge['kappa']:.2f})",
                                "prompt قاضی را بهتر کن یا مدل قوی‌تری بگذار؛ اختلاف‌ها را بخوان."))
+        if s.evaluation.repeats == 1:
+            items.append(_item("info", 6, "پایایی را هم بسنج (pass^k)",
+                               "هر سناریو فقط یک بار اجرا شده؛ evaluation.repeats را ۳–۴ کن تا pass^k (موفقیت در همه‌ی تکرارها) را ببینی. "
+                               "مشتری تکرار را تجربه می‌کند، نه میانگین را.", {"type": "setting", "key": "evaluation.repeats"}))
     t6, t_thr = _mtime("stage6_summary.json"), _mtime("thresholds.json")
     if t6 and t_thr and t_thr > t6:
         items.append(_item("warn", 6, "آستانه‌ها بعد از ارزیابی عوض شده‌اند", "عدد مرحله‌ی ۶ با آستانه‌های قبلی است؛ دوباره اجرا کن.",
@@ -212,6 +216,11 @@ def advice(checks: list[dict] | None = None) -> list[dict]:
                                {"type": "page", "page": f"preset/{nxt.id}"}))
     except Exception:          # a broken preset file must not break the advice list
         pass
+
+    if res[2]["available"]:
+        items.append(_item("info", 2, "تکنیک‌های جدید RAG آماده‌اند",
+                           "Agentic RAG (امتناع وقتی شواهد نیست) و contextual retrieval در labkit هستند؛ پریست‌های p22 و p23 و "
+                           "سند «پژوهش ۲۰۲۶» نشان می‌دهند کدام تثبیت شده و چطور بسنجی.", {"type": "page", "page": "doc?path=docs/research_2026.md"}))
 
     for job_id, text in JOB_AD.items():
         if not any(res[st.id]["available"] for st in STAGES if job_id in st.job_ad):

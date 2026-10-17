@@ -291,7 +291,8 @@ if __name__ == "__main__":
     if cmd == "export":
         Path(sys.argv[2]).write_text(json.dumps(export(), ensure_ascii=False, indent=1), encoding="utf-8")
     elif cmd == "html":
-        data = json.dumps(export(), ensure_ascii=False).replace("</", "<\\/")      # keep </script> out of the data
+        docs = {k: (ROOT / "docs" / f).read_text(encoding="utf-8") for k, f in [("jepa", "jepa.md"), ("research", "research_2026.md")]}
+        data = json.dumps({**export(), "docs": docs}, ensure_ascii=False).replace("</", "<\\/")   # keep </script> out of the data
         page = (Path(__file__).parent / "roadmap_template.html").read_text(encoding="utf-8").replace("__DATA__", data)
         Path(sys.argv[2]).write_text(page, encoding="utf-8")
     else:

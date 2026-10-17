@@ -314,3 +314,10 @@ def test_web_api_main_endpoints(monkeypatch):
     # another website in the same browser cannot drive the panel
     assert TestClient(web.app).post("/api/runs", json={"task": "tests_all"}).status_code == 403
     assert c.get("/api/catalog", headers={"host": "evil.example"}).status_code == 403
+
+
+def test_tutorial_docs_are_readable_from_the_panel():
+    from support.panel import service
+    for path, needle in [("docs/jepa.md", "SIGReg"), ("docs/research_2026.md", "pass^k")]:
+        f = service.read_project_file(path, max_chars=200_000)
+        assert needle in f["text"] and not f.get("truncated"), path
