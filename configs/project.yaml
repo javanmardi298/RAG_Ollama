@@ -4,6 +4,11 @@
 project:
   seed: 7
 llm:
+  provider: ollama
+  api_base: ''
+  cloud_budget_usd: 0.0
+  price_in_per_mtok: 0.0
+  price_out_per_mtok: 0.0
   host: http://localhost:11434
   chat_model: qwen2.5:7b
   temperature: 0.0

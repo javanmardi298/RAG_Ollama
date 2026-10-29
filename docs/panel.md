@@ -106,3 +106,12 @@ windows/                      setup.ps1, start_panel.bat, install_claude_desktop
 ### labkit: قطعه‌هایی که برای این پروژه‌ها اضافه شد
 `loaders` (txt/md/html/pdf/docx و حذف سرصفحه) · `chunking` (fixed، recursive، heading، AST برای کد) · `retrieval` (index عمومی BM25/dense/hybrid، فیلتر metadata، reranker، MMR، multi-query) · `metrics` (recall، MRR، nDCG درجه‌دار، F1 فیلدی) · `structured` (اعتبارسنجی JSON با pydantic و یک دور repair) · `sqlguard` (فقط SELECT، جدول مجاز، LIMIT، اتصال read-only، execution accuracy) · `workflow` (retry، resume، idempotency، تأیید انسانی، audit) · `ops` (کش، ledger هزینه، router مدل ارزان ← قوی، نسخه‌گذاری prompt) · `graph` (گراف دانش، مسیر چندپرشی با منبع) · `memory` (حافظه‌ی گفتگو) · `agentic_rag` (route/grade/rewrite/verify/abstain) · `contextual` (contextual retrieval با کش) · `context` (بودجه‌ی context، prefix پایدار، پاک‌کردن tool result کهنه) · `optimize` (بهینه‌سازی prompt به سبک GEPA با validation و جریمه‌ی طول) · `reasoning` (self-consistency، best-of-n) · `capsec` (provenance و policy ابزار به سبک CaMeL) · `metrics.reliability_report` (pass^k).
 `jepa_lab` (نیاز به PyTorch): `ssl` (I-JEPA کوچک)، `sigreg` (LeJEPA و تشخیص collapse)، `world_model` (world model نهفته، CEM-MPC، surprise).
+
+
+## درس‌ها (قدم‌به‌قدم) و حالت معلم
+
+پوشه‌ی `lessons/` هر پروژه را به گام‌های کوچک می‌شکند (متن آموزشی کامل، کد ناقص، تست خودکار، راهنمایی سه‌سطحی، امتحان کوتاه، جواب مرجع). منوی «درس‌ها» در پنل همان فهرست را نشان می‌دهد؛ خط فرمان: `python -m learn list | start | check | hint | quiz | solution | review | errors | notebook | build | selftest` (Windows: `windows\learn.bat`).
+
+- **مدل هر درس:** `LEARN_PROVIDER` = `offline` (پیش‌فرض) | `ollama` | `anthropic` | `opencode` | `openai_compatible` با `LEARN_MODEL`، `LEARN_API_BASE` و سقف هزینه‌ی `LEARN_BUDGET_USD` (+ قیمت‌ها). برای کل پروژه همین ارائه‌دهنده‌ها در `configs/project.yaml` بخش `llm.provider` هم هست.
+- **حالت معلم:** ابزارهای `lessons_list`، `lesson_step`، `lesson_check`، `lesson_hint`، `lessons_progress` در MCP و چت Claude هستند. Claude مفهوم را توضیح می‌دهد، تست را اجرا می‌کند و با پرسش راهنما جلو می‌برد؛ فایل `solution.py` از `read_project_file` خوانده نمی‌شود (مگر `LEARN_REVEAL_SOLUTIONS=1`) و ابزار «جواب» وجود ندارد.
+- **notebook:** `python -m learn notebook p01_faq_search` ← `lessons/p01_faq_search/p01_faq_search.ipynb` با دکمه‌ی Colab.

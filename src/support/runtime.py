@@ -13,15 +13,32 @@ from .config import RESULTS_DIR
 from .settings import encoder_device, settings, tuned_thresholds
 
 
+_BUDGET = None
+
+
+def _budget():
+    from .providers import Budget
+    s = settings().llm
+    return Budget(s.cloud_budget_usd, s.price_in_per_mtok, s.price_out_per_mtok)
+
+
+def _shared_budget():
+    global _BUDGET
+    if _BUDGET is None:                      # one budget for every role in this process
+        _BUDGET = _budget()
+    return _BUDGET
+
+
 def make_llm(role: str = "agent"):
     """role: agent | user_sim | judge. All roles talk to the same Ollama server."""
-    from .llm import OllamaLLM
+    from . import providers
 
     s = settings().llm
     model, temp = {"agent": (s.chat_model, s.temperature),
                    "user_sim": (s.user_sim_model, s.user_sim_temperature),
                    "judge": (s.judge_model, 0.0)}[role]
-    return OllamaLLM(model, temperature=temp, host=s.host, timeout_s=s.timeout_s, max_retries=s.max_retries)
+    return providers.make(s.provider, model, temp, host=s.host, api_base=s.api_base, timeout_s=s.timeout_s,
+                          max_retries=s.max_retries, budget=_shared_budget())
 
 
 def make_encoder():

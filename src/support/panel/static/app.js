@@ -641,14 +641,20 @@ async function pageFile(main, r) {
 }
 
 // ----- documents (tutorials, research notes) rendered from markdown -----
-const DOCS = [["docs/jepa.md", "🧠", "آموزش JEPA و World Model"], ["docs/research_2026.md", "🔬", "پژوهش ۲۰۲۶: چه چیزی تثبیت شده"],
+const DOCS = [["lessons/README.md", "🎓", "درس‌ها (قدم‌به‌قدم، با کد)"], ["docs/jepa.md", "🧠", "آموزش JEPA و World Model"], ["docs/research_2026.md", "🔬", "پژوهش ۲۰۲۶: چه چیزی تثبیت شده"],
   ["docs/panel.md", "📘", "راهنمای پنل"]];
+let docBase = "docs";
+function docLink(href) {                       // a relative link inside a document -> project path
+  const parts = docBase.split("/").filter(Boolean);
+  for (const seg of href.split("/")) { if (seg === "..") parts.pop(); else if (seg && seg !== ".") parts.push(seg); }
+  return parts.join("/");
+}
 function mdInline(t) {
   return esc(t)
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/\[([^\]]+)\]\(([\w./-]+\.md)\)/g, (m, label, href) => `<a onclick="go('/doc?path=docs/${href.replace(/^(\.\/|docs\/)/, "")}')">${label}</a>`);
+    .replace(/\[([^\]]+)\]\(([\w./-]+\.md)\)/g, (m, label, href) => `<a onclick="go('/doc?path=${docLink(href)}')">${label}</a>`);
 }
 function mdToHtml(md) {
   const out = []; const lines = md.split("\n"); let i = 0;
@@ -687,6 +693,7 @@ function mdToHtml(md) {
 }
 async function pageDoc(main, r) {
   const path = r.params.path || "docs/jepa.md";
+  docBase = path.split("/").slice(0, -1).join("/");
   const f = await api(`/api/file?path=${encodeURIComponent(path)}`);
   main.innerHTML = `<div class="card pad mddoc"><div class="hd"><span class="note mono">${esc(f.path)}</span><div class="sp"></div>
     <button class="btn sm" onclick="go('/presets?track=world_models')">پریست‌های JEPA</button></div>${mdToHtml(f.text || "")}

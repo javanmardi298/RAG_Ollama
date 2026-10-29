@@ -34,6 +34,14 @@ class Project(_Section):
 
 
 class LLM(_Section):
+    provider: Literal["ollama", "anthropic", "opencode", "openai_compatible"] = Field(
+        "ollama", description="Where chat_model runs: local Ollama, Claude API (key in .env), OpenCode (its configured models, "
+                              "chat_model = provider/model) or any OpenAI-compatible server (LM Studio, vLLM, OpenRouter).")
+    api_base: str = Field("", description="openai_compatible only: base URL, e.g. http://localhost:1234/v1.")
+    cloud_budget_usd: float = Field(0.0, ge=0, le=10_000, description="Stop cloud calls (anthropic / openai_compatible) after this "
+                                    "estimated spend per process. 0 = no limit. Needs the two prices below.")
+    price_in_per_mtok: float = Field(0.0, ge=0, description="USD per million input tokens of your cloud model (copy from its pricing page).")
+    price_out_per_mtok: float = Field(0.0, ge=0, description="USD per million output tokens.")
     host: str = Field("http://localhost:11434", description="Ollama server address.")
     chat_model: str = Field("qwen2.5:7b", description="Model used by the agent, the RAG answers and the LLM classifier.")
     temperature: float = Field(0.0, ge=0, le=2, description="0 = repeatable answers; keep 0 for evaluation.")

@@ -3,6 +3,7 @@
 
 python -m support.panel.presets check            validate every preset file
 python -m support.panel.presets export out.json  everything as one JSON
+python -m support.panel.presets scaffold <preset_id>   projects/<id>/ with README, config and a runnable starter
 python -m support.panel.presets html out.html    the online roadmap artifact (roadmap_template.html + this data)
 """
 from __future__ import annotations
@@ -290,6 +291,8 @@ if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "check"
     if cmd == "export":
         Path(sys.argv[2]).write_text(json.dumps(export(), ensure_ascii=False, indent=1), encoding="utf-8")
+    elif cmd == "scaffold":
+        print(json.dumps(scaffold(sys.argv[2]), ensure_ascii=False, indent=1))
     elif cmd == "html":
         docs = {k: (ROOT / "docs" / f).read_text(encoding="utf-8") for k, f in [("jepa", "jepa.md"), ("research", "research_2026.md")]}
         data = json.dumps({**export(), "docs": docs}, ensure_ascii=False).replace("</", "<\\/")   # keep </script> out of the data

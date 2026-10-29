@@ -1,0 +1,16 @@
+question,relevant,answerable
+how long do I have to send back a sofa,returns,yes
+can I return a personalised mirror,returns,yes
+how do I start a return,returns,yes
+when do I get my money back,refunds,yes
+what if the item comes back damaged,refunds,yes
+how fast is standard delivery,shipping,yes
+how much does express shipping cost,shipping,yes
+is there a tracking link,shipping,yes
+is a broken table leg covered,warranty,yes
+how do I claim the warranty,warranty,yes
+can I pay with PayPal,payment,yes
+where is my invoice,payment,yes
+can I pay by cheque,,no
+what is the CEO's phone number,,no
+do you sell gift cards,,no

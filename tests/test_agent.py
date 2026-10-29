@@ -100,3 +100,20 @@ def test_ollama_llm_retries_transient_errors_only(monkeypatch):
     with pytest.raises(ValueError):
         bad.chat([{"role": "user", "content": "hi"}])
     assert len(calls) == 2          # not retried
+
+
+def test_providers_offline_budget_and_factory():
+    import pytest
+    from support import providers as P
+    o = P.make("offline", "x")
+    assert o.chat([{"role": "user", "content": "hi"}]).content.startswith("(offline")
+    assert o.json([], {"type": "object", "properties": {"ok": {"type": "boolean"}}}) == {"ok": True}
+    b = P.Budget(0.002, price_in=1000, price_out=0)          # $1000 per million tokens
+    b.add(1, 0)
+    assert b.spent == pytest.approx(0.001)
+    b.add(1, 0)
+    with pytest.raises(P.BudgetExceeded):
+        b.check()
+    with pytest.raises(ValueError):
+        P.make("nope", "x")
+    assert P._json_from_text('sure!\n```json\n{"a": 1}\n```') == {"a": 1}

@@ -123,6 +123,11 @@ def policy_rules() -> dict:
 _FORBIDDEN = {".env", ".git", ".venv", "venv", "__pycache__"}
 
 
+def _reveal_solutions() -> bool:
+    import os
+    return os.environ.get("LEARN_REVEAL_SOLUTIONS") == "1"
+
+
 def read_project_file(path: str, max_chars: int = 20000) -> dict:
     """Read a text file of the project (code, configs, docs, logs, results). Relative to the project root.
     Secrets (.env), the git folder and the virtual environment are not readable."""
@@ -131,9 +136,12 @@ def read_project_file(path: str, max_chars: int = 20000) -> dict:
         raise ValueError("path must be inside the project")
     if any(part in _FORBIDDEN for part in p.relative_to(ROOT.resolve()).parts):
         raise ValueError("this path is not readable from here")
+    hide = set() if _reveal_solutions() else {"solution.py"}          # teacher mode: lesson solutions stay unread
+    if p.name in hide and "lessons" in p.relative_to(ROOT.resolve()).parts:
+        raise ValueError("lesson solutions are not readable in teacher mode; the student can open them with `python -m learn solution`")
     if p.is_dir():
         return {"path": path, "entries": sorted(x.name + ("/" if x.is_dir() else "") for x in p.iterdir()
-                                                if x.name not in _FORBIDDEN)}
+                                                if x.name not in _FORBIDDEN | hide)}
     if not p.exists():
         raise FileNotFoundError(path)
     text = p.read_text(encoding="utf-8", errors="replace")
@@ -372,11 +380,46 @@ def apply_settings_preset(preset_id: str, origin: str = "panel") -> dict:
     return {**out, "preset": preset_id}
 
 
+# ---------- lessons (teacher mode: Claude guides, the student writes the code) ----------
+
+def lessons_list() -> list[dict]:
+    """All lessons with the student's progress (steps done / steps). Start here when the user wants to learn or continue."""
+    from learn import api
+    return api.overview()
+
+
+def lesson_step(lesson: str, step: str = "") -> dict:
+    """The text of a lesson step (default: the student's next unfinished step) and the path of the student's answer file.
+    Never includes the solution. Explain the concept in your own words, then let the student write the code."""
+    from learn import api
+    return api.show(lesson, step or api.next_step(lesson) or api.steps(lesson)[-1])
+
+
+def lesson_check(lesson: str, step: str = "") -> dict:
+    """Run the automatic check on the student's answer file for a step and return which checks pass or fail, with messages.
+    Use the failing messages to ask guiding questions; do not paste the corrected code."""
+    from learn import api
+    return api.check(lesson, step or api.next_step(lesson) or api.steps(lesson)[-1], timeout=60)
+
+
+def lesson_hint(lesson: str, step: str = "", level: int = 0) -> dict:
+    """A hint for a step: level 1 nudge, 2 direction, 3 almost the answer (0 = the next unseen level). Give hints one at a time."""
+    from learn import api
+    return api.hint(lesson, step or api.next_step(lesson) or api.steps(lesson)[-1], level or None)
+
+
+def lessons_progress() -> dict:
+    """Per lesson and step: passed, attempts, hints used, whether the solution was viewed, quiz result."""
+    from learn import api
+    return api.progress()
+
+
 # ---------- tool registry for MCP and the Claude chat ----------
 
 READ_TOOLS = [project_status, get_stage, get_settings, get_results, get_advice, job_ad_coverage, policy_rules,
               read_project_file, list_tasks, run_status, list_runs, compare_runs, sample_orders,
-              list_presets, get_preset, list_settings_presets]
+              list_presets, get_preset, list_settings_presets,
+              lessons_list, lesson_step, lesson_check, lesson_hint, lessons_progress]
 ACTION_TOOLS = [update_settings, run_task, stop_run, chat_with_agent, make_colab_bundle,
                 set_preset_progress, scaffold_preset, apply_settings_preset]
 ALL_TOOLS = READ_TOOLS + ACTION_TOOLS

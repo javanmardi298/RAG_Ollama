@@ -8,6 +8,9 @@ version = "0.0.1"
 description = "Marketplace support agent: intents, policy RAG, tools, handoff decisions and evaluation"
 requires-python = ">=3.10"
 
+[project.scripts]
+learn = "learn.__main__:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
@@ -21,6 +24,7 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 130
+extend-exclude = ["lessons/*/*/starter.py", "*.ipynb"]   # starters are deliberately unfinished
 target-version = "py310"
 
 [tool.ruff.lint]

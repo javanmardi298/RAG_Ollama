@@ -232,3 +232,6 @@ venv/
 results/*
 !results/.gitkeep
 *.db
+
+# learner files (python -m learn): answers, progress, error diary
+work/

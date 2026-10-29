@@ -13,6 +13,8 @@ windows\install_claude_desktop.bat   # optional: Claude Desktop gets the same to
 ```
 **Learning roadmap:** 30 real-world project presets from basic to advanced in `presets/`: FAQ search, product search, document QA, ticket triage, invoice extraction workflow, Text-to-SQL, email workflow, this agent, multilingual RAG, deep-research agent, code assistant, multi-agent claims, GraphRAG, LLMOps, fine-tuning/distillation, LLM security; 2026 techniques (agentic RAG, contextual and multimodal RAG, pass^k reliability, GEPA-style prompt optimisation, MCP + A2A, context engineering, CaMeL-style security, GRPO, agent skills); and a JEPA / world-model track (p17–p21). Each preset has stages, data, metrics, pitfalls, interview questions and a runnable starter scaffolded into `projects/`. Building blocks they need beyond the agent live in `src/labkit/` and `src/jepa_lab/`.
 
+**Lessons (step by step, with code):** [lessons/](lessons/README.md) turns the presets into guided lessons: each step has a full text, a starter with TODOs, an automatic check, three hint levels, a quiz and the reference solution (`python -m learn start p01_faq_search`). Also as notebooks (Colab / Jupyter), in the panel, and with Claude or OpenCode as a teacher that guides without giving the answer. Lesson code talks to any model through one interface: offline (default), Ollama, Claude API, OpenCode models or an OpenAI-compatible server (`lessons/00_setup/README.md`).
+
 **New in this version:** [docs/research_2026.md](docs/research_2026.md) (what is established vs hype, with sources, and where each idea is implemented) and [docs/jepa.md](docs/jepa.md) (step-by-step JEPA / world-model tutorial: I-JEPA on digits, collapse and SIGReg, a reward-free latent world model that plans with CEM-MPC, surprise-based anomaly detection, pretrained V-JEPA 2; `pip install -r requirements-jepa.txt`, CPU is enough). Both open inside the panel.
 
 Other systems: `pip install -r requirements.txt -r requirements-panel.txt && pip install -e . && python -m support.panel`.
@@ -77,13 +79,15 @@ src/labkit/   building blocks for the presets: loaders, chunking, retrieval, met
               SQL guard, workflow engine, cache/ledger/router/prompts, knowledge graph, memory,
               agentic RAG, contextual retrieval, context packing, prompt optimiser, self-consistency,
               provenance-based tool policies (capsec), pass^k
+src/learn/    lesson engine: python -m learn (check, hint, quiz, notebooks, teacher-mode tools)
+lessons/      step-by-step lessons (text, starter, check, hints, quiz, solution) + setup, glossary, troubleshooting
 src/jepa_lab/ JEPA and world-model experiments (PyTorch, CPU): ssl, sigreg, world_model
 presets/      30 project presets, components.yaml (what is ready / in labkit / external), settings presets
 scripts/      one runnable script per stage
 app/          FastAPI service (stage 8)
 eval/         hand-written policy questions
 notebooks/    stage 0 notebook
-tests/        166 unit tests (no model or download needed)
+tests/        178 unit tests (no model or download needed)
 windows/      setup.ps1, start_panel.bat, install_claude_desktop.bat
 results/      numbers reported in this README
 docs/         design and decisions
