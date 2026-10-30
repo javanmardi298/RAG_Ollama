@@ -111,3 +111,60 @@ def test_provider_env_defaults_to_offline(monkeypatch):
     monkeypatch.delenv("LEARN_PROVIDER", raising=False)
     assert llm.get().chat([{"role": "user", "content": "x"}]).content.startswith("(offline")
     assert sys.version_info >= (3, 10)
+
+
+# ---------- panel API for the lessons page ----------
+
+@pytest.fixture
+def client():
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    from support.panel.web import app
+    return TestClient(app), {"X-Panel": "1"}
+
+
+def test_panel_lessons_flow(client):
+    c, H = client
+    tree = c.get("/api/lessons").json()
+    assert {t["lesson"] for t in tree["tree"] if t["interactive"]} >= {"p01_faq_search", "p22_agentic_rag", "p17_jepa_basics", "m01_compare_models"}
+    d = c.get("/api/lessons/p01_faq_search/1").json()
+    assert d["is_starter"] and d["hints_total"] == 3 and len(d["quiz"]) == 3 and "answer" not in d["quiz"][0] and d["next"] == "step02_bm25"
+    sol = (api.LESSONS / "p01_faq_search" / "step01_chunk_markdown" / "solution.py").read_text(encoding="utf-8")
+    bad = c.post("/api/lessons/p01_faq_search/1/check", json={}, headers=H).json()
+    assert bad["passed"] is False
+    good = c.post("/api/lessons/p01_faq_search/1/check", json={"code": sol}, headers=H).json()
+    assert good["passed"] is True
+    assert c.get("/api/lessons/p01_faq_search/1").json()["code"] == sol            # saved by the check call
+    assert [t for t in c.get("/api/lessons").json()["tree"] if t["lesson"] == "p01_faq_search"][0]["steps"][0]["passed"] is True
+    h = c.post("/api/lessons/p01_faq_search/1/hint", json={}, headers=H).json()
+    assert h["level"] == 1 and h["of"] == 3
+    q = c.post("/api/lessons/p01_faq_search/1/quiz", json={"answers": [1, 1, 1]}, headers=H).json()
+    assert q["score"] == 3 and q["wrong"] == []
+    assert c.post("/api/lessons/p01_faq_search/1/quiz", json={"answers": [0, 0]}, headers=H).status_code == 400
+    assert c.post("/api/lessons/p01_faq_search/1/reset", json={}, headers=H).json()["ok"]
+    assert c.get("/api/lessons/p01_faq_search/1").json()["is_starter"] is True
+
+
+def test_panel_lessons_provider_and_guards(client):
+    c, H = client
+    assert c.post("/api/lessons/provider", json={"provider": "nope"}, headers=H).status_code == 400
+    assert c.post("/api/lessons/provider", json={"provider": "opencode", "model": "claude"}, headers=H).status_code == 400
+    assert c.post("/api/lessons/provider", json={"provider": "openai_compatible", "model": "m", "api_base": "ftp://x"}, headers=H).status_code == 400
+    ok = c.post("/api/lessons/provider", json={"provider": "ollama", "model": "qwen2.5:7b", "budget_usd": 1}, headers=H).json()
+    assert ok["provider"] == "ollama" and c.get("/api/lessons/provider").json()["budget_usd"] == 1
+    c.post("/api/lessons/provider", json={"provider": "offline"}, headers=H)
+    t = c.post("/api/lessons/provider/test", headers=H).json()
+    assert t["ok"] and t["reply"].startswith("(offline")
+    assert c.get("/api/lessons/nope/1").status_code == 404
+    assert c.put("/api/lessons/p01_faq_search/1/answer", json={"code": "x"}).status_code == 403   # writes need the X-Panel header
+    assert c.put("/api/lessons/p01_faq_search/1/answer", json={"code": "x" * 300_000}, headers=H).status_code == 400
+    assert c.get("/api/lessons/p01_faq_search/..%2F..%2Fx").status_code in (404, 400)
+
+
+def test_run_answer_uses_the_chosen_provider_env():
+    api.set_provider({"provider": "offline"})
+    f = api.answer_file("p01_faq_search", 5)
+    f.write_text("import os\nprint('PROVIDER=' + os.environ['LEARN_PROVIDER'])\n", encoding="utf-8")
+    out = api.run_answer("p01_faq_search", 5, timeout=30)
+    assert out["ok"] and "PROVIDER=offline" in out["stdout"]

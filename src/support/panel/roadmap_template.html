@@ -154,6 +154,8 @@ article.md a { color: var(--accent); }
     <button role="tab" id="v-run" aria-selected="false">اجرا روی لپ‌تاپ</button>
     <button role="tab" id="v-jepa" aria-selected="false">آموزش JEPA و World Model</button>
     <button role="tab" id="v-research" aria-selected="false">پژوهش ۲۰۲۶</button>
+    <button role="tab" id="v-lessons" aria-selected="false">درس‌های قدم‌به‌قدم</button>
+    <button role="tab" id="v-setup" aria-selected="false">راه‌اندازی روی لپ‌تاپ</button>
   </nav>
 
   <section id="view"></section>
@@ -267,7 +269,7 @@ function render() {
   if (state.view === "matrix") v.innerHTML = matrixView();
   if (state.view === "settings") v.innerHTML = settingsView();
   if (state.view === "run") v.innerHTML = runView();
-  if (state.view === "jepa" || state.view === "research") v.innerHTML = `<article class="md">${mdToHtml(DATA.docs?.[state.view] || "")}</article>`;
+  if (DATA.docs && DATA.docs[state.view]) v.innerHTML = `<article class="md">${mdToHtml(DATA.docs?.[state.view] || "")}</article>`;
 }
 function chip(label, on, act) { return `<button class="chip" aria-pressed="${on}" data-act="${act}">${esc(label)}</button>`; }
 function mapView() {

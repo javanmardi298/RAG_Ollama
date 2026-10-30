@@ -294,7 +294,8 @@ if __name__ == "__main__":
     elif cmd == "scaffold":
         print(json.dumps(scaffold(sys.argv[2]), ensure_ascii=False, indent=1))
     elif cmd == "html":
-        docs = {k: (ROOT / "docs" / f).read_text(encoding="utf-8") for k, f in [("jepa", "jepa.md"), ("research", "research_2026.md")]}
+        docs = {k: (ROOT / f).read_text(encoding="utf-8") for k, f in [("jepa", "docs/jepa.md"), ("research", "docs/research_2026.md"),
+                                                                    ("lessons", "lessons/README.md"), ("setup", "lessons/00_setup/README.md")]}
         data = json.dumps({**export(), "docs": docs}, ensure_ascii=False).replace("</", "<\\/")   # keep </script> out of the data
         page = (Path(__file__).parent / "roadmap_template.html").read_text(encoding="utf-8").replace("__DATA__", data)
         Path(sys.argv[2]).write_text(page, encoding="utf-8")

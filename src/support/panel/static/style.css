@@ -165,3 +165,25 @@ svg text { font-family: inherit; }
 .mddoc blockquote { border-inline-start: 3px solid var(--accent, #6b8afd); margin: 8px 0; padding: 4px 10px; opacity: .9; }
 .mddoc .mdtable { overflow-x: auto; margin: 8px 0; } .mddoc table { min-width: 100%; }
 .mddoc pre { overflow-x: auto; }
+
+/* lessons page */
+.provbar select, .provbar input, .learnhead select { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font: inherit; font-size: 12.5px; }
+.learnhead { margin: 12px 0; }
+.provbar, .learnhead { overflow-x: auto; } .provbar select, .learnhead select { max-width: 240px; } .provbar input { max-width: 100%; }
+.chips2 { display: flex; gap: 4px; flex-wrap: wrap; }
+.chip2 { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; min-width: 30px; padding: 3px 10px; cursor: pointer; font-size: 12.5px; }
+.chip2.cur { background: var(--acc); color: var(--acc-ink); border-color: var(--acc); }
+.chip2.done:not(.cur) { background: var(--ok-bg); color: var(--ok); }
+.learncols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; align-items: start; }
+.learnside { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow-y: auto; }
+@media (max-width: 900px) { .learnside { position: static; max-height: none; } }
+textarea.code { width: 100%; min-height: 300px; margin-top: 8px; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; line-height: 1.5; background: var(--code); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 8px; padding: 10px; direction: ltr; text-align: left; resize: vertical; tab-size: 4; }
+ul.chk { list-style: none; margin: 0; padding: 0; } ul.chk li { padding: 3px 0; } ul.chk li.ok b { color: var(--ok); } ul.chk li.bad b { color: var(--bad); }
+ul.chk .msg { color: var(--bad); font-size: 12px; margin: 2px 22px; direction: ltr; text-align: left; white-space: pre-wrap; }
+ul.chk .tr { font-size: 11px; margin: 2px 22px; opacity: .8; direction: ltr; text-align: left; overflow-x: auto; }
+.hintbox { background: var(--info-bg); border-radius: 8px; padding: 8px 12px; margin-top: 8px; font-size: 13px; }
+.hintbox pre { direction: ltr; text-align: left; overflow-x: auto; font-size: 12px; }
+.runout { direction: ltr; text-align: left; background: var(--code); border-radius: 8px; padding: 10px; font-size: 12px; max-height: 320px; overflow: auto; white-space: pre-wrap; margin-top: 8px; }
+.qopt { display: block; padding: 2px 0; cursor: pointer; font-size: 13px; } .qres { margin: 2px 0 6px; }
+.bar { height: 8px; background: var(--code); border-radius: 99px; overflow: hidden; } .bar > i { display: block; height: 100%; background: var(--acc); }

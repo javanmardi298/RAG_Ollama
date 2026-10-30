@@ -285,6 +285,92 @@ def settings_preset_apply(preset_id: str):
     return service.apply_settings_preset(preset_id, origin="panel")
 
 
+# ---------- lessons ----------
+
+@app.get("/api/lessons")
+def lessons_tree():
+    from learn import api as learn
+    return {"tree": learn.tree(), "provider": learn.provider_config(), "providers": list(learn.PROVIDERS),
+            "claude": claude_chat.status()}
+
+
+@app.get("/api/lessons/provider")
+def lessons_provider():
+    from learn import api as learn
+    return learn.provider_config()
+
+
+@app.post("/api/lessons/provider")
+def lessons_set_provider(config: dict = Body(...)):
+    from learn import api as learn
+    return learn.set_provider(config)
+
+
+@app.post("/api/lessons/provider/test")
+def lessons_test_provider():
+    from learn import api as learn
+    return learn.test_provider()
+
+
+def _lesson_call(fn, *args, **kw):
+    try:
+        return fn(*args, **kw)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e)) from None
+
+
+@app.get("/api/lessons/{lesson}/{step}")
+def lesson_detail(lesson: str, step: str):
+    from learn import api as learn
+    return _lesson_call(learn.detail, lesson, step)
+
+
+@app.put("/api/lessons/{lesson}/{step}/answer")
+def lesson_save(lesson: str, step: str, code: str = Body(..., embed=True)):
+    from learn import api as learn
+    return _lesson_call(learn.save_answer, lesson, step, code)
+
+
+@app.post("/api/lessons/{lesson}/{step}/reset")
+def lesson_reset(lesson: str, step: str):
+    from learn import api as learn
+    return _lesson_call(learn.reset_answer, lesson, step)
+
+
+@app.post("/api/lessons/{lesson}/{step}/check")
+def lesson_check_ep(lesson: str, step: str, code: str | None = Body(None, embed=True)):
+    from learn import api as learn
+    if code is not None:
+        _lesson_call(learn.save_answer, lesson, step, code)
+    return _lesson_call(learn.check, lesson, step)
+
+
+@app.post("/api/lessons/{lesson}/{step}/run")
+def lesson_run(lesson: str, step: str, code: str | None = Body(None, embed=True)):
+    from learn import api as learn
+    if code is not None:
+        _lesson_call(learn.save_answer, lesson, step, code)
+    return _lesson_call(learn.run_answer, lesson, step)
+
+
+@app.post("/api/lessons/{lesson}/{step}/hint")
+def lesson_hint_ep(lesson: str, step: str, level: int = Body(0, embed=True)):
+    from learn import api as learn
+    return _lesson_call(learn.hint, lesson, step, level or None)
+
+
+@app.post("/api/lessons/{lesson}/{step}/solution")
+def lesson_solution_ep(lesson: str, step: str, force: bool = Body(False, embed=True)):
+    from learn import api as learn
+    return _lesson_call(learn.solution, lesson, step, force)
+
+
+@app.post("/api/lessons/{lesson}/{step}/quiz")
+def lesson_quiz(lesson: str, step: str, answers: list[int] = Body(..., embed=True)):
+    from learn import api as learn
+    return _lesson_call(learn.grade_quiz, lesson, step, answers)
+
+
 # ---------- LLM judge labels (stage 6b) ----------
 
 @app.get("/api/judge/labels")

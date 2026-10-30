@@ -49,7 +49,7 @@ function route() {
   const [path, q] = h.split("?");
   const params = Object.fromEntries(new URLSearchParams(q || ""));
   const parts = path.split("/").filter(Boolean);
-  return { page: parts[0] || "home", arg: parts[1], params };
+  return { page: parts[0] || "home", arg: parts[1], arg2: parts[2], params };
 }
 window.addEventListener("hashchange", render);
 const go = (h) => { location.hash = h; };
@@ -62,7 +62,7 @@ async function render() {
   try {
     const pages = { home: pageHome, stage: pageStage, settings: pageSettings, data: pageData, runs: pageRuns, run: pageRun,
       chat: pageChat, judge: pageJudge, coverage: pageCoverage, setup: pageSetup, file: pageFile, compare: pageCompare,
-      presets: pagePresets, preset: pagePreset, doc: pageDoc };
+      presets: pagePresets, preset: pagePreset, doc: pageDoc, learn: pageLearn };
     await (pages[r.page] || pageHome)(main, r);
   } catch (e) {
     main.innerHTML = `<div class="card pad"><div class="adv error"><span class="ic">!</span><div>${esc(e.message)}</div></div></div>`;
@@ -102,6 +102,7 @@ function renderSide(r) {
     ${cat.stages.map((s) => `<div class="nav ${st[s.id] || s.status}${cur("stage", s.id)}" onclick="go('/stage/${s.id}')">
       <span class="n">${n(s.id)}</span>${esc(s.title)}<span class="t">${st[s.id] === "done" ? "✓" : st[s.id] === "running" ? "…" : ""}</span></div>`).join("")}
     <hr><h3>نقشه‌ی راه</h3>
+    <div class="nav${cur("learn")}" onclick="go('/learn')"><span class="n">🎓</span>درس‌های تعاملی</div>
     <div class="nav${cur("presets") || cur("preset")}" onclick="go('/presets')"><span class="n">🧭</span>پروژه‌ها و پریست‌ها</div>
     ${DOCS.map(([path, ic, title]) => `<div class="nav${r.page === "doc" && r.params.path === path ? " cur" : ""}" onclick="go('/doc?path=${path}')"><span class="n">${ic}</span>${title}</div>`).join("")}
     <hr><h3>ابزارها</h3>
@@ -641,7 +642,7 @@ async function pageFile(main, r) {
 }
 
 // ----- documents (tutorials, research notes) rendered from markdown -----
-const DOCS = [["lessons/README.md", "🎓", "درس‌ها (قدم‌به‌قدم، با کد)"], ["docs/jepa.md", "🧠", "آموزش JEPA و World Model"], ["docs/research_2026.md", "🔬", "پژوهش ۲۰۲۶: چه چیزی تثبیت شده"],
+const DOCS = [["lessons/README.md", "📚", "راهنمای درس‌ها و راه‌اندازی"], ["docs/jepa.md", "🧠", "آموزش JEPA و World Model"], ["docs/research_2026.md", "🔬", "پژوهش ۲۰۲۶: چه چیزی تثبیت شده"],
   ["docs/panel.md", "📘", "راهنمای پنل"]];
 let docBase = "docs";
 function docLink(href) {                       // a relative link inside a document -> project path
@@ -654,7 +655,7 @@ function mdInline(t) {
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-    .replace(/\[([^\]]+)\]\(([\w./-]+\.md)\)/g, (m, label, href) => `<a onclick="go('/doc?path=${docLink(href)}')">${label}</a>`);
+    .replace(/\[([^\]]+)\]\(([\w./-]+\.md)\)/g, (m, label, href) => `<a onclick="docGo('${docLink(href)}')">${label}</a>`);
 }
 function mdToHtml(md) {
   const out = []; const lines = md.split("\n"); let i = 0;
@@ -788,6 +789,7 @@ function pageContext() {
   const r = route();
   if (r.page === "stage") return `user is on the page of stage ${r.arg}`;
   if (r.page === "run") return `user is looking at run #${r.arg}`;
+  if (r.page === "learn") return `user is on the interactive lessons page${r.arg ? ` (lesson ${r.arg}${r.arg2 ? ", " + r.arg2 : ""})` : ""}; act as a teacher: guide, do not give the full solution`;
   if (r.page === "compare") return `user is comparing runs #${r.params.a} and #${r.params.b}`;
   return `user is on the ${r.page} page`;
 }
