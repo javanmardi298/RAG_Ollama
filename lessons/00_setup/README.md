@@ -14,14 +14,14 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1              # اگر خطای ExecutionPolicy داد: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 python -m pip install -U pip
 pip install -r requirements.txt -r requirements-panel.txt
-pip install -e .
+pip install -e .   # (the .bat files also work without this step)
 ```
 **Linux / macOS:**
 ```bash
 git clone https://github.com/javanmardi298/rag_ollama.git && cd rag_ollama
 git checkout ccr-f5e84f2b-jub2kh
 python3 -m venv .venv && source .venv/bin/activate
-pip install -U pip && pip install -r requirements.txt -r requirements-panel.txt && pip install -e .
+pip install -U pip && pip install -r requirements.txt -r requirements-panel.txt && pip install -e .   # (the .bat files also work without this step)
 ```
 **چرا venv؟** تا نسخه‌ی کتابخانه‌های این پروژه با بقیه‌ی پروژه‌های سیستم قاطی نشود. هر بار ترمینال جدید باز می‌کنی دوباره فعالش کن.
 

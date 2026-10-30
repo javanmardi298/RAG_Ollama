@@ -4,6 +4,7 @@
 
 | علامت | علت و راه‌حل |
 |---|---|
+| `No module named support` یا `learn` | فایل‌های `windows\*.bat` خودشان درستش می‌کنند (`git pull` و دوباره اجرا). در ترمینال: `pip install -e .` در venv فعال |
 | `No module named learn` | `pip install -e .` را در محیط فعال (venv) اجرا نکرده‌ای |
 | `ModuleNotFoundError: torch` | فقط درس‌های JEPA: `pip install -r requirements-jepa.txt` |
 | تست‌ها `not implemented yet: TODO` | طبیعی است؛ هنوز کد را ننوشته‌ای (یا فایل پاسخ را ذخیره نکرده‌ای) |
