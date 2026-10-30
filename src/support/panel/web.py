@@ -331,6 +331,19 @@ def lesson_save(lesson: str, step: str, code: str = Body(..., embed=True)):
     return _lesson_call(learn.save_answer, lesson, step, code)
 
 
+@app.post("/api/lessons/{lesson}/notebook")
+def lesson_notebook(lesson: str):
+    """Build the lesson notebook and start JupyterLab (127.0.0.1, random token); returns the URL to open."""
+    from learn import api as learn
+    from learn import lab
+    if lesson not in learn.lessons() or not learn.steps(lesson):
+        raise HTTPException(404, "no interactive lesson " + lesson)
+    try:
+        return lab.start(lesson)
+    except RuntimeError as e:
+        raise ValueError(str(e)) from None
+
+
 @app.post("/api/lessons/{lesson}/{step}/reset")
 def lesson_reset(lesson: str, step: str):
     from learn import api as learn

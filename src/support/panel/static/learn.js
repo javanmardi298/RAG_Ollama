@@ -10,6 +10,11 @@ async function learnLoad(force) {
   return L.data;
 }
 const lessonInfo = (id) => L.data.tree.find((t) => t.lesson === id);
+window.openNotebook = async (lesson) => {
+  toast("در حال آماده کردن notebook و JupyterLab… (بار اول چند ثانیه)", 6000);
+  try { const r = await api(`/api/lessons/${lesson}/notebook`, {}); window.open(r.url, "_blank"); }
+  catch (e) { toast("notebook باز نشد: " + e.message, 9000); }
+};
 const stepShort = (s) => s.slice(0, 6);                      // "step01"
 
 window.docGo = (path) => {
@@ -41,10 +46,11 @@ function learnHome(main) {
       <div class="note">${t.steps.length} گام · ${done} انجام شده</div>
       <div class="bar" style="margin:8px 0"><i style="width:${pct}%"></i></div>
       <button class="btn p sm" onclick="go('/learn/${t.lesson}/${(next || t.steps[0]).step}')">${done === 0 ? "شروع" : done === t.steps.length ? "مرور" : "ادامه"}</button>
+      <button class="btn sm" onclick="openNotebook('${t.lesson}')" title="کد را ببین، اجرا کن و بررسی کن">📓 notebook</button>
       <button class="btn sm" onclick="go('/doc?path=${encodeURIComponent(t.readme)}')">معرفی</button></div>`;
   };
   main.innerHTML = `<div class="card pad"><h2>درس‌های تعاملی</h2>
-    <p class="note" style="margin:6px 0 0">هر گام: متن آموزشی ← کد ناقص که خودت کامل می‌کنی ← «بررسی» (تست خودکار) ← راهنمایی سه‌سطحی ← امتحان کوتاه. مدل زبانی را بالای صفحه‌ی هر گام انتخاب می‌کنی؛ پیش‌فرض بدون مدل است و همه‌چیز کار می‌کند.</p></div>
+    <p class="note" style="margin:6px 0 0">پیشنهاد اصلی: دکمه‌ی «📓 notebook» (JupyterLab): همه‌ی کد را می‌بینی، سلول‌به‌سلول اجرا می‌کنی و در پایان گزارش نهایی درس را می‌گیری. همین کار را در این صفحه هم می‌شود انجام داد. هر گام: متن آموزشی ← کد ناقص که خودت کامل می‌کنی ← «بررسی» (تست خودکار) ← راهنمایی سه‌سطحی ← امتحان کوتاه. مدل زبانی را بالای صفحه‌ی هر گام انتخاب می‌کنی؛ پیش‌فرض بدون مدل است و همه‌چیز کار می‌کند.</p></div>
     <div class="grid2" style="margin-top:14px">${inter.map(card).join("")}</div>
     <div class="card pad" style="margin-top:14px"><h4>راهنمای مرحله‌ای (هنوز بدون تمرین خودکار)</h4>
       <div class="note" style="margin:6px 0">${guides.map((t) => `<a onclick="go('/doc?path=${encodeURIComponent(t.readme)}')">${esc(t.lesson)}</a>`).join(" · ")}</div></div>`;
@@ -103,6 +109,7 @@ async function learnStep(main, lesson, step) {
   main.innerHTML = `${provBar()}
     <div class="card pad learnhead"><div class="row" style="gap:10px;flex-wrap:wrap;align-items:center">
       <select id="lsSel">${lessonOpts}</select><div class="chips2">${chips}</div><span class="sp"></span>
+      <button class="btn p sm" onclick="openNotebook('${lesson}')" title="همین درس را در JupyterLab باز می‌کند: کد را می‌بینی، اجرا می‌کنی و آخر بررسی می‌شود">📓 باز کردن به‌صورت notebook</button>
       <a class="note" onclick="go('/learn')">همه‌ی درس‌ها</a></div></div>
     <div class="learncols">
       <div class="card pad mddoc" id="lessonText">${mdToHtml(d.text)}

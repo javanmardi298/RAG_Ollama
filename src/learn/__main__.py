@@ -9,6 +9,7 @@
     quiz <lesson> [step]          3 questions; wrong ones come back in `review`
     review                        repeat questions you got wrong
     notebook <lesson>             write lessons/<lesson>/<lesson>.ipynb for Colab / Jupyter
+    lab <lesson>                  write the notebook and open it in JupyterLab (pip install -r requirements-notebook.txt)
     build                         regenerate lessons/README.md and the guide-only lesson pages from presets/
     selftest                      maintainers / CI: solutions pass, starters fail, links resolve
     errors                        your error diary (work/errors.md)
@@ -85,6 +86,17 @@ def main(argv: list[str] | None = None) -> int:
         elif a.cmd == "notebook":
             from . import notebooks
             print("wrote", notebooks.write(a.lesson))
+        elif a.cmd == "lab":
+            import webbrowser
+
+            from . import lab
+            info = lab.start(a.lesson)
+            print("JupyterLab:", info["url"], "\n(Ctrl+C to stop)")
+            webbrowser.open(info["url"])
+            try:
+                lab._STATE["proc"].wait()
+            except KeyboardInterrupt:
+                lab.stop()
         elif a.cmd == "build":
             from . import build
             print(build.build())

@@ -14,7 +14,7 @@ import yaml
 from support.config import ROOT
 
 LESSONS = ROOT / "lessons"
-WORK = ROOT / "work"
+WORK = Path(os.environ.get("LEARN_WORK") or ROOT / "work")
 STEP_RE = re.compile(r"step(\d\d)_")
 HINT_RE = re.compile(r"^##\s*(?:Hint|راهنمایی)\s*(\d)", re.M)
 

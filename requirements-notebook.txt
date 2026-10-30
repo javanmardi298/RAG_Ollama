@@ -1,0 +1,6 @@
+# Notebook lessons (python -m learn lab <lesson>, the panel's notebook button, VS Code, Colab needs nothing)
+jupyterlab>=4.0
+ipykernel>=6.29
+# only to execute notebooks in CI / tests:
+nbclient>=0.10
+nbformat>=5.9

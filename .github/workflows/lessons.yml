@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install pandas numpy scipy scikit-learn pyyaml pydantic matplotlib fastapi httpx mcp psutil pytest ruff
+      - run: pip install pandas numpy scipy scikit-learn pyyaml pydantic matplotlib fastapi httpx mcp psutil pytest ruff nbclient nbformat ipykernel
       - run: pip install torch --index-url https://download.pytorch.org/whl/cpu    # the JEPA lessons (p17 step 2) need it
       - run: pip install -e . --no-deps
       - run: ruff check lessons src/learn

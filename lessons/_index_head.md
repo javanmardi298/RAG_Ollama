@@ -9,7 +9,16 @@
 4. [p17 — مبانی JEPA](p17_jepa_basics/README.md) (PyTorch، CPU).
 5. [m01 — مقایسه‌ی مدل‌ها](m01_compare_models/README.md) (Ollama در برابر Claude در برابر OpenCode با عدد).
 
-## چطور کار می‌کند
+## روش پیشنهادی: notebook (کد را می‌بینی، اجرا می‌کنی، آخر بررسی می‌شود)
+هر درس یک notebook دارد: `lessons/<درس>/<درس>.ipynb`. هر گام در آن به این ترتیب است: **متن درس** ← **✍️ کد تو** (کد ناقص را اینجا کامل می‌کنی؛ به فایل جدا نیازی نیست) ← **▶ اجرای نمایشی** ← **✅ بررسی خودکار** ← **🔍 کد تست‌ها** (ببین چه چیزی سنجیده می‌شود) ← **💡 جواب مرجع** (تاشو) ← **📝 امتحان کوتاه**. در پایان **🏁 گزارش نهایی درس**: نتیجه‌ی تست و امتحان هر گام.
+
+```powershell
+pip install -r requirements-notebook.txt
+windows\notebook.bat p01_faq_search        # یا: python -m learn lab p01_faq_search
+```
+یا از پنل: «درس‌های تعاملی» ← «📓 notebook». در Colab: دکمه‌ی «Open in Colab» بالای هر notebook. در VS Code: فایل `.ipynb` را باز کن و kernel پایتون venv را انتخاب کن.
+
+## روش‌های دیگر (همان درس‌ها)
 ```bash
 python -m learn list                       # درس‌ها و پیشرفت تو
 python -m learn start p01_faq_search       # متن گام ۱ + ساخت فایل پاسخ در work/
@@ -20,7 +29,7 @@ python -m learn solution p01_faq_search    # جواب مرجع (بعد از یک
 python -m learn review                     # سؤال‌هایی که اشتباه زدی
 python -m learn errors                     # دفترچه‌ی خطاهای خودت
 ```
-همین‌ها در **پنل** (منوی «درس‌ها») و به‌صورت **notebook** (Jupyter / Colab / VS Code) هم هست. پاسخ‌های تو در `work/` می‌مانند و commit نمی‌شوند.
+همین‌ها در **پنل** (منوی «درس‌های تعاملی»: ویرایشگر، بررسی، راهنمایی، امتحان، انتخاب مدل) هم هست. پاسخ‌های تو در `work/` می‌مانند و commit نمی‌شوند.
 
 ## حالت معلم (Claude یا OpenCode راهنمای توست)
 از Claude Desktop، Claude Code یا OpenCode بخواه: «درس p01 را با من جلو ببر». ابزارهای `lessons_list`، `lesson_step`، `lesson_check`، `lesson_hint` به آن‌ها داده می‌شود. معلم مفهوم را توضیح می‌دهد، تو کد را می‌نویسی، او نتیجه‌ی تست را با پرسش راهنما برایت باز می‌کند و **جواب کامل نمی‌دهد** (فایل `solution.py` از ابزار پنل خوانده نمی‌شود). برای Claude Code/OpenCode که خودشان فایل می‌خوانند، این قرارداد است نه قفل: در تنظیمات آن‌ها قاعده‌ی deny برای `lessons/**/solution.py` بگذار.

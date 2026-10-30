@@ -61,12 +61,56 @@ def test_infinite_loop_times_out():
 def test_notebook_is_valid_and_checks_run_against_notebook_globals(capsys):
     nb = notebooks.build("p01_faq_search")
     assert nb["nbformat"] == 4 and any("Open In Colab" in "".join(c["source"]) for c in nb["cells"])
-    assert sum(c["cell_type"] == "code" for c in nb["cells"]) == 1 + 2 * 5          # setup + (starter, check) per step
     json.dumps(nb)
+    src = ["".join(c["source"]) for c in nb["cells"]]
+    kinds = [("c" if c["cell_type"] == "code" else "m") for c in nb["cells"]]
+    # per step: the code is shown (starter with TODOs), then the check, then the folded tests and solution, then the quiz
+    assert sum("TODO 1" in t for t in src if t.startswith('"""Step')) == 5
+    assert sum(t.startswith("from learn.notebook import check_cell") for t in src) == 5
+    assert sum("<summary><b>💡 جواب مرجع" in t for t in src) == 5 and sum("<summary><b>🔍" in t for t in src) == 5
+    assert sum(t.startswith("from learn.notebook import quiz_cell") for t in src) == 5
+    assert src[-1].startswith("from learn.notebook import lesson_report") and kinds[-1] == "c"
+    first_code = next(i for i, t in enumerate(src) if "TODO 1" in t)
+    first_check = next(i for i, t in enumerate(src) if t.startswith("from learn.notebook import check_cell"))
+    assert first_code < first_check                                    # you see and write the code before it is checked
+    assert not any("python -m learn check" in t for t in src), "command-line workflow text leaked into the notebook"
     ns = {}
     exec((api.LESSONS / "p01_faq_search" / "step01_chunk_markdown" / "solution.py").read_text(encoding="utf-8"), ns)
-    nbmod.check_cell("p01_faq_search", "step01_chunk_markdown", ns)
+    assert nbmod.check_cell("p01_faq_search", "step01_chunk_markdown", ns) is True
     assert "PASSED" in capsys.readouterr().out
+    rep = nbmod.lesson_report("p01_faq_search")
+    assert rep["passed"] == 1 and rep["total"] == 5
+
+
+def _execute(lesson, tmp_path, monkeypatch):
+    nbformat = pytest.importorskip("nbformat")
+    nbclient = pytest.importorskip("nbclient")
+    pytest.importorskip("ipykernel")
+    monkeypatch.setenv("LEARN_QUIZ_AUTO", "1")
+    monkeypatch.setenv("LEARN_WORK", str(tmp_path / "w"))
+    nb = nbformat.reads(json.dumps(notebooks.build(lesson, "solution")), as_version=4)
+    nbclient.NotebookClient(nb, timeout=600, kernel_name="python3", resources={"metadata": {"path": str(api.ROOT)}}).execute()
+    return "".join(o.get("text", "") for o in nb.cells[-1].outputs)
+
+
+@pytest.mark.parametrize("lesson, steps", [("p01_faq_search", 5), ("p22_agentic_rag", 5), ("m01_compare_models", 3)])
+def test_notebooks_run_top_to_bottom_with_the_reference_solution(lesson, steps, tmp_path, monkeypatch):
+    out = _execute(lesson, tmp_path, monkeypatch)
+    assert f"{steps}/{steps} گام پاس شد" in out and "✗" not in out, out
+
+
+def test_jepa_notebook_runs(tmp_path, monkeypatch):
+    pytest.importorskip("torch")
+    if not __import__("os").environ.get("LEARN_SLOW"):
+        pytest.skip("set LEARN_SLOW=1 (about 80 s)")
+    assert "4/4 گام پاس شد" in _execute("p17_jepa_basics", tmp_path, monkeypatch)
+
+
+def test_lab_launcher_requires_jupyterlab(monkeypatch):
+    from learn import lab
+    monkeypatch.setattr(lab.importlib.util, "find_spec", lambda name: None)
+    with pytest.raises(ValueError, match="requirements-notebook"):
+        lab.start("p01_faq_search")
 
 
 def test_quiz_files_are_well_formed():

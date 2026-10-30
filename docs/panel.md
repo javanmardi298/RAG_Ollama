@@ -115,3 +115,5 @@ windows/                      setup.ps1, start_panel.bat, install_claude_desktop
 - **مدل هر درس:** `LEARN_PROVIDER` = `offline` (پیش‌فرض) | `ollama` | `anthropic` | `opencode` | `openai_compatible` با `LEARN_MODEL`، `LEARN_API_BASE` و سقف هزینه‌ی `LEARN_BUDGET_USD` (+ قیمت‌ها). برای کل پروژه همین ارائه‌دهنده‌ها در `configs/project.yaml` بخش `llm.provider` هم هست.
 - **حالت معلم:** ابزارهای `lessons_list`، `lesson_step`، `lesson_check`، `lesson_hint`، `lessons_progress` در MCP و چت Claude هستند. Claude مفهوم را توضیح می‌دهد، تست را اجرا می‌کند و با پرسش راهنما جلو می‌برد؛ فایل `solution.py` از `read_project_file` خوانده نمی‌شود (مگر `LEARN_REVEAL_SOLUTIONS=1`) و ابزار «جواب» وجود ندارد.
 - **notebook:** `python -m learn notebook p01_faq_search` ← `lessons/p01_faq_search/p01_faq_search.ipynb` با دکمه‌ی Colab.
+
+- **notebook:** دکمه‌ی «📓 notebook» در صفحه‌ی درس‌ها notebook همان درس را می‌سازد و JupyterLab (فقط 127.0.0.1، توکن تصادفی) را باز می‌کند؛ کد را می‌بینی، در سلول‌ها می‌نویسی، اجرا می‌کنی و در پایان گزارش نهایی درس را می‌گیری. نیاز: `pip install -r requirements-notebook.txt`.

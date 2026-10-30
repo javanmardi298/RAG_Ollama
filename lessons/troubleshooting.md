@@ -19,3 +19,7 @@
 | `UnicodeDecodeError` هنگام خواندن فایل | فایل را با `encoding="utf-8"` باز کن |
 | notebook در Colab `ModuleNotFoundError` | اولین سلول (Setup) را اجرا نکرده‌ای |
 | JEPA کند است | طبیعی روی CPU؛ `--epochs` را کم کن یا Colab با GPU |
+| `JupyterLab is not installed` | `pip install -r requirements-notebook.txt` |
+| notebook: `ModuleNotFoundError: learn` | اولین سلول (آماده‌سازی) را اجرا نکرده‌ای، یا kernel با venv پروژه یکی نیست (VS Code: Select Kernel) |
+| در notebook سلول بررسی `✗ not implemented yet` | سلول «✍️ کد تو» را کامل نکرده یا اجرا نکرده‌ای؛ اول آن را اجرا کن |
+| `input()` در امتحان کار نمی‌کند | سلول را در Jupyter/Colab اجرا کن (نه به‌صورت اسکریپت) |

@@ -116,5 +116,12 @@ export OPENAI_API_KEY=...   # فقط اگر سرور می‌خواهد
 - **Colab:** هر درس یک notebook دارد (`lessons/<درس>/<درس>.ipynb`)؛ دکمه‌ی «Open in Colab» بالای آن است. برای درس‌های JEPA/GPU بهترین مسیر است.
 - **GitHub Codespaces:** روی repo «Code ← Codespaces ← Create». محیط خودکار نصب می‌شود. Ollama روی CPU آنجا کند است؛ `anthropic` یا `opencode` مناسب‌تر است.
 
-## ۷. اگر گیر کردی
+## ۷. اجرای درس‌ها به‌صورت notebook (روش اصلی)
+```powershell
+pip install -r requirements-notebook.txt        # JupyterLab و kernel
+windows\notebook.bat p01_faq_search              # یا: python -m learn lab p01_faq_search
+```
+JupyterLab فقط روی `127.0.0.1` با توکن تصادفی باز می‌شود. در notebook سلول‌ها را به ترتیب اجرا کن: اول «آماده‌سازی» و «مدل زبانی» (همان‌جا ارائه‌دهنده را انتخاب می‌کنی)، بعد برای هر گام: کد را بخوان و کامل کن، اجرا کن، «بررسی خودکار» را بزن و در پایان «گزارش نهایی درس» را. کلید API را داخل notebook ننویس؛ از `.env` یا `getpass` استفاده کن.
+
+## ۸. اگر گیر کردی
 [رفع اشکال](../troubleshooting.md) و [واژه‌نامه](../glossary.md). خطاهایی که می‌خوری در `work/errors.md` ثبت می‌شود (`python -m learn errors`).
