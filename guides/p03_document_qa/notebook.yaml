@@ -1,0 +1,76 @@
+name: 01_document_qa.ipynb
+cells:
+  - md: |
+      # Question answering over company documents, with citations
+
+      Four internal documents in three formats (markdown, plain text, HTML; PDF and Word are optional) and 18 employee
+      questions: 15 answerable, 3 about things the documents do not cover. Every answer must cite its source, every number
+      in it must appear in the cited text, and without enough evidence the system abstains.
+  - code: |
+      from doc_qa import BM25, answer, chunk_all, evaluate, load_documents, load_questions
+
+      docs = load_documents()
+      questions = load_questions()
+      for name, text in docs.items():
+          print(f"{name:18s} {len(text.split()):4d} words | {text.splitlines()[0]}")
+      print(len(questions), "questions")
+    note: "سه قالب فایل خوانده می‌شوند و هر کدام به متن با عنوان‌های `#` تبدیل می‌شود، تا تکه‌کردن برای همه یکسان باشد."
+    expect: "it_security +98 words \\| # IT Security Policy"
+  - md: |
+      ## Chunks keep their heading path
+  - code: |
+      chunks = chunk_all(docs)
+      print(len(chunks), "chunks")
+      for c in chunks[:5]:
+          print(f"{c['id']:20s} {c['heading']:32s} {c['text'][:50]}")
+    note: "هر بخش یک تکه است و عنوان کامل کنارش می‌ماند. بخش‌های بلندتر از ۸۰ کلمه به پنجره‌های هم‌پوشان تقسیم می‌شوند (تست این را چک می‌کند)."
+    expect: "employee_handbook#0 +Employee Handbook > Vacation"
+  - md: |
+      ## Answers
+  - code: |
+      index = BM25(chunks)
+      for q in questions:
+          out = answer(q["question"], index)
+          shown = f"ABSTAIN ({out['reason']})" if out["abstained"] else out["answer"][:70]
+          print(f"{q['question'][:38]:38s} -> {shown}")
+    note: "مدل پیش‌فرض offline جمله‌ی مرتبط را از سند برمی‌دارد و ارجاع می‌دهد. سه سؤال آخر شاهد ندارند و امتناع می‌شوند."
+    expect: "can I bring my dog to the office +-> ABSTAIN \\(no evidence\\)"
+  - md: |
+      ## Guards against wrong answers
+      Two answers a model could plausibly give: a wrong number with a real citation, and a right number with an invented citation.
+  - code: |
+      q = "when do I have to submit expenses"
+      wrong_number = lambda question, cs: f"Within 60 days [{cs[0]['id']}]"
+      fake_citation = lambda question, cs: "Within 30 days [policy#9]"
+      print("wrong number  ->", answer(q, index, wrong_number)["reason"])
+      print("fake citation ->", answer(q, index, fake_citation)["reason"])
+    note: "دفاع در کد است، نه در prompt: عدد ۶۰ در سند نیست، پس جواب رد می‌شود؛ ارجاع ساختگی هم رد می‌شود."
+    expect: "wrong number  -> number not in the source"
+  - md: |
+      ## Evaluation
+  - code: |
+      import json, os
+
+      result = evaluate(questions, index)
+      print(result)
+      os.makedirs("results", exist_ok=True)
+      with open("results/results.json", "w") as f:
+          json.dump({"offline": result}, f, indent=2)
+    note: "روی این مجموعه‌ی کوچک همه درست است؛ این یعنی مجموعه کوچک و تمیز است، نه اینکه سیستم بی‌نقص است. با سؤال‌های واقعی همکاران و سندهای بلندتر امتحان کن."
+    expect: "'answered_unanswerable': 0"
+  - md: |
+      ## With a real model (optional)
+      Set `DOCQA_PROVIDER` to `ollama`, `anthropic` or `opencode` before starting the notebook. The same guards apply.
+  - code: |
+      import os
+      from doc_qa import make_llm
+
+      if os.environ.get("DOCQA_PROVIDER", "offline") != "offline":
+          result_llm = evaluate(questions, index, make_llm())
+          print(result_llm)
+          with open("results/results.json", "w") as f:
+              json.dump({"offline": result, os.environ["DOCQA_PROVIDER"]: result_llm}, f, indent=2)
+      else:
+          print("No model set: DOCQA_PROVIDER = ollama | anthropic | opencode (see the guide)")
+    note: "با مدل واقعی جواب‌ها روان‌تر می‌شوند؛ ببین چند بار نگهبان‌ها (عدد و ارجاع) جواب مدل را رد می‌کنند."
+    expect: "No model set|answered_unanswerable"

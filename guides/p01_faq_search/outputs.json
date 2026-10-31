@@ -1,0 +1,36 @@
+{
+ "check_setup": "Python 3.x.y\n5 documents, 13 chunks, 15 questions\nBM25 top hit for 'refund money': refunds#0\nsetup ok\n",
+ "pytest": "......                                                                   [100%]\n6 passed",
+ "cells": [
+  "5 documents, 13 chunks, 15 questions",
+  "payment#0 | Payment > Methods | We accept credit cards, PayPal and bank transfer. We do not \npayment#1 | Payment > Invoices | The invoice is attached to your order confirmation email and\nrefunds#0 | Refunds > Timing | We send your money back to the original payment method withi\nrefunds#1 | Refunds > Partial refunds | If an item comes back damaged or used, we may refund only pa",
+  "how fast is standard delivery\n  bm25     ['shipping#0', 'returns#0', 'shipping#1']\n  trigram  ['shipping#0', 'shipping#1', 'returns#0']\n  hybrid   ['shipping#0', 'returns#0', 'shipping#1']\nhow fast is standrd delivry\n  bm25     []\n  trigram  ['shipping#0', 'shipping#1', 'returns#0']\n  hybrid   ['shipping#0', 'shipping#1', 'returns#0']",
+  "method    recall@3    mrr  misses\nbm25         0.917  0.917  ['how long do I have to send back a sofa']\ntrigram      1.000  0.944  []\nhybrid       1.000  0.944  []",
+  "how long do I have to send back a sofa -> We send your money back to the original payment method withi\ncan I return a personalised mirror     -> You can return most items within 30 days of delivery. Return\nhow do I start a return                -> Open your order in the account page and choose \"Return item\"\nwhen do I get my money back            -> We send your money back to the original payment method withi\nwhat if the item comes back damaged    -> If an item comes back damaged or used, we may refund only pa\nhow fast is standard delivery          -> Standard delivery takes 3 to 5 working days. Express deliver\nhow much does express shipping cost    -> Shipping is free above 50 EUR. Below that, standard shipping\nis there a tracking link               -> You receive a tracking link by email when the parcel leaves \nis a broken table leg covered          -> Furniture has a 2-year warranty against manufacturing defect\nhow do I claim the warranty            -> Send a photo of the defect and your order number to support.\ncan I pay with PayPal                  -> We accept credit cards, PayPal and bank transfer. We do not \nwhere is my invoice                    -> The invoice is attached to your order confirmation email and\ncan I pay by cheque                    -> The invoice is attached to your order confirmation email and\nwhat is the CEO's phone number         -> Send a photo of the defect and your order number to support.\ndo you sell gift cards                 -> Refunds for gift orders go to the buyer, not to the recipien\n\nunanswerable questions: answered 3 | abstained 0"
+ ],
+ "results": [
+  {
+   "method": "bm25",
+   "recall@3": 0.917,
+   "mrr": 0.917,
+   "n": 12,
+   "misses": [
+    "how long do I have to send back a sofa"
+   ]
+  },
+  {
+   "method": "trigram",
+   "recall@3": 1.0,
+   "mrr": 0.944,
+   "n": 12,
+   "misses": []
+  },
+  {
+   "method": "hybrid",
+   "recall@3": 1.0,
+   "mrr": 0.944,
+   "n": 12,
+   "misses": []
+  }
+ ]
+}

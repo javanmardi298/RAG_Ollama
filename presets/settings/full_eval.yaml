@@ -1,0 +1,12 @@
+id: full_eval
+title: "ارزیابی کامل برای گزارش و رزومه"
+description: "سناریوهای بیشتر برای فاصله‌ی اطمینان باریک‌تر، مدل متفاوت برای مشتری شبیه‌سازی‌شده و قاضی. کند است (ساعت‌ها با مدل محلی)."
+changes:
+  evaluation.n_random_scenarios: 120
+  evaluation.n_run: 80
+  evaluation.n_bootstrap: 5000
+  llm.user_sim_model: "llama3.1:8b"
+  llm.judge_model: "llama3.1:8b"
+  intents.run_embeddings: true
+  intents.run_llm: true
+  intents.llm_sample_per_intent: 12

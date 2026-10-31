@@ -1,0 +1,37 @@
+# Hand-written questions for evaluating policy retrieval and answers (stage 2).
+# doc: the policy document that answers it; null = not answerable from our policies (bot must say so / hand off).
+# must_mention: a fact the answer has to contain.
+- {lang: en, doc: cancellation, must_mention: "free", question: "Does it cost anything to cancel my order?"}
+- {lang: en, doc: cancellation, must_mention: "shipped", question: "My parcel already left the warehouse, can I still cancel?"}
+- {lang: en, doc: returns, must_mention: "30", question: "How long do I have to send something back?"}
+- {lang: en, doc: returns, must_mention: "14", question: "What is the legal withdrawal period in the EU?"}
+- {lang: en, doc: returns, must_mention: "personalised", question: "Can I return an engraved custom mirror?"}
+- {lang: en, doc: returns, must_mention: "free", question: "Who pays for the return shipping?"}
+- {lang: en, doc: refunds, must_mention: "original payment method", question: "Where will my money go when I get a refund?"}
+- {lang: en, doc: refunds, must_mention: "14", question: "How long until the refund arrives after you get my return?"}
+- {lang: en, doc: refunds, must_mention: "150", question: "Why does my refund need manual approval?"}
+- {lang: en, doc: damaged_items, must_mention: "7", question: "The table arrived scratched, until when do I have to tell you?"}
+- {lang: en, doc: damaged_items, must_mention: "photo", question: "What do you need from me for a broken item?"}
+- {lang: en, doc: shipping, must_mention: "3 to 5", question: "How long does standard delivery take?"}
+- {lang: en, doc: shipping, must_mention: "processing", question: "Can I change the delivery address?"}
+- {lang: en, doc: shipping, must_mention: "DHL", question: "Which carriers do you use?"}
+- {lang: en, doc: payment_invoices, must_mention: "Klarna", question: "Can I pay later?"}
+- {lang: en, doc: payment_invoices, must_mention: "email", question: "How do I get my invoice?"}
+- {lang: de, doc: cancellation, must_mention: "keine", question: "Kostet eine Stornierung etwas?"}
+- {lang: de, doc: cancellation, must_mention: "versendet", question: "Kann ich noch stornieren, wenn das Paket schon unterwegs ist?"}
+- {lang: de, doc: returns, must_mention: "30", question: "Wie lange habe ich Zeit für eine Rücksendung?"}
+- {lang: de, doc: returns, must_mention: "14", question: "Wie lang ist das gesetzliche Widerrufsrecht?"}
+- {lang: de, doc: returns, must_mention: "Sonderanfertigung", question: "Kann ich ein personalisiertes Kissen zurückschicken?"}
+- {lang: de, doc: refunds, must_mention: "Zahlungsart", question: "Wohin wird mein Geld erstattet?"}
+- {lang: de, doc: refunds, must_mention: "150", question: "Warum dauert meine Erstattung länger?"}
+- {lang: de, doc: damaged_items, must_mention: "7", question: "Mein Sofa ist kaputt angekommen, bis wann muss ich das melden?"}
+- {lang: de, doc: damaged_items, must_mention: "Foto", question: "Was braucht ihr bei einem beschädigten Artikel?"}
+- {lang: de, doc: shipping, must_mention: "3 bis 5", question: "Wie lange dauert der Versand?"}
+- {lang: de, doc: shipping, must_mention: "10", question: "Ab wann gilt meine Lieferung als verspätet?"}
+- {lang: de, doc: shipping, must_mention: "Bearbeitung", question: "Kann ich die Lieferadresse noch ändern?"}
+- {lang: de, doc: payment_invoices, must_mention: "PayPal", question: "Welche Zahlungsarten gibt es?"}
+- {lang: de, doc: payment_invoices, must_mention: "Team", question: "Mir wurde doppelt abgebucht, was jetzt?"}
+- {lang: en, doc: null, must_mention: "", question: "Do you ship to Switzerland?"}
+- {lang: en, doc: null, must_mention: "", question: "Do you offer assembly service for wardrobes?"}
+- {lang: de, doc: null, must_mention: "", question: "Habt ihr einen Laden in Berlin?"}
+- {lang: de, doc: null, must_mention: "", question: "Gibt es Gutscheine für Neukunden?"}

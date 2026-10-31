@@ -1,0 +1,55 @@
+{
+ "check_setup": "Python 3.x.y\n84 products, 24 queries, 207 labels\nElio Sofa\nCategory: sofa (Living Room Furniture)\nFeatures: color: white; material: velvet; style: modern; seats: 4\nDescription: A settee made of velvet. Solid build for daily use. Seats 4.\n1.0 0.587 1.0\nsetup ok\n",
+ "pytest": "....                                                                     [100%]\n4 passed",
+ "cells": [
+  "84 products, 24 queries\nElio Sofa. A settee made of velvet. Solid build for daily use. Seats 4.\n---\nElio Sofa\nCategory: sofa (Living Room Furniture)\nFeatures: color: white; material: velvet; style: modern; seats: 4\nDescription: A settee made of velvet. Solid build for daily use. Seats 4.",
+  "bm25 basic     {'ndcg@10': 0.841, 'recall@10': 0.958, 'mrr': 0.699}\nbm25 rich      {'ndcg@10': 0.941, 'recall@10': 1.0, 'mrr': 0.972}",
+  "trigram rich   {'ndcg@10': 0.915, 'recall@10': 1.0, 'mrr': 1.0}\nhybrid rrf     {'ndcg@10': 0.926, 'recall@10': 1.0, 'mrr': 1.0}\n\ngrey velvt sofaa   bm25: ['bookcase', 'bookcase', 'floor lamp']\n                   hybrid: ['armchair', 'sofa', 'sofa']\noak dinning tabel  bm25: ['dining table', 'desk', 'dining table']\n                   hybrid: ['dining table', 'dining table', 'dining table']",
+  "bm25 rich      {'diff': 0.1, 'low': 0.045, 'high': 0.154, 'p': 0.0}\ntrigram rich   {'diff': 0.073, 'low': -0.001, 'high': 0.156, 'p': 0.028}\nhybrid rrf     {'diff': 0.085, 'low': 0.019, 'high': 0.158, 'p': 0.0044}",
+  "sentence-transformers is not installed: dense search skipped"
+ ],
+ "results": {
+  "table": {
+   "bm25 basic": {
+    "ndcg@10": 0.841,
+    "recall@10": 0.958,
+    "mrr": 0.699
+   },
+   "bm25 rich": {
+    "ndcg@10": 0.941,
+    "recall@10": 1.0,
+    "mrr": 0.972
+   },
+   "trigram rich": {
+    "ndcg@10": 0.915,
+    "recall@10": 1.0,
+    "mrr": 1.0
+   },
+   "hybrid rrf": {
+    "ndcg@10": 0.926,
+    "recall@10": 1.0,
+    "mrr": 1.0
+   }
+  },
+  "vs_basic": {
+   "bm25 rich": {
+    "diff": 0.1,
+    "low": 0.045,
+    "high": 0.154,
+    "p": 0.0
+   },
+   "trigram rich": {
+    "diff": 0.073,
+    "low": -0.001,
+    "high": 0.156,
+    "p": 0.028
+   },
+   "hybrid rrf": {
+    "diff": 0.085,
+    "low": 0.019,
+    "high": 0.158,
+    "p": 0.0044
+   }
+  }
+ }
+}

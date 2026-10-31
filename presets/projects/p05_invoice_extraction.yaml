@@ -1,0 +1,45 @@
+id: p05_invoice_extraction
+order: 5
+level: 2
+title: "استخراج داده از فاکتور و رسید + workflow تأیید"
+title_en: "Invoice / receipt extraction with an approval workflow"
+tracks: [workflow, eval]
+weeks: "2–3"
+real_world: "حسابداری و خرید (accounts payable): فاکتور ایمیل می‌شود، فیلدها استخراج، با سفارش خرید تطبیق و برای پرداخت تأیید می‌شود."
+problem: "قالب فاکتورها متفاوت است، OCR خطا دارد، و یک رقم اشتباه یعنی پرداخت اشتباه. پرداخت تکراری فاجعه است."
+goal: "استخراج ساختاریافته با اعتبارسنجی قواعد کسب‌وکار، صف بازبینی انسانی برای موارد مشکوک، و workflow که هیچ فاکتوری را دو بار پرداخت نکند."
+prerequisites: [p03_document_qa]
+data:
+  - {name: "SROIE", url: "https://rrc.cvc.uab.es/?ch=13", license: "پژوهشی", note: "۱۰۰۰ رسید با شرکت، تاریخ، آدرس، مبلغ کل"}
+  - {name: "CORD", url: "https://huggingface.co/datasets/naver-clova-ix/cord-v2", license: "CC BY 4.0", note: "رسید با آیتم‌ها"}
+  - {name: "فاکتورهای ساختگی خودت", url: "", license: "—", note: "با جمع غلط، تاریخ آینده، فاکتور تکراری برای موارد مرزی"}
+stack: {llm: "qwen2.5:7b (متن) یا qwen2.5vl / llama3.2-vision (تصویر)", embeddings: "—", extras: ["Tesseract یا docTR", "pydantic"]}
+components: [ocr, doc_loaders, structured_output, extraction_metrics, workflow_engine, human_approval, idempotency, selective_decision, cost_ledger, pii_masking]
+stages:
+  - title: "schema و قواعد کسب‌وکار"
+    learn: ["schema با pydantic", "اعتبارسنجی فراتر از نوع: جمع = خالص + مالیات، تاریخ در گذشته، IBAN معتبر"]
+    build: ["مدل Invoice با validatorها", "۲۰ فاکتور با جواب درست (gold) آماده کن"]
+    measure: "پوشش قواعد روی موارد مرزی"
+    pitfall: "JSON معتبر ≠ داده‌ی درست؛ constrained decoding فقط شکل را تضمین می‌کند."
+  - title: "استخراج و repair"
+    learn: ["structured output + یک دور repair با پیام خطا", "متن OCR در برابر مدل بینایی"]
+    build: ["labkit.structured.extract روی متن OCR", "مقایسه با مدل بینایی روی همان فاکتورها"]
+    measure: "F1 هر فیلد، exact match سند (labkit.metrics.extraction_report)"
+    pitfall: "مقایسه‌ی رشته‌ای خام «1.234,50» و «1234.5» را متفاوت می‌شمارد؛ نرمال‌سازی کن."
+  - title: "اطمینان و صف بازبینی"
+    learn: ["چه زمانی انسان: قاعده‌ی شکسته، مبلغ بالا، فیلد خالی، تأمین‌کننده‌ی جدید"]
+    build: ["قاعده‌های ارجاع با کد (نه LLM)", "نرخ ارجاع و دقت موارد خودکار را کنار هم گزارش کن"]
+    measure: "straight-through rate در برابر خطای موارد خودکار"
+    pitfall: "Straight-through rate بالا بدون نرخ خطا گمراه‌کننده است."
+  - title: "workflow پرداخت"
+    learn: ["idempotency key = شماره‌ی فاکتور + تأمین‌کننده", "تأیید انسانی بالای سقف، audit log"]
+    build: ["labkit.workflow: extract → validate → match PO → approve(>سقف) → pay", "فاکتور تکراری و crash وسط کار را شبیه‌سازی کن"]
+    measure: "صفر پرداخت تکراری در آزمون؛ زمان تا پرداخت"
+    pitfall: "retry یک مرحله‌ی پرداخت بدون idempotency یعنی پرداخت دوباره."
+metrics: ["field F1", "document exact match", "straight-through rate", "error among automated", "duplicate payments (=0)"]
+params: {llm: "qwen2.5:7b", max_repairs: 1, approval_above_eur: 1000, ocr: tesseract}
+guardrails: ["IBAN و اطلاعات بانکی در لاگ پنهان شود", "تغییر IBAN تأمین‌کننده همیشه تأیید انسانی (کلاهبرداری رایج)"]
+production: ["صف و retry برای OCR/LLM", "داشبورد نرخ ارجاع و دلیلش"]
+interview: ["چطور جلوی پرداخت تکراری را گرفتی؟", "کی فاکتور به انسان می‌رود و چه کسی این را تصمیم می‌گیرد؟", "F1 فیلدی را چطور حساب کردی؟"]
+advanced: ["مدل layout-aware (LayoutLMv3، Donut) و fine-tune", "تطبیق سه‌طرفه با PO و رسید انبار", "یادگیری از اصلاحات اپراتور"]
+cv: "Built an invoice-extraction workflow (OCR + validated structured output + human review + idempotent payment step); field F1 {f1}, straight-through {stp} at {err} error, zero duplicate payments."

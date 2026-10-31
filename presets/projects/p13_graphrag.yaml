@@ -1,0 +1,44 @@
+id: p13_graphrag
+order: 13
+level: 3
+title: "GraphRAG: پرسش چندپرشی با گراف دانش"
+title_en: "GraphRAG: multi-hop QA over a knowledge graph"
+tracks: [rag, eval]
+weeks: "3"
+real_world: "زنجیره‌ی تأمین، داروسازی، هوش تجاری: «کدام تأمین‌کننده‌ی محصولی که بیشترین مرجوعی را دارد آلمانی است؟» جواب در یک سند نیست."
+problem: "vector RAG قطعه‌های شبیه سؤال را می‌آورد، نه زنجیره‌ی واقعیت‌ها را؛ استخراج triple خطا دارد؛ موجودیت‌ها نام‌های مختلف دارند."
+goal: "گراف از اسناد بسازی، بازیابی گرافی و vector را روی سؤال‌های چندپرشی مقایسه کنی، و مسیر استدلال را به‌عنوان توضیح نشان دهی."
+prerequisites: [p03_document_qa, p10_research_agent]
+data:
+  - {name: "MuSiQue / 2WikiMultiHopQA", url: "https://github.com/StonyBrookNLP/musique", license: "CC BY 4.0", note: "سؤال‌های واقعاً چندپرشی"}
+  - {name: "shop.db + WANDS", url: "", license: "ساختگی/MIT", note: "گراف محصول ← تأمین‌کننده ← کشور ← مرجوعی؛ سؤال و جواب با SQL"}
+stack: {llm: "qwen2.5:14b (استخراج triple)", embeddings: "bge-m3", extras: ["networkx یا Neo4j برای مقیاس"]}
+components: [knowledge_graph, structured_output, chunking, hybrid_rrf, retrieval_metrics, citations, llm_judge, cost_ledger]
+stages:
+  - title: "استخراج triple"
+    learn: ["واژگان رابطه‌ی ثابت", "provenance: هر triple از کدام chunk"]
+    build: ["labkit.graph.extract_triples با relations ثابت", "دقت استخراج روی ۵۰ chunk برچسب‌خورده"]
+    measure: "precision/recall triple"
+    pitfall: "رابطه‌های آزاد («ساخته‌شده توسط»، «تولیدکننده‌اش»، «made by») گراف را بی‌استفاده می‌کند."
+  - title: "entity resolution"
+    learn: ["یک موجودیت، چند نام", "alias و نرمال‌سازی"]
+    build: ["Graph.alias برای نام‌های تکراری؛ ادغام با شباهت embedding"]
+    measure: "تعداد موجودیت قبل و بعد، دقت ادغام"
+    pitfall: "ادغام بیش از حد دو شرکت متفاوت را یکی می‌کند."
+  - title: "بازیابی گرافی"
+    learn: ["موجودیت‌های سؤال ← همسایگی k-پرشی ← context", "path به‌عنوان توضیح"]
+    build: ["entities_in + neighbourhood/path", "hybrid: گراف + chunkهای منبع tripleها"]
+    measure: "دقت جواب روی سؤال‌های ۲ و ۳ پرشی"
+    pitfall: "همسایگی ۳-پرشی در گراف شلوغ هزاران triple است؛ محدود و رتبه‌بندی کن."
+  - title: "مقایسه با vector RAG"
+    learn: ["کجا گراف برنده است و کجا بازنده"]
+    build: ["همان سؤال‌ها با RAG معمولی؛ paired bootstrap"]
+    measure: "دقت به تفکیک تعداد پرش، هزینه‌ی ساخت گراف"
+    pitfall: "هزینه‌ی ساخت گراف (LLM روی همه‌ی اسناد) را در مقایسه بیاور."
+metrics: ["triple precision/recall", "multi-hop answer accuracy", "path validity", "build cost"]
+params: {llm: "qwen2.5:14b", relations: [made_by, supplied_by, located_in, part_of, returned_for], hops: 2, max_triples: 50}
+guardrails: ["جواب فقط از tripleهای دارای منبع؛ citation به chunk"]
+production: ["به‌روزرسانی افزایشی گراف", "Neo4j برای مقیاس و Cypher"]
+interview: ["GraphRAG کی ارزش دارد؟", "entity resolution را چطور انجام دادی؟", "هزینه‌ی ساخت گراف چقدر بود؟"]
+advanced: ["Microsoft GraphRAG (community summaries)", "Text-to-Cypher با همان ایده‌ی sqlguard", "گراف زمانی (رابطه‌ها با تاریخ)"]
+cv: "Built a GraphRAG pipeline (constrained triple extraction, entity resolution, k-hop retrieval with provenance); multi-hop accuracy {g} vs {v} for vector RAG."

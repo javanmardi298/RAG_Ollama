@@ -1,0 +1,43 @@
+id: p12_multi_agent_claims
+order: 12
+level: 3
+title: "پردازش خسارت بیمه با چند agent و تأیید انسانی"
+title_en: "Multi-agent insurance claims processing with human-in-the-loop"
+tracks: [agent, workflow, eval]
+weeks: "3–4"
+real_world: "بیمه و بانک (خسارت، وام، KYC): پرونده از چند سند تشکیل شده، چند تخصص لازم است، تصمیم نهایی پول جابه‌جا می‌کند و باید قابل توضیح و audit باشد."
+problem: "یک agent با همه‌ی ابزارها گیج می‌شود؛ قواعد بیمه‌نامه باید با کد اعمال شوند؛ تقلب باید علامت بخورد؛ هر تصمیم باید دلیل داشته باشد."
+goal: "supervisor + agentهای متخصص (اسناد، پوشش بیمه‌نامه، تقلب، محاسبه)، تصمیم نهایی با موتور قواعد، و انسان برای موارد پرریسک."
+prerequisites: [p05_invoice_extraction, p08_support_agent]
+data:
+  - {name: "پرونده‌های ساختگی", url: "", license: "ساختگی", note: "مثل shop.db: ۳۰۰ پرونده با موارد مرزی (سقف پوشش، استثنا، تاریخ، تقلب کاشته‌شده) و جواب درست با کد"}
+stack: {llm: "qwen2.5:14b یا Claude", embeddings: "bge-m3 (بیمه‌نامه)", extras: ["LangGraph"]}
+components: [multi_agent, langgraph, tool_agent, structured_output, workflow_engine, human_approval, idempotency, citations, selective_decision, sim_user_eval, bootstrap_ci, cost_ledger, tracing, pii_masking]
+stages:
+  - title: "قواعد با کد، ground truth با کد"
+    learn: ["همان اصل support-agent: تصمیم پوشش با کد، نه LLM"]
+    build: ["policy engine: پوشش، فرانشیز، سقف، استثنا", "مولد پرونده‌ی ساختگی با جواب درست"]
+    measure: "تست واحد روی موارد مرزی"
+    pitfall: "اگر LLM تصمیم پوشش را بگیرد، قابل audit و تکرار نیست."
+  - title: "agentهای متخصص"
+    learn: ["نقش، ابزار و خروجی ساختاریافته‌ی هر agent", "supervisor: کدام متخصص بعدی"]
+    build: ["document agent (استخراج)، coverage agent (بیمه‌نامه با RAG)، fraud agent (علامت‌ها)، calculator (کد)"]
+    measure: "دقت هر agent جداگانه"
+    pitfall: "agentهایی که با هم چت آزاد می‌کنند هزینه و خطا را چند برابر می‌کنند؛ پیام‌ها ساختاریافته باشند."
+  - title: "تصمیم، توضیح و انسان"
+    learn: ["تصمیم = موتور قواعد روی facts استخراج‌شده", "توضیح با ارجاع به سند و بند"]
+    build: ["approval برای مبلغ بالا یا علامت تقلب", "audit log کامل هر پرونده"]
+    measure: "دقت تصمیم، نرخ ارجاع، false approve rate"
+    pitfall: "false approve (پرداخت ناحق) و false deny (رد ناحق) هزینه‌ی متفاوت دارند؛ جدا گزارش کن."
+  - title: "مقایسه با agent تکی"
+    learn: ["آیا multi-agent ارزشش را دارد؟ paired bootstrap روی همان پرونده‌ها"]
+    build: ["همان پرونده‌ها با یک agent و همه‌ی ابزارها"]
+    measure: "اختلاف دقت با CI، هزینه و تأخیر هر روش"
+    pitfall: "multi-agent همیشه بهتر نیست؛ گاهی فقط گران‌تر است."
+metrics: ["decision accuracy", "false approve / false deny", "referral rate", "cost and latency per claim", "explanation citation validity"]
+params: {llm: "qwen2.5:14b", approval_above_eur: 5000, fraud_flag_referral: true, max_agent_turns: 10}
+guardrails: ["PII و اطلاعات پزشکی پنهان در لاگ", "سند آپلودی داده است نه دستور"]
+production: ["صف پرونده و SLA", "گزارش منظم برای ناظر (compliance)"]
+interview: ["چرا چند agent؟ اندازه‌گیری‌ات چه گفت؟", "تصمیم نهایی را چه کسی می‌گیرد؟", "audit و توضیح‌پذیری را چطور تضمین کردی؟"]
+advanced: ["Claude Managed Agents یا LangGraph Platform", "ارزیابی fairness بین گروه‌ها", "یادگیری از تصمیم‌های ارزیاب انسانی"]
+cv: "Built a multi-agent claims pipeline (specialist agents, code-based policy engine, human approval, full audit); decision accuracy {acc}, false approve {fa}, vs single-agent {delta} (paired bootstrap)."

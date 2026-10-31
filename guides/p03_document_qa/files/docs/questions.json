@@ -1,0 +1,92 @@
+[
+ {
+  "question": "how many vacation days do I get",
+  "source": "employee_handbook",
+  "answerable": "yes"
+ },
+ {
+  "question": "can I carry over unused vacation days",
+  "source": "employee_handbook",
+  "answerable": "yes"
+ },
+ {
+  "question": "when do I need a doctor's certificate",
+  "source": "employee_handbook",
+  "answerable": "yes"
+ },
+ {
+  "question": "how many days a week can I work from home",
+  "source": "employee_handbook",
+  "answerable": "yes"
+ },
+ {
+  "question": "how long is the probation period",
+  "source": "employee_handbook",
+  "answerable": "yes"
+ },
+ {
+  "question": "how long must my password be",
+  "source": "it_security",
+  "answerable": "yes"
+ },
+ {
+  "question": "are SMS codes allowed for MFA",
+  "source": "it_security",
+  "answerable": "yes"
+ },
+ {
+  "question": "what do I do with a phishing email",
+  "source": "it_security",
+  "answerable": "yes"
+ },
+ {
+  "question": "how often are laptops replaced",
+  "source": "it_security",
+  "answerable": "yes"
+ },
+ {
+  "question": "can I fly business class",
+  "source": "travel_policy",
+  "answerable": "yes"
+ },
+ {
+  "question": "what is the hotel limit in Paris",
+  "source": "travel_policy",
+  "answerable": "yes"
+ },
+ {
+  "question": "how much is the meal allowance per day",
+  "source": "travel_policy",
+  "answerable": "yes"
+ },
+ {
+  "question": "when do I have to submit expenses",
+  "source": "expenses",
+  "answerable": "yes"
+ },
+ {
+  "question": "do I need a receipt for a 10 EUR taxi",
+  "source": "expenses",
+  "answerable": "yes"
+ },
+ {
+  "question": "when are approved expenses paid",
+  "source": "expenses",
+  "answerable": "yes"
+ },
+ {
+  "question": "what is the company's parental leave policy",
+  "source": "",
+  "answerable": "no"
+ },
+ {
+  "question": "can I bring my dog to the office",
+  "source": "",
+  "answerable": "no"
+ },
+ {
+  "question": "what is the stock option vesting schedule",
+  "source": "",
+  "answerable": "no"
+ }
+]

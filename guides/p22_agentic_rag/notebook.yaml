@@ -1,0 +1,74 @@
+name: 01_agentic_rag.ipynb
+cells:
+  - md: |
+      # Agentic RAG: retrieve again when needed, and know when to say "I don't know"
+
+      Plain RAG always answers from whatever the search returns. This agent routes the question, grades the evidence,
+      rewrites the query when nothing relevant is found (at most 3 rounds), verifies the answer against the evidence, and
+      abstains otherwise. 16 questions: 12 answerable, 3 with no answer on purpose, 1 greeting.
+  - code: |
+      from agentic_rag import chunk_all, load_data, make_search, plain_rag, report, run_agent
+
+      docs, questions = load_data()
+      search = make_search(chunk_all(docs))
+      print(len(questions), "questions:", {k: sum(q["answerable"] == k for q in questions) for k in ["yes", "no", "direct"]})
+    note: "داده و جست‌وجو را آماده می‌کند."
+    expect: "16 questions: \\{'yes': 12, 'no': 3, 'direct': 1\\}"
+  - md: |
+      ## Baseline: plain RAG
+      Search, take the best sentence, answer. No grading, no verification.
+  - code: |
+      plain = [plain_rag(q["question"], search) for q in questions]
+      print(report(plain, questions))
+    note: "پایه: دو تا از سه سؤال بی‌جواب جواب می‌گیرند (`answered_unanswerable: 2`)؛ فقط وقتی جست‌وجو هیچ چیزی پیدا نکند ساکت می‌ماند. این همان مشکل RAG ساده است."
+    expect: "'answered_unanswerable': 2"
+  - md: |
+      ## The agent (rules, no model)
+      route -> retrieve -> grade -> rewrite (bounded) -> answer -> verify -> abstain.
+  - code: |
+      agent = [run_agent(q["question"], search) for q in questions]
+      for q, o in zip(questions, agent):
+          shown = "ABSTAIN" if o["abstained"] else (o["answer"] or "")[:55]
+          print(f"{q['question'][:40]:40s} {o['route']:8s} rounds={o['rounds']}  {shown}")
+      print()
+      print(report(agent, questions))
+    note: "عامل: سؤال‌های بی‌جواب امتناع می‌شوند، «hello» مستقیم جواب می‌گیرد، و «send back a sofa» بعد از بازنویسی (rounds=2) پیدا می‌شود."
+    expect: "'answered_unanswerable': 0"
+  - md: |
+      ## Comparison
+  - code: |
+      import json, os
+
+      rows = {"plain RAG": report(plain, questions), "agentic (rules)": report(agent, questions)}
+      print(f"{'':16s} {'answered':>8s} {'wrong abstain':>14s} {'right abstain':>14s} {'answered unanswerable':>22s}")
+      for name, r in rows.items():
+          print(f"{name:16s} {r['answered_correctly']:8d} {r['abstained_wrongly']:14d} {r['abstained_correctly']:14d} {r['answered_unanswerable']:22d}")
+      os.makedirs("results", exist_ok=True)
+      with open("results/results.json", "w") as f:
+          json.dump(rows, f, indent=2)
+    note: "جدول نهایی و ذخیره در `results/results.json` (عددهای README از همین فایل)."
+    expect: "agentic \\(rules\\) +\\d+ +\\d+ +\\d+ +0"
+  - md: |
+      ## With a real model (optional)
+      Set `AGENT_PROVIDER` to `ollama`, `anthropic` or `opencode` before starting the notebook; the same loop then asks the
+      model for each decision. Without it, this cell only prints how to turn it on.
+  - code: |
+      import os
+      from agentic_rag import make_llm, make_llm_components
+
+      if os.environ.get("AGENT_PROVIDER"):
+          parts = make_llm_components(make_llm())
+          llm_agent = [run_agent(q["question"], search, **parts) for q in questions]
+          rows["agentic (model)"] = report(llm_agent, questions)
+          print(rows["agentic (model)"])
+          with open("results/results.json", "w") as f:
+              json.dump(rows, f, indent=2)
+      else:
+          print("No model set: AGENT_PROVIDER = ollama | anthropic | opencode (see step 11 of the guide)")
+    note: "بدون مدل فقط راهنما چاپ می‌کند. با مدل، همان پنج شمارنده را برای عامل مدلی می‌بینی؛ با مدل کوچک ممکن است از قاعده‌ها بدتر شود و این هم یک نتیجه است."
+    expect: "No model set|answered_unanswerable"
+  - md: |
+      ## Limitations
+      - 16 questions: enough to see the behaviour, not to claim a precise rate.
+      - The rule grader is word overlap; it does not understand meaning ("bank transfer" vs "return transfer").
+      - With a model, the same model answers and verifies; a different or stronger verifier is safer.

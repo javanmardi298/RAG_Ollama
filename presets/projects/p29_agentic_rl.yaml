@@ -1,0 +1,86 @@
+id: p29_agentic_rl
+order: 29
+level: 3
+title: RL با پاداش قابل‌بررسی (GRPO) برای مدل کوچک ابزارمحور
+title_en: RL with verifiable rewards (GRPO) for a small tool-using model
+tracks:
+- ml
+- agent
+- eval
+weeks: 2–3
+real_world: آموزش مدل کوچک ارزان برای Text-to-SQL، استخراج یا فراخوانی ابزار با پاداش قابل‌بررسی (اجرای SQL، اعتبارسنجی JSON) — روش رایج ۲۰۲۵–۲۰۲۶.
+problem: SFT فقط تقلید می‌کند؛ وقتی جواب قابل‌بررسی است، RL می‌تواند مستقیماً موفقیت را بهینه کند.
+goal: یک مدل 0.5B–1.5B را با GRPO و پاداش قابل‌بررسی (اجرای SQL یا صحت JSON) آموزش بدهی و با SFT و مدل پایه مقایسه کنی؛ reward hacking را پایش کنی.
+prerequisites:
+- p15_finetune_distill
+- p06_text_to_sql
+data:
+- name: Spider / BIRD
+  url: https://bird-bench.github.io/
+  license: CC BY-SA 4.0
+  note: Text-to-SQL با اجرای قابل‌بررسی
+- name: TRL GRPOTrainer
+  url: https://huggingface.co/docs/trl/main/en/grpo_trainer
+  license: Apache 2.0
+  note: پیاده‌سازی مرجع
+stack:
+  llm: Qwen2.5-0.5B/1.5B-Instruct
+  embeddings: —
+  extras:
+  - trl
+  - peft
+  - Colab GPU
+  - labkit.sqlguard
+components:
+- grpo_trl
+- lora
+- sql_guard
+- sql_exec_accuracy
+- bootstrap_ci
+- run_registry
+stages:
+- title: پاداش
+  learn:
+  - پاداش قابل‌بررسی، شکل‌دهی (فرمت + صحت)
+  - reward hacking
+  build:
+  - تابع پاداش با اجرای SQL در sandbox فقط‌خواندنی
+  measure: پاداش روی جواب‌های gold = 1
+  pitfall: پاداش قابل دور زدن (مثلاً SELECT همه‌چیز) را تست کن.
+- title: GRPO
+  learn:
+  - گروه نمونه، advantage نسبی، KL
+  build:
+  - TRL GRPOTrainer + LoRA روی Colab
+  measure: منحنی پاداش و طول پاسخ
+  pitfall: طول پاسخ منفجر می‌شود یا فرمت می‌شکند؛ پایش کن.
+- title: مقایسه
+  learn:
+  - SFT در برابر GRPO در برابر پایه
+  build:
+  - execution accuracy روی dev جدا
+  measure: accuracy با CI، هزینه‌ی آموزش
+  pitfall: ارزیابی روی همان پایگاه داده‌ی آموزش = نشت.
+metrics:
+- execution accuracy
+- reward curve
+- response length
+- training GPU hours
+params:
+  base_model: Qwen/Qwen2.5-0.5B-Instruct
+  group_size: 8
+  lora_r: 16
+  max_steps: 500
+guardrails:
+- اجرای SQL فقط‌خواندنی با timeout (labkit.sqlguard)
+production:
+- سرو مدل کوچک با Ollama (GGUF)، fallback به مدل بزرگ
+interview:
+- GRPO چه فرقی با PPO و DPO دارد؟
+- reward hacking دیدی؟
+- کی RL بهتر از SFT است؟
+advanced:
+- RL چندمرحله‌ای با ابزار (agentic RL)
+- curriculum سختی
+- تقطیر از مدل بزرگ + RL
+cv: 'Trained a {size} model with GRPO on verifiable SQL-execution rewards: execution accuracy {base}→{rl} (SFT {sft}), with reward-hacking checks.'

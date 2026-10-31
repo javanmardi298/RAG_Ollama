@@ -1,0 +1,9 @@
+id: strict_safety
+title: "ایمنی سخت‌گیرانه"
+description: "بودجه‌ی خطای کمتر برای هر سطح ریسک (ارجاع بیشتر به انسان، خطای خودکار کمتر) و قدم‌های ابزار کمتر. بعد از اعمال، مرحله‌ی ۴ و ۶ را دوباره اجرا کن."
+changes:
+  decision.error_budget_low: 0.03
+  decision.error_budget_medium: 0.01
+  decision.error_budget_high: 0.005
+  decision.cost_wrong_action: 50
+  agent.max_tool_steps: 3

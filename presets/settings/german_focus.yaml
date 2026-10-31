@@ -1,0 +1,9 @@
+id: german_focus
+title: "تمرکز بر آلمانی و چندزبانه"
+description: "طبقه‌بند embedding چندزبانه به‌جای TF-IDF، test آلمانی بزرگ‌تر، RAG hybrid. مناسب وقتی بازار هدف آلمانی‌زبان است."
+changes:
+  intents.run_embeddings: true
+  intents.winner: embeddings
+  robustness.translate: true
+  robustness.german_per_intent: 20
+  rag.mode: hybrid

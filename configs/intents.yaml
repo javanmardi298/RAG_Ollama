@@ -1,0 +1,39 @@
+# How each Bitext intent is handled by our agent.
+#   tool    -> needs order data and may call an action (stage 3)
+#   rag     -> answered from policy documents (stage 2)
+#   handoff -> goes to a human (stage 4)
+#   out_of_scope -> politely declined / redirected
+# `risk` feeds the decision layer in stage 4: high-risk intents need confirmation or a human.
+# Any Bitext intent missing here is reported by the notebook, so this file cannot silently drift.
+
+intents:
+  cancel_order:             {route: tool,    risk: high}
+  change_order:             {route: tool,    risk: high}
+  track_order:              {route: tool,    risk: low}
+  change_shipping_address:  {route: tool,    risk: medium}
+  get_refund:               {route: tool,    risk: high}
+  track_refund:             {route: tool,    risk: low}
+  delivery_period:          {route: tool,    risk: low}
+
+  check_refund_policy:      {route: rag,     risk: low}
+  check_cancellation_fee:   {route: rag,     risk: low}
+  delivery_options:         {route: rag,     risk: low}
+  check_payment_methods:    {route: rag,     risk: low}
+  set_up_shipping_address:  {route: rag,     risk: low}
+  place_order:              {route: rag,     risk: low}
+  check_invoice:            {route: rag,     risk: low}
+  get_invoice:              {route: rag,     risk: low}
+
+  contact_human_agent:      {route: handoff, risk: low}
+  contact_customer_service: {route: handoff, risk: low}
+  complaint:                {route: handoff, risk: medium}
+  payment_issue:            {route: handoff, risk: high}
+
+  create_account:           {route: out_of_scope, risk: low}
+  delete_account:           {route: out_of_scope, risk: high}
+  edit_account:             {route: out_of_scope, risk: medium}
+  switch_account:           {route: out_of_scope, risk: low}
+  recover_password:         {route: out_of_scope, risk: medium}
+  registration_problems:    {route: out_of_scope, risk: low}
+  newsletter_subscription:  {route: out_of_scope, risk: low}
+  review:                   {route: out_of_scope, risk: low}

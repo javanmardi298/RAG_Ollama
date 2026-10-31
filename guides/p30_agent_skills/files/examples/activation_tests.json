@@ -1,0 +1,8 @@
+[{"request": "how is the project doing? give me a status report", "skill": "project-report"},
+ {"request": "what should I do next on this project, based on the results", "skill": "project-report"},
+ {"request": "here is a receipt, check the totals", "skill": "invoice-check"},
+ {"request": "extract the data from this invoice", "skill": "invoice-check"},
+ {"request": "summarise this meeting transcript and list the action items", "skill": "meeting-notes"},
+ {"request": "who owns which task from yesterday's meeting notes", "skill": "meeting-notes"},
+ {"request": "what's the weather in Berlin", "skill": null},
+ {"request": "write a poem about autumn", "skill": null}]

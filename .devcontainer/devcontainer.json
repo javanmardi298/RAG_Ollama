@@ -1,0 +1,13 @@
+{
+  "name": "AI engineering lessons",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "postCreateCommand": "pip install -r requirements.txt -r requirements-panel.txt && pip install -e . && pip install torch --index-url https://download.pytorch.org/whl/cpu && python lessons/00_setup/check_env.py",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-toolsai.jupyter", "charliermarsh.ruff"],
+      "settings": { "python.defaultInterpreterPath": "/usr/local/bin/python", "files.encoding": "utf8" }
+    }
+  },
+  "remoteEnv": { "LEARN_PROVIDER": "offline" },
+  "forwardPorts": [8765]
+}

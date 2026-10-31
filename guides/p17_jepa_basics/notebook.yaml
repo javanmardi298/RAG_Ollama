@@ -1,0 +1,88 @@
+name: 01_jepa_digits.ipynb
+cells:
+  - md: |
+      # Mini I-JEPA on handwritten digits
+
+      JEPA (Joint-Embedding Predictive Architecture) predicts the **embeddings** of hidden image patches from the visible
+      ones, instead of the pixels. This notebook trains four variants with the same budget on 8x8 digits (sklearn, no
+      download), measures them with a linear probe against two baselines, and checks for representation collapse.
+      Runs on a laptop CPU in a few minutes.
+  - code: |
+      import torch
+      from jepa import GRID, linear_probe, load_digits_patches, sample_masks
+
+      data = load_digits_patches()
+      print("train", tuple(data[0].shape), "test", tuple(data[2].shape), "(images, patches, pixels per patch)")
+      img = data[0][3].reshape(GRID, GRID, 2, 2).permute(0, 2, 1, 3).reshape(8, 8)
+      print("\n".join("".join("#" if v > 0.4 else "." for v in row) for row in img))
+      keep = sample_masks(1, torch.Generator().manual_seed(0))[0].reshape(GRID, GRID)
+      print("\nmask (X = hidden patches the model must predict):")
+      print("\n".join("".join("." if k else "X" for k in row) for row in keep))
+    note: "یک رقم و ماسک: یک بلوک ۲×۲ از ۱۶ patch پنهان می‌شود و مدل باید embedding آن را از بقیه حدس بزند."
+    expect: "train \\(1347, 16, 4\\) test \\(450, 16, 4\\)"
+  - md: |
+      ## Train four variants on two seeds
+      Same encoder, same epochs. Baselines: raw pixels (no encoder) and a random, untrained encoder.
+  - code: |
+      import time
+      from jepa import Encoder, train
+
+      EPOCHS, SEEDS = 20, [7, 8]
+      rows, histories, start = [], {}, time.time()
+      for seed in SEEDS:
+          d = load_digits_patches(seed)
+          torch.manual_seed(seed)
+          rows.append({"run": "raw_pixels", "seed": seed, "probe": linear_probe(None, d)})
+          rows.append({"run": "random_encoder", "seed": seed, "probe": linear_probe(Encoder(64).eval(), d)})
+          for variant in ["ema", "sigreg", "pixel", "naive"]:
+              r = train(variant, epochs=EPOCHS, seed=seed, data=d)
+              rows.append({"run": variant, "seed": seed, "probe": linear_probe(r["encoder"], d)})
+              histories[(variant, seed)] = r["history"][-1]
+      print(f"{len(rows)} runs in {time.time() - start:.0f} s")
+    note: "۴ روش × ۲ seed آموزش می‌بیند. روی CPU لپ‌تاپ حدود ۱ تا ۳ دقیقه."
+    expect: "12 runs in \\d+ s"
+  - md: |
+      ## Linear-probe accuracy (mean and range over seeds)
+  - code: |
+      summary = {}
+      for name in dict.fromkeys(r["run"] for r in rows):
+          v = [r["probe"] for r in rows if r["run"] == name]
+          summary[name] = {"mean": round(sum(v) / len(v), 3), "min": round(min(v), 3), "max": round(max(v), 3)}
+      for name, s in sorted(summary.items(), key=lambda kv: -kv[1]["mean"]):
+          print(f"{name:15s} {s['mean']:.3f}  [{s['min']:.3f}, {s['max']:.3f}]")
+    note: "جدول اصلی. عددهای تو کمی فرق دارد (تصادف آموزش). پیکسل خام بالاتر از همه است، چون ارقام ۸×۸ ساده‌اند. **دام مهم:** `naive` ممکن است بالا بیاید، با اینکه collapse کرده! probe خطی با StandardScaler تفاوت‌های بسیار ریز را بزرگ می‌کند. سلول بعد نشان می‌دهد چرا نباید به این عدد اعتماد کرد."
+    expect: "raw_pixels +0\\.9"
+  - md: |
+      ## Collapse check
+      A near-zero loss with a tiny spread of embeddings (`mean_std`) means the encoder ignores its input.
+  - code: |
+      print(f"{'variant':8s} {'loss':>8s} {'mean_std':>9s} {'eff.rank':>9s}")
+      for variant in ["ema", "sigreg", "pixel", "naive"]:
+          h = histories[(variant, SEEDS[0])]
+          print(f"{variant:8s} {h['loss']:8.4f} {h['mean_std']:9.4f} {h['effective_rank']:9.1f}")
+    note: "`naive` کمترین loss و کمترین پراکندگی را دارد: collapse. به loss پایین اعتماد نکن؛ پراکندگی را هم ببین."
+    expect: "naive +0\\.0"
+  - md: |
+      ## Verdict (rules fixed before looking at the numbers)
+  - code: |
+      import json, os
+
+      collapsed = [v for v in ["ema", "sigreg", "pixel", "naive"] if histories[(v, SEEDS[0])]["mean_std"] < 0.01]
+      learned = {k: v for k, v in summary.items() if k not in ("raw_pixels", "random_encoder", *collapsed)}
+      best = max(learned, key=lambda k: learned[k]["mean"])
+      verdict = {"collapsed": collapsed, "best_learned": best,
+                 "pixels_win": summary["raw_pixels"]["mean"] >= learned[best]["mean"],
+                 "beats_random": [k for k, v in learned.items() if v["mean"] >= summary["random_encoder"]["mean"] + 0.02],
+                 "unstable": [k for k, v in learned.items() if v["max"] - v["min"] > 0.1]}
+      print(verdict)
+      os.makedirs("results", exist_ok=True)
+      with open("results/results.json", "w") as f:
+          json.dump({"summary": summary, "verdict": verdict, "epochs": EPOCHS, "seeds": SEEDS}, f, indent=2)
+    note: "حکم قاعده‌مند: کدام روش collapse کرده (و از رقابت حذف می‌شود)، آیا پیکسل خام بهتر است، کدام روش حداقل ۰٫۰۲ از encoder تصادفی بهتر است، و کدام بین seed ها ناپایدار است. ذخیره در `results/results.json`."
+    expect: "'collapsed': \\['naive'\\]"
+  - md: |
+      ## What this shows and limitations
+      - On tiny, almost linearly separable 8x8 digits raw pixels win; the value of JEPA appears with large, detailed data
+        (images, video) and in world models. Report it honestly.
+      - Two seeds and 20 epochs: results move between runs; use more seeds before claiming a difference.
+      - CPU-sized model (64-dim, 2 layers).

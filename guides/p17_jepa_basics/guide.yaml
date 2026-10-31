@@ -1,0 +1,211 @@
+id: p17_jepa_basics
+title: ساختن پروژه‌ی Mini I-JEPA روی ارقام دست‌نویس، از صفر در GitHub
+repo: jepa_digits
+description: 'Mini I-JEPA in PyTorch on 8x8 digits: EMA teacher vs SIGReg vs pixel prediction, linear probes against baselines, and representation-collapse diagnostics'
+lede: 'یک JEPA کوچک را با PyTorch آموزش می‌دهی، چهار روش را با linear probe و دو baseline مقایسه می‌کنی و فروپاشی نمایش (collapse) را با عدد نشان می‌دهی. فقط CPU لازم است (چند دقیقه). مفهوم کامل: آموزش JEPA در repo آزمایشگاه (`docs/jepa.md`) و درس p17.'
+learn:
+- - درس قدم‌به‌قدم JEPA (۴ گام)
+  - lesson:p17_jepa_basics
+- - آموزش کامل JEPA و world model (۸ مرحله)
+  - roadmap-tab:jepa
+- - پروژه در نقشه‌ی راه
+  - roadmap:p17_jepa_basics
+lesson: p17_jepa_basics
+fill:
+  seeds: seeds/length
+  raw: summary/raw_pixels/mean
+  random: summary/random_encoder/mean
+  ema: summary/ema/mean
+  sigreg: summary/sigreg/mean
+  pixel: summary/pixel/mean
+  naive: summary/naive/mean
+facts:
+- - GitHub
+  - فایل‌ها و تست خودکار
+- - VS Code + PyTorch
+  - آموزش روی CPU لپ‌تاپ
+- - Colab (اختیاری)
+  - اگر لپ‌تاپ کند است
+flow:
+- - GitHub
+  - gh
+- - VS Code + notebook
+  - vs
+- - Colab (optional)
+  - co
+steps:
+- title: ساختن repo در GitHub
+  where:
+  - gh
+  minutes: 3
+  why: repo خودت نمونه‌کار توست. یک پروژه‌ی پژوهشی کوچک و صادقانه (با baseline و تحلیل collapse) برای نقش‌های ML بسیار ارزشمند است.
+  do:
+  - در github.com بالا سمت راست **+** → **New repository**.
+  - '**Repository name:** `jepa_digits`'
+  - '**Description:** `{description}`'
+  - '**Public**، تیک **Add a README file**، **Add .gitignore:** None، **Choose a license:** MIT License → **Create repository**.'
+  see: 'repo دو فایل دارد: `README.md` و `LICENSE`.'
+- title: فایل .gitignore
+  where:
+  - gh
+  minutes: 2
+  why: محیط مجازی، فایل‌های موقت و `.env` هرگز وارد repo نشوند.
+  do:
+  - '**Add file** → **Create new file**، نام `.gitignore`، متن زیر. commit: `Add .gitignore`.'
+  file: .gitignore
+- title: فایل requirements.txt
+  where:
+  - gh
+  minutes: 2
+  why: numpy و scikit-learn (داده‌ی ارقام داخل sklearn است، بدون دانلود) و PyTorch. نسخه‌ی CPU کوچک‌تر است و کافی است.
+  do:
+  - '**Add file → Create new file**، نام `requirements.txt`. commit: `Add requirements`.'
+  file: requirements.txt
+- title: 'فایل اصلی: jepa.py'
+  where:
+  - gh
+  minutes: 5
+  why: 'کل روش در یک فایل: SIGReg و آمار collapse، داده و patch ها، encoder و predictor (Transformer کوچک)، ماسک بلوکی، آموزش چهار روش، و linear probe. هر تکه را در درس p17 قدم‌به‌قدم دیده‌ای.'
+  do:
+  - '**Add file → Create new file**، نام `jepa.py`. commit: `Add mini I-JEPA: encoder, predictor, EMA, SIGReg, probes`.'
+  file: jepa.py
+  explain:
+  - - sigreg و collapse_stats
+    - 'SIGReg: embedding ها روی جهت‌های تصادفی project و با N(0,1) مقایسه می‌شوند (LeJEPA). collapse_stats پراکندگی و رتبه‌ی مؤثر را می‌دهد.'
+    - p17_jepa_basics/step03_collapse
+  - - load_digits_patches و sample_masks
+    - رقم ۸×۸ به ۱۶ patch دوپیکسلی؛ ماسک یک بلوک ۲×۲ را پنهان می‌کند.
+    - p17_jepa_basics/step01_patches_masks
+  - - Encoder و Predictor
+    - Transformer کوچک؛ encoder فقط patch های دیده‌شده را می‌بیند، predictor در جای پنهان‌ها mask token می‌گذارد و embedding آن‌ها را حدس می‌زند.
+    - ''
+  - - train
+    - 'loss فقط روی patch های پنهان؛ ema: هدف از معلم EMA بدون گرادیان؛ sigreg: یک encoder + SIGReg؛ naive: بدون درمان (collapse)؛ pixel: پیش‌بینی پیکسل.'
+    - p17_jepa_basics/step02_latent_loss_ema
+  - - features و linear_probe
+    - encoder منجمد، میانگین embedding ها، logistic regression روی train و دقت روی test.
+    - p17_jepa_basics/step04_probe_and_verdict
+- title: فایل check_setup.py
+  where:
+  - gh
+  minutes: 2
+  why: قبل از notebook، یک epoch آموزش می‌دهد تا مطمئن شوی PyTorch و داده درست کار می‌کنند و زمان هر epoch روی لپ‌تاپت را ببینی.
+  do:
+  - '**Add file → Create new file**، نام `check_setup.py`. commit: `Add setup check`.'
+  file: check_setup.py
+- title: 'تست‌ها: tests/test_jepa.py'
+  where:
+  - gh
+  minutes: 3
+  why: 'تست‌های سریع: شکل ماسک و encoder، اینکه SIGReg توزیع گاوسی را به collapse ترجیح می‌دهد، و اینکه هر چهار روش یک epoch آموزش می‌بینند.'
+  do:
+  - '**Add file → Create new file**، نام `tests/test_jepa.py`. commit: `Add tests`.'
+  file: tests/test_jepa.py
+- title: تست خودکار در GitHub (Actions)
+  where:
+  - gh
+  minutes: 4
+  why: با هر push تست‌ها روی ماشین تمیز اجرا می‌شوند. نسخه‌ی CPU مخصوص PyTorch نصب می‌شود تا سریع باشد.
+  do:
+  - '**Add file → Create new file**، نام `.github/workflows/tests.yml`. commit: `Add CI`.'
+  - به تب **Actions** برو؛ اجرای اول چند دقیقه طول می‌کشد (نصب PyTorch).
+  file: .github/workflows/tests.yml
+  see: اجرای `tests` با تیک سبز.
+- title: آوردن repo به لپ‌تاپ و ساختن محیط پایتون
+  where:
+  - vs
+  minutes: 10
+  why: محیط مجازی جدا برای این پروژه؛ PyTorch را اول از نسخه‌ی CPU نصب می‌کنیم که کوچک‌تر است.
+  pre: 'پیش‌نیاز: Git، Python 3.10+، و افزونه‌های **Python** و **Jupyter** در VS Code.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Git: Clone** → `https://github.com/<نام-کاربری-تو>/jepa_digits.git` → **Open**.'
+  - 'ترمینال: ``Ctrl+` ``'
+  commands:
+  - label: ترمینال VS Code · Windows PowerShell
+    code: 'python -m venv .venv
+
+      .venv\Scripts\Activate.ps1
+
+      pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      pip install -r requirements.txt
+
+      '
+  - label: ترمینال VS Code
+    code: 'python check_setup.py
+
+      python -m pytest -q
+
+      '
+    output:
+    - check_setup
+    - pytest
+    expect: setup ok|\d+ passed
+  warn: عدد «one epoch» و دقت probe روی سیستم تو کمی فرق دارد؛ مهم «setup ok» و «passed» است. اگر یک epoch بیش از ۱۰ ثانیه طول کشید، در notebook عدد `EPOCHS` را کم کن یا Colab را امتحان کن.
+- title: ساختن و اجرای notebook
+  where:
+  - vs
+  minutes: 15
+  why: 'notebook داستان پژوهش است: داده و ماسک، آموزش، جدول probe با baseline ها، تحلیل collapse و حکم صادقانه. با خروجی‌هایش در GitHub دیده می‌شود.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Create: New Jupyter Notebook** → ذخیره با نام `01_jepa_digits.ipynb` در پوشه‌ی repo.'
+  - '**Select Kernel → Python Environments → .venv**.'
+  - سلول‌ها را به ترتیب بساز و اجرا کن (`Shift+Enter`) و خروجی را با «باید ببینی» مقایسه کن.
+  tip: 'عددهای آموزش تصادفی‌اند: عدد تو با «باید ببینی» دقیقاً یکی نیست، ولی ترتیب کلی و برچسب‌ها باید شبیه باشد. دکمه‌ی «مقایسه» فقط بخش اصلی را بررسی می‌کند.'
+  notebook: 01_jepa_digits.ipynb
+- title: اجرا در Colab (اختیاری)
+  where:
+  - co
+  - gh
+  minutes: 5
+  why: اگر لپ‌تاپ کند است. Colab خودش PyTorch دارد.
+  do:
+  - در GitHub، `01_jepa_digits.ipynb` را باز کن (بعد از مرحله‌ی ۱۱ push شده) و آدرس را در colab.research.google.com → **GitHub** paste کن.
+  - 'یک سلول در بالا اضافه کن و اجرا کن (با نام کاربری خودت):'
+  commands:
+  - label: اولین سلول در Colab
+    code: '!git clone https://github.com/<نام-کاربری-تو>/jepa_digits.git
+
+      %cd jepa_digits
+
+      '
+  warn: 'Colab رایگان اگر بی‌کار بماند قطع می‌شود. برای ذخیره: **File → Save a copy in GitHub**.'
+- title: commit و push از VS Code
+  where:
+  - vs
+  - gh
+  minutes: 3
+  why: notebook با خروجی‌ها و `results/results.json` باید در GitHub باشند.
+  do:
+  - 'Source Control: `Ctrl+Shift+G` → فایل‌های `01_jepa_digits.ipynb` و `results/results.json`.'
+  - 'پیام: `Add notebook: JEPA variants vs baselines and collapse check` → **Commit** → **Sync Changes**.'
+  see: در GitHub، notebook با جدول‌ها و خروجی‌ها دیده می‌شود.
+- title: README نهایی
+  where:
+  - gh
+  minutes: 10
+  why: README در ۳۰ ثانیه می‌گوید چه کردی، با چه baseline هایی و نتیجه‌ی صادقانه چه بود. عددها را از `results/results.json` خودت بردار.
+  do:
+  - 'در GitHub: `README.md` → مداد → متن زیر، عددهای `{...}` را پر کن (یا results.json را پایین paste کن). commit: `Write README`.'
+  readme: true
+- title: صیقل نهایی repo
+  where:
+  - gh
+  minutes: 5
+  why: جزئیاتی که repo را حرفه‌ای نشان می‌دهد.
+  do:
+  - 'About → Topics: `self-supervised-learning`, `jepa`, `pytorch`, `representation-learning`.'
+  - repo را در پروفایل pin کن.
+  - خط رزومه (پایین).
+  cv: Implemented a mini I-JEPA in PyTorch (masked latent prediction with an EMA teacher, a SIGReg variant and a pixel-prediction baseline), evaluated with linear probes against raw-pixel and random-encoder baselines over {seeds} seeds, with representation-collapse diagnostics.
+trouble:
+- - '`pip install torch` خیلی طول می‌کشد'
+  - از دستور نسخه‌ی CPU استفاده کن (`--index-url https://download.pytorch.org/whl/cpu`)؛ نسخه‌ی پیش‌فرض خیلی بزرگ‌تر است.
+- - '`No module named jepa` در notebook'
+  - notebook باید کنار `jepa.py` باشد و kernel روی `.venv`.
+- - آموزش خیلی کند است
+  - '`EPOCHS` را ۱۰ کن، یا فقط یک seed، یا Colab.'
+- - عددهای من با «باید ببینی» فرق دارد
+  - 'طبیعی است (تصادف آموزش). مهم: پیکسل خام بالا، naive با mean_std نزدیک صفر، و برچسب‌های verdict.'
+- - تب Actions قرمز است
+  - روی اجرای قرمز کلیک کن؛ معمولاً نام یا مسیر فایل اشتباه است.

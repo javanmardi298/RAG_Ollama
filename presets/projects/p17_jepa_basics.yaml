@@ -1,0 +1,91 @@
+id: p17_jepa_basics
+order: 17
+level: 1
+title: 'مبانی JEPA: پیش‌بینی در فضای embedding (I-JEPA کوچک)'
+title_en: 'JEPA basics: predict embeddings, not pixels (mini I-JEPA)'
+tracks:
+- world_models
+- ml
+weeks: '1'
+real_world: پیش‌آموزش encoder بدون برچسب برای تصویر/ویدیو/سنسور وقتی برچسب گران است (پزشکی، صنعتی، ماهواره‌ای)؛ همان ایده‌ی I-JEPA و V-JEPA در Meta.
+problem: برچسب‌زدن داده گران است و مدل‌های مولد ظرفیتشان را صرف جزئیات غیرقابل پیش‌بینی (نویز، بافت) می‌کنند.
+goal: یک I-JEPA کوچک روی ارقام ۸×۸ آموزش بدهی، آن را با پیکسل خام، encoder تصادفی و نسخه‌ی پیکسلی (MAE-like) با linear probe و چند seed مقایسه کنی و نتیجه را صادقانه تفسیر کنی.
+prerequisites: []
+data:
+- name: sklearn digits (داخل sklearn)
+  url: https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_digits.html
+  license: BSD
+  note: ۱٬۷۹۷ تصویر ۸×۸، بدون دانلود
+- name: CIFAR-10 (قدم بعد)
+  url: https://www.cs.toronto.edu/~kriz/cifar.html
+  license: پژوهشی
+  note: برای دیدن مزیت JEPA در داده‌ی پرجزئیات‌تر
+stack:
+  llm: —
+  embeddings: Transformer کوچک خودت (PyTorch، CPU)
+  extras:
+  - torch
+  - scikit-learn
+components:
+- jepa_ssl
+- linear_probe
+- sigreg
+- bootstrap_ci
+- run_registry
+stages:
+- title: 'مفهوم: چرا embedding و نه پیکسل'
+  learn:
+  - مولد در برابر joint-embedding
+  - context / target / predictor / mask token
+  - docs/jepa.md مرحله‌ی ۱ و ۲
+  build:
+  - شکل معماری را روی کاغذ بکش و برای هر بخش ورودی/خروجی را بنویس
+  measure: می‌توانی در دو دقیقه فرق MAE، CLIP، DINO و I-JEPA را توضیح بدهی
+  pitfall: JEPA را با GEPA (بهینه‌سازی prompt) یا با LLM اشتباه نگیر.
+- title: آموزش و probe
+  learn:
+  - ماسک بلوکی، attention mask، EMA teacher
+  - linear probe = ارزیابی استاندارد SSL
+  build:
+  - python run.py (یا scripts/jepa1_ijepa_digits.py)
+  - 'baseline ها: پیکسل خام و encoder تصادفی'
+  measure: دقت probe هر نسخه با بازه‌ی چند seed
+  pitfall: یک seed و یک عدد = نتیجه‌ی تصادفی. حداقل ۳ seed.
+- title: تفسیر صادقانه و آزمایش
+  learn:
+  - چرا پیکسل خام روی ارقام ۸×۸ برنده است
+  - مقیاس داده و مزیت JEPA
+  build:
+  - epochs، dim، اندازه‌ی ماسک و sigreg_weight را تغییر بده و در یک جدول ثبت کن
+  measure: جدول ablation با ۳ متغیر
+  pitfall: ادعای «JEPA بهتر است» بدون baseline مناسب گمراه‌کننده است.
+metrics:
+- linear-probe accuracy (mean, min, max over seeds)
+- gap vs random encoder
+- training seconds
+params:
+  epochs: 40
+  dim: 64
+  seeds:
+  - 7
+  - 8
+  - 9
+  variants:
+  - ema
+  - sigreg
+  - pixel
+  mask_block: 2
+guardrails:
+- تقسیم train/test ثابت و stratified؛ probe فقط روی train fit شود
+production:
+- encoder منجمد + probe کوچک برای هر وظیفه = هزینه‌ی برچسب کم
+interview:
+- چرا پیش‌بینی در فضای embedding از پیکسل بهتر است و کی نیست؟
+- linear probe چه چیزی را می‌سنجد؟
+- baseline encoder تصادفی چرا لازم است؟
+advanced:
+- CIFAR-10 با ViT کوچک
+- مقایسه با DINOv2 منجمد
+- multi-block masking مثل مقاله‌ی I-JEPA
+cv: Implemented a mini I-JEPA (masked latent prediction) in PyTorch; compared EMA-teacher, SIGReg and pixel-reconstruction variants against raw-pixel and random-encoder baselines over {seeds} seeds (probe
+  {acc}).

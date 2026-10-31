@@ -1,0 +1,10 @@
+id: laptop_cpu
+title: "لپ‌تاپ بدون GPU"
+description: "embedding سنگین خاموش (آن بخش را در Colab اجرا کن)، RAG با BM25، نمونه‌ی LLM کوچک‌تر. عددها قابل گزارش‌اند ولی مقایسه‌ی embedding را جدا در Colab انجام بده."
+changes:
+  intents.run_embeddings: false
+  intents.llm_sample_per_intent: 4
+  rag.mode: bm25
+  embeddings.device: cpu
+  embeddings.batch_size: 32
+  evaluation.n_run: 20

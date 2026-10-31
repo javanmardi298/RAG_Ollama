@@ -1,0 +1,44 @@
+id: p15_finetune_distill
+order: 15
+level: 3
+title: "fine-tune و distillation مدل کوچک (LoRA، DPO)"
+title_en: "Fine-tuning and distillation of small models (LoRA, DPO)"
+tracks: [ml, eval, production]
+weeks: "3"
+real_world: "وقتی LLM بزرگ برای یک کار تکراری (طبقه‌بندی، استخراج، لحن برند) گران یا کند است: مدل کوچکِ آموزش‌دیده جایگزین می‌شود."
+problem: "داده‌ی برچسب‌دار کم است، fine-tune بد مدل را بدتر می‌کند (فراموشی)، و مقایسه باید منصفانه و با هزینه باشد."
+goal: "با برچسب‌های LLM بزرگ (distillation) مدل کوچک را با LoRA آموزش دهی، با DPO لحن را تنظیم کنی، و دقت/هزینه/تأخیر را با baseline مقایسه کنی."
+prerequisites: [p04_ticket_triage, p08_support_agent]
+data:
+  - {name: "splitهای Bitext مرحله‌ی ۰", url: "data/processed/", license: "CDLA-Sharing-1.0", note: "برای SFT طبقه‌بندی"}
+  - {name: "جفت‌های ترجیح از ویرایش اپراتور یا judge", url: "", license: "—", note: "(prompt، جواب بهتر، جواب بدتر) برای DPO"}
+stack: {llm: "Qwen2.5-0.5B/1.5B-Instruct یا xlm-roberta-base", embeddings: "—", extras: ["transformers", "peft", "trl", "Colab GPU"]}
+components: [lora, dpo, distillation, structured_output, extraction_metrics, bootstrap_ci, cost_ledger, run_registry, leakage_free_split]
+stages:
+  - title: "baseline و بودجه"
+    learn: ["آیا fine-tune لازم است؟ اول prompt و few-shot را بسنج"]
+    build: ["baseline: TF-IDF مرحله‌ی ۱ و LLM با few-shot"]
+    measure: "دقت، تأخیر، هزینه به ازای ۱۰۰۰ پیام"
+    pitfall: "fine-tune بدون baseline قوی، بهبود خیالی نشان می‌دهد."
+  - title: "SFT با LoRA"
+    learn: ["LoRA: rank، alpha، ماژول‌های هدف", "overfitting و early stopping روی dev"]
+    build: ["بسته‌ی Colab از پنل (مرحله‌ی ۹ support-agent)", "rank 8/16/32 را مقایسه کن"]
+    measure: "macro-F1 روی dev و یک بار test"
+    pitfall: "learning rate بالا با LoRA مدل را خراب می‌کند؛ منحنی loss را ببین."
+  - title: "distillation"
+    learn: ["برچسب نرم/سخت از مدل بزرگ", "کیفیت برچسب معلم را بسنج"]
+    build: ["LLM بزرگ روی داده‌ی بی‌برچسب برچسب بزند؛ مدل کوچک روی آن آموزش ببیند", "مقایسه با آموزش روی برچسب انسانی"]
+    measure: "دقت شاگرد در برابر معلم، هزینه‌ی برچسب‌زنی"
+    pitfall: "شاگرد خطاهای معلم را یاد می‌گیرد؛ نمونه‌ی برچسب معلم را دستی چک کن."
+  - title: "DPO برای لحن و قالب"
+    learn: ["preference optimization بدون reward model", "جفت‌های ترجیح از ویرایش اپراتور"]
+    build: ["TRL DPOTrainer روی مدل کوچک instruct با LoRA"]
+    measure: "win rate با judge اعتبارسنجی‌شده، و حفظ دقت فکت"
+    pitfall: "DPO می‌تواند مدل را پرحرف کند (length bias)؛ طول را کنترل کن."
+metrics: ["macro-F1 / field F1", "win rate (validated judge)", "latency", "cost per 1k requests", "teacher-student gap"]
+params: {base_model: "xlm-roberta-base", lora_r: 16, lora_alpha: 32, lr: 0.0005, epochs: 3, dpo_beta: 0.1}
+guardrails: ["داده‌ی آموزشی بدون PII", "ارزیابی ایمنی بعد از fine-tune (رفتار ناامن برنگردد)"]
+production: ["سرو با Ollama (GGUF) یا vLLM", "A/B مدل جدید با guardrail metrics"]
+interview: ["کی fine-tune و کی prompt؟", "LoRA چطور کار می‌کند؟", "distillation را چطور ارزیابی کردی؟"]
+advanced: ["QLoRA برای مدل‌های ۷B روی GPU کوچک", "تبدیل به GGUF و quantization", "continual learning بدون فراموشی"]
+cv: "Distilled an LLM into a LoRA-tuned small model for intent classification (macro-F1 {f1} vs teacher {t}) at {x}x lower latency; tuned reply style with DPO (win rate {wr})."

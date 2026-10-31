@@ -1,0 +1,61 @@
+{
+ "check_setup": "Python 3.x.y | torch 2.14.1 | GPU: False\ntrain (1347, 16, 4) test (450, 16, 4)\none epoch: 0.5 s, probe accuracy 0.84\nsetup ok\n",
+ "pytest": "....                                                                     [100%]\n4 passed",
+ "cells": [
+  "train (1347, 16, 4) test (450, 16, 4) (images, patches, pixels per patch)\n....##..\n...##...\n..##..#.\n.##..##.\n.#####..\n..####..\n....#...\n....#...\n\nmask (X = hidden patches the model must predict):\n....\n....\nXX..\nXX..",
+  "12 runs in 92 s",
+  "raw_pixels      0.968  [0.964, 0.971]\nnaive           0.832  [0.811, 0.853]\nema             0.818  [0.798, 0.838]\nrandom_encoder  0.807  [0.784, 0.829]\npixel           0.780  [0.776, 0.784]\nsigreg          0.773  [0.662, 0.884]",
+  "variant      loss  mean_std  eff.rank\nema        0.0064    0.0233      10.7\nsigreg     0.0873    0.1213      19.5\npixel      0.0911    0.0744      10.9\nnaive      0.0003    0.0055      14.3",
+  "{'collapsed': ['naive'], 'best_learned': 'ema', 'pixels_win': True, 'beats_random': [], 'unstable': ['sigreg']}"
+ ],
+ "results": {
+  "summary": {
+   "raw_pixels": {
+    "mean": 0.968,
+    "min": 0.964,
+    "max": 0.971
+   },
+   "random_encoder": {
+    "mean": 0.807,
+    "min": 0.784,
+    "max": 0.829
+   },
+   "ema": {
+    "mean": 0.818,
+    "min": 0.798,
+    "max": 0.838
+   },
+   "sigreg": {
+    "mean": 0.773,
+    "min": 0.662,
+    "max": 0.884
+   },
+   "pixel": {
+    "mean": 0.78,
+    "min": 0.776,
+    "max": 0.784
+   },
+   "naive": {
+    "mean": 0.832,
+    "min": 0.811,
+    "max": 0.853
+   }
+  },
+  "verdict": {
+   "collapsed": [
+    "naive"
+   ],
+   "best_learned": "ema",
+   "pixels_win": true,
+   "beats_random": [],
+   "unstable": [
+    "sigreg"
+   ]
+  },
+  "epochs": 20,
+  "seeds": [
+   7,
+   8
+  ]
+ }
+}

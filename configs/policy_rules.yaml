@@ -1,0 +1,41 @@
+# Single source of truth for store policy.
+# The prose policies in policies/en and policies/de are written FROM these numbers.
+# Code (tools, guardrails, tests, eval) reads the numbers from HERE, never from the prose.
+# If you change a value, update both prose files and re-run tests/test_policy_sync.py.
+
+store_name: "Hausgemacht Home"     # fictional store
+currency: EUR
+reference_date: "2026-10-01"       # the simulated "today"; keeps every run reproducible
+
+cancellation:
+  allowed_statuses: [processing]   # once shipped, a cancellation becomes a return
+  fee_eur: 0
+
+returns:
+  legal_withdrawal_days: 14        # EU right of withdrawal, counted from delivery
+  store_return_days: 30            # our voluntary, longer window
+  excluded: [custom_made]          # EU exception: goods made to the customer's specifications
+  return_shipping_paid_by: store
+
+refunds:
+  auto_approve_max_eur: 150        # above this, a human must approve
+  issue_within_days: 14            # after we receive the returned item
+  method: original_payment_method
+
+damaged_items:
+  report_within_days: 7            # after delivery
+  photo_required: true
+  auto_replace_max_eur: 150
+
+shipping:
+  address_change_statuses: [processing]
+  delayed_after_days: 10           # shipped but not delivered after this many days
+
+identity:
+  # The bot may only show or change an order if the customer is verified
+  # and the order belongs to them.
+  verify_with: [order_id, email]
+
+handoff:
+  always_for: [contact_human_agent, legal_threat, account_security, payment_dispute]
+  max_failed_turns: 2              # bot could not resolve after this many turns

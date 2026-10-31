@@ -1,0 +1,278 @@
+id: p30_agent_skills
+title: ساختن مجموعه‌ی Agent Skills (SKILL.md) با تست، از صفر در GitHub
+repo: agent_skills
+description: 'Agent Skills (SKILL.md) for coding agents: project report, invoice check and meeting notes, with a toolkit that validates skills, measures context cost and tests activation'
+lede: 'سه skill برای عامل‌های کدنویسی (Claude Code و ابزارهای سازگار) می‌سازی: گزارش وضعیت پروژه، بررسی فاکتور با اسکریپت، و خلاصه‌ی جلسه. یک ابزار کوچک هم می‌نویسی که skill ها را اعتبارسنجی کند، هزینه‌ی context را بسنجد و تست کند هر skill کی فعال شود. بدون GPU و بدون مدل.'
+learn:
+- - پروژه در نقشه‌ی راه
+  - roadmap:p30_agent_skills
+- - 'پژوهش ۲۰۲۶: Agent Skills'
+  - roadmap-tab:research
+lesson: ''
+fill:
+  always: context/always_loaded_tokens
+  all: context/if_all_in_prompt_tokens
+  correct: activation/correct
+  total: activation/total
+facts:
+- - GitHub
+  - فایل‌ها و تست خودکار
+- - VS Code + notebook
+  - اعتبارسنجی و تست
+- - Claude Code
+  - استفاده‌ی واقعی از skill ها
+flow:
+- - GitHub
+  - gh
+- - VS Code + notebook
+  - vs
+- - Claude Code / OpenCode
+  - ol
+steps:
+- title: ساختن repo در GitHub
+  where:
+  - gh
+  minutes: 3
+  why: 'repo خودت نمونه‌کار توست: هر فایلی که اینجا می‌سازی، کارفرما می‌بیند. اسم و توضیح کوتاه و دقیق، اولین چیزی است که دیده می‌شود.'
+  do:
+  - در github.com بالا سمت راست **+** → **New repository**.
+  - '**Repository name:** `agent_skills`'
+  - '**Description:** `{description}`'
+  - '**Public** را انتخاب کن (برای نمونه‌کار و Actions رایگان).'
+  - تیک **Add a README file**، **Add .gitignore:** None (خودمان می‌سازیم)، **Choose a license:** MIT License → **Create repository**.
+  see: 'repo دو فایل دارد: `README.md` و `LICENSE`. در LICENSE اگر نام تو در خط Copyright نیست، با آیکون مداد اصلاحش کن.'
+- title: فایل .gitignore
+  where:
+  - gh
+  minutes: 2
+  why: 'به git می‌گوید چه چیزهایی هرگز وارد repo نشوند: محیط مجازی، فایل‌های موقت، و `.env` که کلید API در آن است. **قبل از** هر فایل دیگری بساز.'
+  do:
+  - '**Add file** → **Create new file**، نام `.gitignore`، متن زیر را paste کن. commit: `Add .gitignore`.'
+  file: .gitignore
+- title: فایل requirements.txt
+  where:
+  - gh
+  minutes: 2
+  why: فقط `pyyaml` برای خواندن frontmatter، به‌علاوه‌ی pytest و ipykernel.
+  do:
+  - '**Add file → Create new file**، نام `requirements.txt`. commit: `Add requirements`.'
+  file: requirements.txt
+- title: 'skill اول: skills/project-report/SKILL.md'
+  where:
+  - gh
+  minutes: 3
+  why: یک skill = یک پوشه با `SKILL.md`. بالای فایل بین دو `---` نام و توضیح می‌آید؛ توضیح باید بگوید skill چه می‌کند و **کی** استفاده شود («Use when ...»)، چون عامل فقط همین را همیشه می‌بیند و از روی آن تصمیم می‌گیرد. بقیه‌ی متن دستورالعمل است و فقط وقتی skill لازم شد خوانده می‌شود.
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `skills/project-report/SKILL.md` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add project-report skill`.'
+  file: skills/project-report/SKILL.md
+- title: فایل skills/project-report/scripts/summarize.py
+  where:
+  - gh
+  minutes: 2
+  why: اسکریپت قطعی که عددهای `results/*.json` را بیرون می‌کشد. کاری که با کد قابل انجام است را به استدلال مدل نسپار.
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `skills/project-report/scripts/summarize.py` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add summarize script`.'
+  file: skills/project-report/scripts/summarize.py
+- title: فایل skills/invoice-check/SKILL.md
+  where:
+  - gh
+  minutes: 2
+  why: 'skill دوم: بررسی فاکتور. دقت کن قاعده‌ها (جمع، تاریخ) در اسکریپت‌اند و دستور صریح دارد که عدد را بی‌صدا «درست» نکند.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `skills/invoice-check/SKILL.md` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add invoice-check skill`.'
+  file: skills/invoice-check/SKILL.md
+- title: فایل skills/invoice-check/reference/schema.json
+  where:
+  - gh
+  minutes: 2
+  why: 'فایل مرجع: ساختار JSON فاکتور. skill به آن اشاره می‌کند و عامل فقط وقتی لازم شد می‌خواندش.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `skills/invoice-check/reference/schema.json` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add invoice schema`.'
+  file: skills/invoice-check/reference/schema.json
+- title: فایل skills/invoice-check/scripts/validate_invoice.py
+  where:
+  - gh
+  minutes: 3
+  why: 'اسکریپت اعتبارسنجی فاکتور: فیلدهای لازم، جمع = خالص + مالیات، تاریخ نه در آینده، و پنهان کردن IBAN. کد خروج ۱ یعنی مشکل دارد.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `skills/invoice-check/scripts/validate_invoice.py` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add invoice validation script`.'
+  file: skills/invoice-check/scripts/validate_invoice.py
+- title: فایل skills/meeting-notes/SKILL.md
+  where:
+  - gh
+  minutes: 2
+  why: 'skill سوم، فقط دستورالعمل و بدون اسکریپت: قالب خروجی ثابت و قاعده‌ی «حدس نزن» برای مسئول و تاریخ.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `skills/meeting-notes/SKILL.md` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add meeting-notes skill`.'
+  file: skills/meeting-notes/SKILL.md
+- title: فایل examples/invoice_ok.json
+  where:
+  - gh
+  minutes: 2
+  why: نمونه‌ی فاکتور درست برای تست اسکریپت.
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `examples/invoice_ok.json` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add example invoices`.'
+  file: examples/invoice_ok.json
+- title: فایل examples/invoice_bad.json
+  where:
+  - gh
+  minutes: 2
+  why: 'نمونه‌ی فاکتور با سه مشکل: شماره‌ی خالی، تاریخ آینده، جمع اشتباه.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `examples/invoice_bad.json` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add a broken example invoice`.'
+  file: examples/invoice_bad.json
+- title: فایل examples/activation_tests.json
+  where:
+  - gh
+  minutes: 2
+  why: هشت درخواست کاربر با skill درستی که باید فعال شود (یا هیچ‌کدام). مثل مجموعه‌ی ارزیابی برای توضیح‌ها.
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `examples/activation_tests.json` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add activation test cases`.'
+  file: examples/activation_tests.json
+- title: 'ابزار: skills_kit.py'
+  where:
+  - gh
+  minutes: 4
+  why: اعتبارسنجی skill ها (نام، توضیح، فایل‌های ارجاع‌شده)، اندازه‌ی context (همیشه در context در برابر فقط هنگام نیاز)، و یک تست فعال‌سازی ساده با کلمه‌های مشترک. عامل واقعی با مدل تصمیم می‌گیرد، ولی این تست جلوی توضیح‌های مبهم را می‌گیرد.
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `skills_kit.py`. commit: `Add skills toolkit: validation, context cost, activation test`.'
+  file: skills_kit.py
+  explain:
+  - - load_skills
+    - 'هر `skills/*/SKILL.md` خوانده می‌شود: بین دو `---` frontmatter (YAML) و بعد بدنه.'
+    - ''
+  - - validate
+    - 'قاعده‌های قالب: نام = نام پوشه، توضیح ۴۰ تا ۱۰۲۴ حرف با «Use when»، و وجود فایل‌هایی که بدنه به آن‌ها اشاره می‌کند.'
+    - ''
+  - - tokens و context_cost
+    - 'progressive disclosure با عدد: نام و توضیح همیشه در context، بدنه فقط هنگام نیاز.'
+    - ''
+  - - words، activate، activation_report
+    - تقریب ساده‌ی «کدام skill به این درخواست می‌خورد» با کلمه‌های مشترک؛ عامل واقعی با مدل تصمیم می‌گیرد، ولی این تست توضیح‌های مبهم را پیدا می‌کند.
+    - ''
+- title: فایل check_setup.py
+  where:
+  - gh
+  minutes: 2
+  why: یک بررسی کوچک که بعد از نصب روی لپ‌تاپ اجرا می‌کنی تا مطمئن شوی پایتون، داده و توابع اصلی کار می‌کنند، قبل از notebook.
+  do:
+  - '**Add file → Create new file**، نام `check_setup.py`. commit: `Add setup check`.'
+  file: check_setup.py
+- title: 'تست‌ها: tests/test_skills.py'
+  where:
+  - gh
+  minutes: 3
+  why: تست‌ها چک می‌کنند skill ها معتبر باشند، اعتبارسنج اشتباه‌های رایج را بگیرد، progressive disclosure context را کم کند، فعال‌سازی درست باشد و اسکریپت فاکتور مشکل‌ها را پیدا کند.
+  do:
+  - '**Add file → Create new file**، نام `tests/test_skills.py`. commit: `Add tests`.'
+  file: tests/test_skills.py
+- title: تست خودکار در GitHub (Actions)
+  where:
+  - gh
+  minutes: 3
+  why: با هر push، GitHub تست‌ها را روی یک ماشین تمیز اجرا می‌کند. تیک سبز یعنی پروژه روی هر سیستمی کار می‌کند، نه فقط لپ‌تاپ تو.
+  do:
+  - '**Add file → Create new file**، نام `.github/workflows/tests.yml`. commit: `Add CI`.'
+  - به تب **Actions** برو و چند ثانیه صبر کن.
+  file: .github/workflows/tests.yml
+  see: 'در تب Actions یک اجرای `tests` با تیک سبز. اگر قرمز شد، رویش کلیک کن: خطا دقیقاً می‌گوید کدام فایل یا خط.'
+- title: آوردن repo به لپ‌تاپ و ساختن محیط پایتون
+  where:
+  - vs
+  minutes: 8
+  why: محیط مجازی (venv) یک پایتون جدا فقط برای این پروژه است تا بسته‌هایش با پروژه‌های دیگر قاطی نشوند.
+  pre: 'پیش‌نیاز: Git (از git-scm.com) و Python 3.10 یا جدیدتر، و در VS Code افزونه‌های **Python** و **Jupyter** از Microsoft.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Git: Clone** → آدرس `https://github.com/<نام-کاربری-تو>/agent_skills.git` → یک پوشه انتخاب کن → **Open**.'
+  - 'ترمینال را باز کن: ``Ctrl+` ``'
+  commands:
+  - label: ترمینال VS Code · Windows PowerShell
+    code: 'python -m venv .venv
+
+      .venv\Scripts\Activate.ps1
+
+      pip install -r requirements.txt
+
+      '
+  - label: ترمینال VS Code
+    code: 'python check_setup.py
+
+      python -m pytest -q
+
+      '
+    output:
+    - check_setup
+    - pytest
+    expect: setup ok|\d+ passed
+  warn: 'اگر PowerShell گفت running scripts is disabled: یک بار `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` و دوباره فعال کن. روی Mac/Linux به‌جای خط دوم: `source .venv/bin/activate`.'
+- title: ساختن و اجرای notebook
+  where:
+  - vs
+  minutes: 15
+  why: 'notebook نشان می‌دهد skill ها چطور ارزیابی می‌شوند: اعتبارسنجی، هزینه‌ی context، تست فعال‌سازی و اجرای اسکریپت.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Create: New Jupyter Notebook** → `Ctrl+S` با نام `01_agent_skills.ipynb` در پوشه‌ی repo.'
+  - بالا سمت راست **Select Kernel → Python Environments → .venv**.
+  - 'سلول‌ها را به ترتیب زیر بساز (متن: **+ Markdown**، کد: **+ Code**) و هر سلول کد را با `Shift+Enter` اجرا کن. خروجی را با «باید ببینی» زیرش مقایسه کن.'
+  tip: 'اگر نمی‌خواهی سلول‌ها را یکی‌یکی بسازی: دکمه‌ی **دانلود notebook** بالای سلول‌ها فایل آماده را می‌دهد؛ در پوشه‌ی repo بگذار و Run All. ولی یک بار دستی ساختن، کد را بهتر در ذهنت می‌نشاند.'
+  notebook: 01_agent_skills.ipynb
+- title: استفاده‌ی واقعی در Claude Code (اختیاری)
+  where:
+  - vs
+  - ol
+  minutes: 10
+  why: skill ها برای عامل‌ها ساخته شده‌اند. در Claude Code آن‌ها را در پوشه‌ی skills پروژه بگذار و ببین کی و چطور استفاده می‌شوند.
+  do:
+  - 'در ترمینال VS Code (داخل repo):'
+  - 'بعد Claude Code را در همین پوشه باز کن و بگو: «summarise the results of this project» یا «check this invoice: ...».'
+  commands:
+  - label: 'Windows PowerShell: skill ها را برای Claude Code همین پروژه فعال کن'
+    code: 'New-Item -ItemType Directory -Force .claude\skills | Out-Null
+
+      Copy-Item -Recurse -Force skills\* .claude\skills\
+
+      '
+  - label: Mac/Linux
+    code: 'mkdir -p .claude/skills && cp -r skills/* .claude/skills/
+
+      '
+  warn: 'skill شخص ثالث را بدون خواندن نصب نکن: اسکریپت‌هایش روی سیستم تو اجرا می‌شوند. پوشه‌ی `.claude/` را اگر نمی‌خواهی commit شود به `.gitignore` اضافه کن.'
+- title: commit و push از VS Code
+  where:
+  - vs
+  - gh
+  minutes: 3
+  why: notebook با خروجی‌هایش و فایل نتایج باید در GitHub باشند تا بدون اجرا دیده شوند.
+  do:
+  - 'پنل Source Control: `Ctrl+Shift+G`. فایل‌های `01_agent_skills.ipynb` و `results/results.json` را می‌بینی.'
+  - 'پیام: `Add notebook: validation, context cost, activation, invoice script` → **Commit** → **Sync Changes**.'
+  see: 'در GitHub، `01_agent_skills.ipynb` را باز کن: جدول‌ها و خروجی‌ها بدون اجرا دیده می‌شوند. تب Actions دوباره سبز است.'
+  warn: 'قانون ساده: قبل از هر کار در VS Code اول **Pull** بزن، و یک فایل را هم‌زمان در GitHub و VS Code ویرایش نکن.'
+- title: README نهایی
+  where:
+  - gh
+  minutes: 10
+  why: 'README صفحه‌ی اول پروژه است: در ۳۰ ثانیه بگوید چه مسئله‌ای، چه روشی، چه عددی و چه محدودیتی. عددها را از `results/results.json` خودت بردار، نه از این صفحه.'
+  do:
+  - 'در GitHub روی `README.md` → آیکون مداد → متن زیر را جایگزین کن و عددهای `{...}` را پر کن (یا results.json را پایین paste کن). commit: `Write README`.'
+  - نام کاربری‌ات را در خط badge جایگزین کن.
+  readme: true
+- title: صیقل نهایی repo
+  where:
+  - gh
+  minutes: 5
+  why: جزئیات کوچکی که repo را حرفه‌ای نشان می‌دهد.
+  do:
+  - 'صفحه‌ی repo → چرخ‌دنده‌ی **About** → Topics: `agent-skills`, `claude-code`, `llm-agents`, `prompt-engineering`, `python`.'
+  - 'در پروفایل GitHub: **Customize your pins** → این repo را pin کن.'
+  - خط رزومه‌ی پایین را با عددهای خودت بردار.
+  cv: Packaged team procedures as Agent Skills (SKILL.md with scripts and references) and built a toolkit that validates skills, measures context cost ({always} vs {all} tokens with progressive disclosure) and tests activation ({correct}/{total} on labelled requests).
+trouble:
+- - '`No module named yaml`'
+  - '`pip install -r requirements.txt` را در venv فعال اجرا کن.'
+- - Claude Code skill را نمی‌بیند
+  - پوشه باید `.claude/skills/<name>/SKILL.md` باشد و Claude Code را از ریشه‌ی repo باز کرده باشی.
+- - '`python` شناخته نمی‌شود'
+  - Python را با تیک «Add to PATH» نصب کن، یا به‌جای `python` بنویس `py`.
+- - تب Actions قرمز است
+  - روی اجرای قرمز کلیک کن؛ معمولاً یک فایل با نام یا مسیر اشتباه ساخته شده (مثلاً `test/` به‌جای `tests/`).

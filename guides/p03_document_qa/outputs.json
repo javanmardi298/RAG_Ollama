@@ -1,0 +1,21 @@
+{
+ "check_setup": "Python 3.x.y\nemployee_handbook   110 words, first line: # Employee Handbook\nexpenses             70 words, first line: # Expenses\nit_security          98 words, first line: # IT Security Policy\ntravel_policy        81 words, first line: # Travel Policy\nPasswords must have at least 12 characters. [it_security#0]\nsetup ok\n",
+ "pytest": ".....                                                                    [100%]\n5 passed",
+ "cells": [
+  "employee_handbook   110 words | # Employee Handbook\nexpenses             70 words | # Expenses\nit_security          98 words | # IT Security Policy\ntravel_policy        81 words | # Travel Policy\n18 questions",
+  "14 chunks\nemployee_handbook#0  Employee Handbook > Vacation     Full-time employees get 25 days of paid vacation p\nemployee_handbook#1  Employee Handbook > Sick leave   Tell your manager before 10:00 on the first day of\nemployee_handbook#2  Employee Handbook > Remote work  You may work remotely up to 2 days per week after \nemployee_handbook#3  Employee Handbook > Probation    The probation period is 6 months. During probation\nexpenses#0           Expenses > Deadline              Submit expenses within 30 days after the purchase",
+  "how many vacation days do I get        -> Full-time employees get 25 days of paid vacation per calendar year. [e\ncan I carry over unused vacation days  -> Up to 5 unused days can be carried over to the next year; they expire \nwhen do I need a doctor's certificate  -> From the fourth day of illness a doctor's certificate is required. [em\nhow many days a week can I work from h -> You may work remotely up to 2 days per week after your probation perio\nhow long is the probation period       -> The probation period is 6 months. [employee_handbook#3]\nhow long must my password be           -> Passwords must have at least 12 characters. [it_security#0]\nare SMS codes allowed for MFA          -> Use the authenticator app; SMS codes are not allowed. [it_security#1]\nwhat do I do with a phishing email     -> Report suspicious emails with the \"Report phishing\" button. [it_securi\nhow often are laptops replaced         -> Laptops are replaced every 3 years. [it_security#3]\ncan I fly business class               -> Business class is allowed for flights of 6 hours or more with approval\nwhat is the hotel limit in Paris       -> The hotel limit is 140 EUR per night in most cities and 190 EUR per ni\nhow much is the meal allowance per day -> The meal allowance (per diem) is 45 EUR per full day of travel and 25 \nwhen do I have to submit expenses      -> Submit expenses within 30 days after the purchase or the end of the tr\ndo I need a receipt for a 10 EUR taxi  -> Upload a receipt for every expense above 25 EUR. [expenses#1]\nwhen are approved expenses paid        -> Approved expenses are paid with the next salary. [expenses#2]\nwhat is the company's parental leave p -> ABSTAIN (no evidence)\ncan I bring my dog to the office       -> ABSTAIN (no evidence)\nwhat is the stock option vesting sched -> ABSTAIN (no evidence)",
+  "wrong number  -> number not in the source\nfake citation -> no valid citation",
+  "{'correct_source': 15, 'wrong_source': 0, 'abstained_wrongly': 0, 'abstained_correctly': 3, 'answered_unanswerable': 0}",
+  "No model set: DOCQA_PROVIDER = ollama | anthropic | opencode (see the guide)"
+ ],
+ "results": {
+  "offline": {
+   "correct_source": 15,
+   "wrong_source": 0,
+   "abstained_wrongly": 0,
+   "abstained_correctly": 3,
+   "answered_unanswerable": 0
+  }
+ }
+}

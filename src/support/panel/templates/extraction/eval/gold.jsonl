@@ -1,0 +1,2 @@
+{"file": "inv_001.txt", "fields": {"vendor": "Holz AG", "invoice_number": "RE-2026-0042", "date": "2026-09-14", "net": 180.0, "vat": 34.2, "total": 214.2}}
+{"file": "inv_002.txt", "fields": {"vendor": "Nordic Lamps Ltd", "invoice_number": "NL-7781", "date": "2026-09-20", "net": 1250.0, "vat": 250.0, "total": 1500.0}}

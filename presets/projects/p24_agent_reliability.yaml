@@ -1,0 +1,83 @@
+id: p24_agent_reliability
+order: 24
+level: 2
+title: 'پایایی agent: pass^k، ارزیابی مسیر و حالت نهایی'
+title_en: 'Agent reliability: pass^k, trajectory and final-state evaluation'
+tracks:
+- eval
+- agent
+- production
+weeks: 1–2
+real_world: agent ای که ۸۰٪ وقت‌ها درست است ولی در ۸ اجرای پشت‌سرهم فقط ۲۰٪ همه درست است؛ معیار tau-bench برای پشتیبانی و خرده‌فروشی.
+problem: یک اجرا برای هر سناریو پایایی را نشان نمی‌دهد؛ مشتری تکرار را تجربه می‌کند، نه میانگین را.
+goal: هر سناریو را k بار اجرا کنی، pass@k و pass^k گزارش کنی، حالت نهایی DB را با gold مقایسه کنی و منبع ناپایداری را پیدا کنی.
+prerequisites:
+- p08_support_agent
+data:
+- name: سناریوهای مرحله‌ی ۶ همین repo
+  url: ''
+  license: —
+  note: evaluation.repeats در configs/project.yaml
+- name: tau-bench / tau2-bench
+  url: https://github.com/sierra-research/tau2-bench
+  license: MIT
+  note: معیار مرجع pass^k
+stack:
+  llm: مدل agent پروژه + user simulator
+  embeddings: —
+  extras:
+  - labkit.metrics.reliability_report
+components:
+- sim_user_eval
+- pass_k
+- trajectory_eval
+- bootstrap_ci
+- run_registry
+- cost_ledger
+- llm_judge
+stages:
+- title: تکرار و pass^k
+  learn:
+  - pass@k (حداقل یک موفقیت) در برابر pass^k (همه موفق)
+  - 'واریانس از کجا می‌آید: temperature، user simulator، ابزار'
+  build:
+  - evaluation.repeats=4 و stage6 را اجرا کن
+  measure: منحنی pass^k برای k=1..4
+  pitfall: pass@1 بالا با pass^4 پایین = محصول غیرقابل‌اعتماد.
+- title: ارزیابی مسیر و حالت نهایی
+  learn:
+  - ابزار درست، ترتیب، آرگومان؛ حالت DB
+  build:
+  - برای هر سناریو حالت نهایی مورد انتظار بنویس و diff کن
+  measure: نرخ حالت نهایی درست
+  pitfall: متن پاسخ خوب ولی DB غلط = شکست.
+- title: ریشه‌یابی و بهبود
+  learn:
+  - دسته‌بندی شکست‌ها
+  - temperature=0، prompt سفت‌تر، تأیید
+  build:
+  - ۳ تغییر و اثرش روی pass^k با CI
+  measure: بهبود pass^k با CI
+  pitfall: یک بار اجرا بعد از تغییر را باور نکن.
+metrics:
+- pass^k
+- pass@k
+- final-state accuracy
+- cost per successful task
+params:
+  repeats: 4
+  n_scenarios: 30
+  temperature: 0.0
+guardrails:
+- سناریوهای امنیتی هم در تکرار باشند؛ یک نشت در k اجرا یعنی نشت
+production:
+- pass^k در CI روی زیرمجموعه‌ی کوچک؛ هشدار با افت
+interview:
+- pass^k چیست و چرا از pass@1 مهم‌تر است؟
+- ناپایداری agent از کجا می‌آید؟
+- ارزیابی حالت نهایی را چطور ساختی؟
+advanced:
+- tau2-bench با کاربر دارای ابزار
+- مدل‌سازی هزینه‌ی شکست
+- تست mutation روی prompt
+cv: 'Added repeated-trial evaluation to an LLM agent (pass^k, final-state checks): pass^4 {p4} vs pass@1 {p1}; root-caused instability and raised pass^4 to {p4b}.'

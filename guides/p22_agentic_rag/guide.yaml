@@ -1,0 +1,247 @@
+id: p22_agentic_rag
+title: ساختن Agentic RAG (جواب با شاهد یا «نمی‌دانم»)، از صفر در GitHub
+repo: agentic_rag
+description: 'Agentic RAG on FAQ pages: routing, evidence grading, bounded query rewriting, answer verification and abstention, rule-based and LLM-based (Ollama / Claude / OpenCode)'
+lede: عاملی می‌سازی که اگر شاهد کافی پیدا نکند دوباره جست‌وجو می‌کند و اگر باز هم نبود می‌گوید «نمی‌دانم»، و آن را با RAG ساده با عدد مقایسه می‌کنی. بدون GPU و بدون مدل اجرا می‌شود؛ نسخه‌ی مدلی (Ollama، Claude یا OpenCode) در مرحله‌ی ۱۱ اختیاری است. بهتر است اول پروژه‌ی جست‌وجوی FAQ (p01) را ساخته باشی.
+learn:
+- - درس قدم‌به‌قدم Agentic RAG (۵ گام)
+  - lesson:p22_agentic_rag
+- - پروژه در نقشه‌ی راه
+  - roadmap:p22_agentic_rag
+- - 'پژوهش ۲۰۲۶: Agentic RAG چه چیزی تثبیت شده'
+  - roadmap-tab:research
+lesson: p22_agentic_rag
+fill:
+  plain_correct: plain RAG/answered_correctly
+  plain_wrong_abstain: plain RAG/abstained_wrongly
+  plain_right_abstain: plain RAG/abstained_correctly
+  plain_unanswerable: plain RAG/answered_unanswerable
+  agent_correct: agentic (rules)/answered_correctly
+  agent_wrong_abstain: agentic (rules)/abstained_wrongly
+  agent_right_abstain: agentic (rules)/abstained_correctly
+  agent_unanswerable: agentic (rules)/answered_unanswerable
+  plain: plain RAG/answered_unanswerable
+  agent: agentic (rules)/answered_unanswerable
+facts:
+- - GitHub
+  - ساختن فایل‌ها، تست خودکار (Actions)
+- - VS Code
+  - اجرای کد و notebook روی لپ‌تاپ
+- - مدل زبانی
+  - 'اختیاری: Ollama، Claude یا OpenCode'
+flow:
+- - GitHub
+  - gh
+- - VS Code + notebook
+  - vs
+- - Ollama / Claude / OpenCode
+  - ol
+steps:
+- title: ساختن repo در GitHub
+  where:
+  - gh
+  minutes: 3
+  why: 'repo خودت نمونه‌کار توست: هر فایلی که اینجا می‌سازی، کارفرما می‌بیند. اسم و توضیح کوتاه و دقیق، اولین چیزی است که دیده می‌شود.'
+  do:
+  - در github.com بالا سمت راست **+** → **New repository**.
+  - '**Repository name:** `agentic_rag`'
+  - '**Description:** `{description}`'
+  - '**Public** را انتخاب کن (برای نمونه‌کار و برای اینکه Actions رایگان باشد).'
+  - تیک **Add a README file** را بزن. **Add .gitignore:** None (خودمان می‌سازیم). **Choose a license:** MIT License.
+  - '**Create repository**.'
+  see: 'repo دو فایل دارد: `README.md` و `LICENSE`. در LICENSE اگر نام تو در خط Copyright نیست، با آیکون مداد اصلاحش کن.'
+- title: فایل .gitignore
+  where:
+  - gh
+  minutes: 2
+  why: 'به git می‌گوید چه چیزهایی هرگز وارد repo نشوند: محیط مجازی پایتون، فایل‌های موقت، و مهم‌تر از همه `.env` که کلید API در آن است. باید **قبل از** هر فایل دیگری ساخته شود.'
+  do:
+  - 'در صفحه‌ی repo: **Add file** → **Create new file**، نام: `.gitignore`، متن زیر را paste کن.'
+  - '**Commit changes** با پیام `Add .gitignore`.'
+  file: .gitignore
+- title: فایل requirements.txt
+  where:
+  - gh
+  minutes: 2
+  why: 'فهرست بسته‌هایی که پروژه لازم دارد. هسته‌ی پروژه فقط با کتابخانه‌ی استاندارد پایتون کار می‌کند (عمداً: می‌خواهی ببینی جست‌وجو زیر پوشش چطور کار می‌کند)؛ `pytest` برای تست و `ipykernel` برای اینکه VS Code بتواند notebook را با همین محیط اجرا کند.'
+  do:
+  - '**Add file → Create new file**، نام `requirements.txt`. commit: `Add requirements`.'
+  file: requirements.txt
+- title: 'فایل داده: data/faq.json'
+  where:
+  - gh
+  minutes: 3
+  why: 'همان پنج صفحه‌ی FAQ پروژه‌ی p01 به‌علاوه‌ی ۱۶ سؤال: ۱۲ قابل‌پاسخ، ۳ عمداً بی‌جواب و یک سلام. ستون `answerable` می‌گوید سیستم باید جواب بدهد، امتناع کند یا مستقیم جواب بدهد.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `data/faq.json` (با تایپ `/` خود GitHub پوشه را می‌سازد).'
+  - 'متن زیر را paste کن. commit: `Add FAQ data with answerable, unanswerable and direct questions`.'
+  file: data/faq.json
+- title: 'فایل اصلی: agentic_rag.py'
+  where:
+  - gh
+  minutes: 5
+  why: 'حلقه‌ی کامل در یک فایل: مسیریابی، جست‌وجو، نمره‌دادن به شواهد، بازنویسی query با سقف دور، جواب با ارجاع، راستی‌آزمایی و امتناع؛ هر تصمیم یک تابع کوچک است با نسخه‌ی قاعده‌ای (بدون مدل) و نسخه‌ی مدلی (`make_llm_components`). هر تکه را در درس p22 قدم‌به‌قدم ساخته‌ای.'
+  do:
+  - '**Add file → Create new file**، نام `agentic_rag.py`. commit: `Add agentic RAG loop with rule-based and model-based decisions`.'
+  file: agentic_rag.py
+  note: 'مدل در `make_llm` با متغیر محیطی `AGENT_PROVIDER` انتخاب می‌شود: `ollama`، `anthropic` یا `opencode`. بدون آن، فقط نسخه‌ی قاعده‌ای اجرا می‌شود.'
+  explain:
+  - - route
+    - سلام و حساب ساده مستقیم جواب می‌گیرند؛ بقیه به جست‌وجو می‌روند. در تردید، جست‌وجو امن‌تر است.
+    - p22_agentic_rag/step01_router
+  - - content_words، expand، grade
+    - مرتبط بودن = حداقل نصف کلمه‌های محتوایی سؤال در تکه باشد؛ مترادف‌ها (send back → return) قبلش باز می‌شوند.
+    - p22_agentic_rag/step02_grader
+  - - rewrite و agentic_search
+    - اگر شاهد کافی نبود، query تازه (مترادف، فقط کلمه‌های محتوایی) با سقف ۳ دور. grade همیشه با سؤال اصلی.
+    - p22_agentic_rag/step03_corrective_loop
+  - - verify، run_agent، report
+    - هر کلمه‌ی محتوایی جواب باید در شواهد باشد؛ ارجاع باید واقعی باشد؛ وگرنه امتناع. report پنج نوع نتیجه را می‌شمارد.
+    - p22_agentic_rag/step04_verify_abstain
+  - - plain_rag
+    - 'خط پایه برای مقایسه: همیشه از هر چیزی که جست‌وجو آورد جواب می‌دهد.'
+    - ''
+  - - make_llm و make_llm_components
+    - همان چهار تصمیم را از مدل می‌پرسد (JSON) و به همان حلقه می‌دهد؛ پس قاعده و مدل با یک ارزیابی مقایسه می‌شوند.
+    - p22_agentic_rag/step05_llm_components
+- title: فایل check_setup.py
+  where:
+  - gh
+  minutes: 2
+  why: یک بررسی کوچک که بعد از نصب روی لپ‌تاپ اجرا می‌کنی تا مطمئن شوی پایتون، داده و توابع اصلی کار می‌کنند، قبل از notebook.
+  do:
+  - '**Add file → Create new file**، نام `check_setup.py`. commit: `Add setup check`.'
+  file: check_setup.py
+- title: 'تست‌ها: tests/test_agentic_rag.py'
+  where:
+  - gh
+  minutes: 3
+  why: 'تست خودکار یعنی هر تغییری بعداً خرابی را فوراً نشان می‌دهد. برای کارفرما هم نشانه‌ی مهندسی جدی است. این تست‌ها به هیچ مدلی نیاز ندارند: به‌جای مدل یک تابع ساختگی می‌دهیم.'
+  do:
+  - '**Add file → Create new file**، نام `tests/test_agentic_rag.py`. commit: `Add tests`.'
+  file: tests/test_agentic_rag.py
+- title: تست خودکار در GitHub (Actions)
+  where:
+  - gh
+  minutes: 3
+  why: با هر push، GitHub خودش تست‌ها را روی یک ماشین تمیز اجرا می‌کند. تیک سبز کنار commit ها یعنی پروژه روی هر سیستمی کار می‌کند، نه فقط لپ‌تاپ تو.
+  do:
+  - '**Add file → Create new file**، نام `.github/workflows/tests.yml`. commit: `Add CI`.'
+  - به تب **Actions** برو و چند ثانیه صبر کن.
+  file: .github/workflows/tests.yml
+  see: 'در تب Actions یک اجرای `tests` با تیک سبز. اگر قرمز شد، رویش کلیک کن: خطا دقیقاً می‌گوید کدام فایل یا خط.'
+- title: آوردن repo به لپ‌تاپ و ساختن محیط پایتون
+  where:
+  - vs
+  minutes: 8
+  why: محیط مجازی (venv) یک پایتون جدا فقط برای این پروژه است تا بسته‌هایش با پروژه‌های دیگر قاطی نشوند.
+  pre: 'پیش‌نیاز: Git (از git-scm.com) و Python 3.10 یا جدیدتر، و در VS Code افزونه‌های **Python** و **Jupyter** از Microsoft.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Git: Clone** → آدرس `https://github.com/<نام-کاربری-تو>/agentic_rag.git` → یک پوشه انتخاب کن → **Open**.'
+  - 'ترمینال را باز کن: ``Ctrl+` ``'
+  commands:
+  - label: ترمینال VS Code · Windows PowerShell
+    code: 'python -m venv .venv
+
+      .venv\Scripts\Activate.ps1
+
+      pip install -r requirements.txt
+
+      '
+  - label: ترمینال VS Code
+    code: 'python check_setup.py
+
+      python -m pytest -q
+
+      '
+    output:
+    - check_setup
+    - pytest
+    expect: setup ok|\d+ passed
+  warn: 'اگر PowerShell گفت running scripts is disabled: یک بار `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` و دوباره فعال کن. روی Mac/Linux به‌جای خط دوم: `source .venv/bin/activate`.'
+- title: ساختن و اجرای notebook
+  where:
+  - vs
+  minutes: 15
+  why: 'notebook داستان پروژه است: داده، روش‌ها، مقایسه با عدد، و جواب‌ها. کسی که repo را در GitHub باز می‌کند، از همین notebook (با خروجی‌هایش) می‌فهمد چه کرده‌ای.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Create: New Jupyter Notebook** → `Ctrl+S` با نام `01_agentic_rag.ipynb` در پوشه‌ی repo.'
+  - بالا سمت راست **Select Kernel → Python Environments → .venv**.
+  - 'سلول‌ها را به ترتیب زیر بساز (متن: **+ Markdown**، کد: **+ Code**) و هر سلول کد را با `Shift+Enter` اجرا کن. خروجی را با «باید ببینی» زیرش مقایسه کن.'
+  tip: 'اگر نمی‌خواهی سلول‌ها را یکی‌یکی بسازی: دکمه‌ی **دانلود notebook** پایین همین مرحله فایل آماده را می‌دهد؛ آن را در پوشه‌ی repo بگذار و همه‌ی سلول‌ها را اجرا کن (Run All). ولی یک بار دستی ساختن، کد را بهتر در ذهنت می‌نشاند.'
+  notebook: 01_agentic_rag.ipynb
+- title: اجرا با مدل زبانی واقعی (اختیاری)
+  where:
+  - vs
+  - ol
+  minutes: 10
+  why: نسخه‌ی قاعده‌ای معنا را نمی‌فهمد. با مدل، همان چهار تصمیم (مسیر، مرتبط بودن، بازنویسی، راستی‌آزمایی) را مدل می‌گیرد. هر سؤال چند فراخوانی مدل است، پس کندتر و (برای Claude) پولی است؛ با عدد مقایسه کن که ارزشش را دارد یا نه.
+  do:
+  - یکی از سه راه را انتخاب کن و در ترمینال VS Code اجرا کن، بعد سلول «With a real model» در notebook را دوباره اجرا کن (اول **Restart** kernel تا متغیر محیطی خوانده شود).
+  commands:
+  - label: Ollama (محلی، رایگان) · از ollama.com نصب کن
+    code: 'ollama pull qwen2.5:7b
+
+      pip install ollama
+
+      $env:AGENT_PROVIDER = "ollama"
+
+      '
+  - label: Claude (کلید API از console.anthropic.com؛ اشتراک Claude.ai کلید API نیست)
+    code: 'pip install anthropic
+
+      $env:ANTHROPIC_API_KEY = "sk-ant-..."     # فقط در ترمینال؛ هرگز در فایل یا notebook
+
+      $env:AGENT_PROVIDER = "anthropic"
+
+      '
+  - label: OpenCode (اگر نصب داری و وارد یک provider شده‌ای)
+    code: 'opencode models
+
+      $env:AGENT_PROVIDER = "opencode"
+
+      '
+  warn: کلید API را هرگز در notebook یا فایل‌های repo ننویس. اگر اشتباهاً push شد، فوراً در Console باطلش کن؛ پاک کردن commit کافی نیست. در Mac/Linux به‌جای `$env:X = "y"` بنویس `export X=y`.
+- title: commit و push از VS Code
+  where:
+  - vs
+  - gh
+  minutes: 3
+  why: notebook با خروجی‌هایش و فایل نتایج باید در GitHub باشند تا بدون اجرا دیده شوند.
+  do:
+  - 'پنل Source Control: `Ctrl+Shift+G`. فایل‌های `01_agentic_rag.ipynb` و `results/results.json` را می‌بینی.'
+  - 'پیام: `Add notebook: plain RAG vs agentic RAG` → **Commit** → **Sync Changes**.'
+  see: 'در GitHub، `01_agentic_rag.ipynb` را باز کن: جدول‌ها و خروجی‌ها بدون اجرا دیده می‌شوند. تب Actions دوباره سبز است.'
+  warn: 'قانون ساده: قبل از هر کار در VS Code اول **Pull** بزن، و یک فایل را هم‌زمان در GitHub و VS Code ویرایش نکن.'
+- title: README نهایی
+  where:
+  - gh
+  minutes: 10
+  why: 'README صفحه‌ی اول پروژه است. باید در ۳۰ ثانیه بگوید: چه مسئله‌ای، چه روشی، چه عددی، و محدودیت‌ها چیست. عددها را از `results/results.json` خودت بردار، نه از این صفحه.'
+  do:
+  - 'در GitHub روی `README.md` → آیکون مداد → همه‌ی متن را با متن زیر عوض کن و عددهای داخل `{...}` را با عددهای خودت پر کن (یا فایل results.json را پایین paste کن). commit: `Write README`.'
+  - نام کاربری‌ات را در خط badge جایگزین کن.
+  readme: true
+- title: صیقل نهایی repo
+  where:
+  - gh
+  minutes: 5
+  why: جزئیات کوچکی که repo را حرفه‌ای نشان می‌دهد.
+  do:
+  - 'صفحه‌ی repo → آیکون چرخ‌دنده کنار **About** → Topics: `rag`, `agentic-rag`, `llm`, `evaluation`, `python`.'
+  - 'در پروفایل GitHub: **Customize your pins** → این repo را pin کن.'
+  - یک خط رزومه از جدول نتایج بنویس (پایین همین مرحله).
+  cv: Built an agentic RAG loop (routing, evidence grading, bounded query rewriting, verification, abstention) that cut answers to unanswerable questions from {plain} to {agent} versus plain RAG on a labelled set, with rule-based and LLM-based (Ollama / Claude / OpenCode) decisions; tested with pytest and GitHub Actions.
+trouble:
+- - '`python` شناخته نمی‌شود'
+  - Python را با تیک «Add to PATH» نصب کن، یا به‌جای `python` بنویس `py`.
+- - '`No module named agentic_rag` در notebook'
+  - notebook باید در همان پوشه‌ی `agentic_rag.py` باشد و kernel روی `.venv` باشد (بالا سمت راست).
+- - '`FileNotFoundError: data/faq.json`'
+  - فایل داده را در مرحله‌ی ۴ با مسیر دقیق `data/faq.json` ساخته‌ای؟ notebook را از پوشه‌ی repo اجرا کن.
+- - تب Actions قرمز است
+  - روی اجرای قرمز کلیک کن؛ معمولاً یک فایل با نام یا مسیر اشتباه ساخته شده (مثلاً `test/` به‌جای `tests/`).
+- - '`ConnectionError` با Ollama'
+  - Ollama را اجرا کن (آیکونش کنار ساعت) و `ollama list` را بزن.
+- - Claude خطای 401 می‌دهد
+  - کلید API اشتباه یا تمام شده؛ اشتراک Claude.ai کلید API نیست.

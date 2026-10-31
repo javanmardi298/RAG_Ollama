@@ -1,0 +1,6 @@
+# core: standard library only, plus tests and notebooks
+pytest>=8.0
+ipykernel>=6.29
+# optional model providers (install the one you use)
+# ollama>=0.4        # local models
+# anthropic>=0.40    # Claude API (needs an API key from console.anthropic.com)

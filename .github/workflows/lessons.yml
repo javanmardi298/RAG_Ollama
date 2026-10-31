@@ -1,0 +1,29 @@
+name: lessons
+# Every solution must pass its check, every starter must fail it, links must resolve, notebooks and the index must be up to date.
+on:
+  push:
+    paths: ["lessons/**", "guides/**", "src/learn/**", "src/labkit/**", "src/jepa_lab/**", "src/support/providers.py", ".github/workflows/lessons.yml"]
+  pull_request:
+    paths: ["lessons/**", "guides/**", "src/learn/**", "src/labkit/**", "src/jepa_lab/**", "src/support/providers.py"]
+jobs:
+  lessons:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pandas numpy scipy scikit-learn pyyaml pydantic matplotlib fastapi httpx mcp psutil pytest ruff nbclient nbformat ipykernel
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu    # the JEPA lessons (p17 step 2) need it
+      - run: pip install -e . --no-deps
+      - run: ruff check lessons guides src/learn
+      - run: python -m learn selftest
+      - name: notebooks and index are up to date
+        run: |
+          for l in $(ls lessons | grep -E '^(p|m)[0-9]'); do
+            if ls lessons/$l/step* >/dev/null 2>&1; then python -m learn notebook $l; fi
+          done
+          python -m learn build
+          git diff --exit-code -- lessons || (echo "::error::run 'python -m learn build' and 'python -m learn notebook <lesson>' and commit" && exit 1)
+      - run: python -m learn.guides build && git diff --exit-code -- guides
+      - run: pytest -q tests/test_learn.py tests/test_guides.py

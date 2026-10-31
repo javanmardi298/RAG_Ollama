@@ -216,3 +216,22 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- support-agent ---
+data/
+!data/.gitkeep
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.env
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+results/*
+!results/.gitkeep
+*.db
+
+# learner files (python -m learn): answers, progress, error diary
+work/

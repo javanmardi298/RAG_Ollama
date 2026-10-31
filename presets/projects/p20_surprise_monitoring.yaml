@@ -1,0 +1,82 @@
+id: p20_surprise_monitoring
+order: 20
+level: 2
+title: 'پایش با «غافلگیری»: کشف ناهنجاری با خطای پیش‌بینی world model'
+title_en: 'Surprise-based monitoring: anomaly detection from world-model prediction error'
+tracks:
+- world_models
+- production
+- eval
+weeks: '1'
+real_world: 'پایش خط تولید، ربات و سنسورها: هشدار وقتی یک عمل اثر همیشگی‌اش را نداشت (شیر باز شد ولی فشار تغییر نکرد).'
+problem: ناهنجاری‌ها نادر و متنوع‌اند و برچسب ندارند؛ قاعده‌های دستی همه را پوشش نمی‌دهند.
+goal: خطای پیش‌بینی world model را به نمره‌ی ناهنجاری تبدیل کنی، AUC بگیری و آستانه را با نرخ هشدار کاذب قابل‌تحمل روی validation انتخاب کنی.
+prerequisites:
+- p19_world_model_planning
+data:
+- name: DotWorld با teleport
+  url: ''
+  license: —
+  note: پرش‌های ناممکن به‌عنوان ناهنجاری
+- name: NAB (Numenta Anomaly Benchmark)
+  url: https://github.com/numenta/NAB
+  license: AGPL
+  note: سری زمانی واقعی برای قدم بعد
+stack:
+  llm: —
+  embeddings: world model p19
+  extras:
+  - torch
+  - scikit-learn
+components:
+- latent_world_model
+- surprise_detection
+- selective_decision
+- drift
+stages:
+- title: نمره‌ی surprise
+  learn:
+  - violation of expectation
+  - ROC AUC
+  build:
+  - python run.py --stage surprise
+  measure: AUC و میانگین خطا برای عادی/ناهنجار
+  pitfall: AUC بالا روی داده‌ی آموزش معنا ندارد؛ episode های تازه.
+- title: آستانه و هزینه
+  learn:
+  - false-alarm rate، precision در آستانه
+  - همان منطق مرحله‌ی ۴ پروژه‌ی اصلی
+  build:
+  - آستانه را روی validation با FPR=1% انتخاب کن
+  measure: recall در FPR ثابت
+  pitfall: آستانه روی تست = نشت.
+- title: مقاومت
+  learn:
+  - نویز سنسور، drift
+  build:
+  - --noise 0.05، تغییر نرخ teleport
+  measure: افت AUC با نویز
+  pitfall: نویز عادی را با ناهنجاری اشتباه نگیر؛ آستانه را دوباره کالیبره کن.
+metrics:
+- ROC AUC
+- recall at fixed false-alarm rate
+- alert latency
+params:
+  stage: all
+  epochs: 40
+  teleport_rate: 0.1
+  target_fpr: 0.01
+  noise: 0.0
+guardrails:
+- هشدار ≠ توقف خودکار؛ تصمیم توقف با قاعده‌ی کد و انسان
+production:
+- لاگ surprise به‌صورت سری زمانی، داشبورد، هشدار با debounce
+interview:
+- چرا خطای پیش‌بینی نمره‌ی ناهنجاری خوبی است؟
+- آستانه را چطور انتخاب کردی؟
+- اگر نویز سنسور زیاد شود چه می‌کنی؟
+advanced:
+- V-JEPA 2 روی ویدیوی واقعی (p21)
+- سری زمانی صنعتی (NAB)
+- ترکیب با قواعد دامنه
+cv: Turned a latent world model's prediction error into an anomaly detector (AUC {auc}, recall {recall} at {fpr} false alarms) with validation-set thresholding.

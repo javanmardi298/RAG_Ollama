@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "support"
+version = "0.0.1"
+description = "Marketplace support agent: intents, policy RAG, tools, handoff decisions and evaluation"
+requires-python = ">=3.10"
+
+[project.scripts]
+learn = "learn.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+"support.panel" = ["static/*", "roadmap_template.html", "templates/*/*", "templates/*/*/*", "templates/*/*/*/*",
+                  "templates/*/*/*/*/*"]
+"learn" = ["guide_template.html"]
+
+[tool.ruff]
+line-length = 130
+extend-exclude = ["lessons/*/*/starter.py", "*.ipynb"]   # starters are deliberately unfinished
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B"]
+# scripts are notebook-style (cells, several imports per line); short lambdas and l/O names are used on purpose
+ignore = ["E501", "E702", "E731", "E401", "E402", "E741", "B008", "B905"]

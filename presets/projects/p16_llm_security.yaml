@@ -1,0 +1,45 @@
+id: p16_llm_security
+order: 16
+level: 3
+title: "آزمایشگاه امنیت برنامه‌های LLM (red-team)"
+title_en: "LLM application security lab (red-teaming)"
+tracks: [eval, production]
+weeks: "2–3"
+real_world: "تیم امنیت هر شرکتی که agent یا RAG در production دارد؛ OWASP Top 10 for LLM Applications."
+problem: "prompt injection مستقیم و غیرمستقیم (از سند، ایمیل، صفحه‌ی وب)، نشت داده‌ی کاربران دیگر، سوءاستفاده از ابزارها، و jailbreak."
+goal: "یک مجموعه‌ی حمله‌ی قابل تکرار برای پروژه‌های قبلی بسازی، دفاع چندلایه پیاده کنی و نرخ موفقیت حمله را قبل/بعد گزارش کنی."
+prerequisites: [p08_support_agent, p03_document_qa]
+data:
+  - {name: "eval/redteam.yaml همین repo", url: "eval/redteam.yaml", license: "—", note: "نقطه‌ی شروع؛ دو known gap دارد"}
+  - {name: "garak", url: "https://github.com/NVIDIA/garak", license: "Apache 2.0", note: "اسکنر خودکار"}
+  - {name: "OWASP LLM Top 10", url: "https://genai.owasp.org/", license: "CC BY-SA", note: "دسته‌بندی ریسک‌ها"}
+stack: {llm: "همان مدل پروژه‌ی هدف", embeddings: "—", extras: ["garak یا PyRIT", "Llama Guard روی Ollama"]}
+components: [input_guardrails, pii_masking, redteam_set, grounding_check, safety_classifier, attack_scanner, confirmation, idempotency, tool_agent, llm_judge, ci_eval]
+stages:
+  - title: "مدل تهدید"
+    learn: ["دارایی‌ها (داده‌ی مشتری، پول)، مهاجم‌ها، سطح حمله (ورودی، سند، ابزار)", "OWASP LLM01–LLM10"]
+    build: ["برای support-agent: جدول تهدید ← دفاع موجود ← شکاف"]
+    measure: "تعداد شکاف بدون دفاع"
+    pitfall: "تمرکز فقط روی jailbreak؛ ریسک واقعی معمولاً سوءاستفاده از ابزار و نشت داده است."
+  - title: "حمله‌ی مستقیم و غیرمستقیم"
+    learn: ["injection غیرمستقیم: دستور داخل سند یا ایمیل", "data exfiltration از طریق ابزار"]
+    build: ["سندی با دستور مخفی در policies کپی‌شده؛ ایمیل با دستور", "garak روی endpoint مرحله‌ی ۸"]
+    measure: "attack success rate به تفکیک دسته"
+    pitfall: "تست فقط با حمله‌های انگلیسی؛ آلمانی، فارسی و base64 را هم امتحان کن."
+  - title: "دفاع چندلایه"
+    learn: ["کنترل با کد (هویت از session، تأیید، idempotency) قوی‌تر از prompt", "classifier امنیتی به‌عنوان لایه‌ی اضافه"]
+    build: ["known gapهای redteam.yaml را ببند", "Llama Guard روی ورودی/خروجی و مقایسه‌ی هزینه"]
+    measure: "attack success قبل/بعد، false positive روی ترافیک عادی"
+    pitfall: "دفاع سخت‌گیرانه کاربران عادی را رد می‌کند؛ false positive را هم گزارش کن."
+  - title: "امنیت در CI"
+    learn: ["هر حمله‌ی موفق = یک تست جدید"]
+    build: ["مجموعه‌ی حمله در CI؛ شکست build اگر نرخ گرفتن افت کند"]
+    measure: "پوشش دسته‌های OWASP"
+    pitfall: "مجموعه‌ی ثابت کهنه می‌شود؛ به‌روزرسانی دوره‌ای."
+metrics: ["attack success rate per category", "false positive rate", "OWASP coverage", "guardrail latency"]
+params: {scanner: garak, safety_model: "llama-guard3:1b", categories: [prompt_injection, indirect_injection, data_leak, tool_abuse, jailbreak]}
+guardrails: ["این پروژه خودش guardrail است"]
+production: ["لاگ حمله‌ها و هشدار", "بازبینی دوره‌ای با تیم امنیت"]
+interview: ["injection غیرمستقیم چیست و چطور دفاع کردی؟", "چرا کنترل با کد مهم‌تر از prompt است؟", "false positive دفاع را چطور سنجیدی؟"]
+advanced: ["spotlighting و جداسازی داده/دستور", "canary token برای تشخیص نشت system prompt", "ارزیابی امنیتی agentهای MCP (tool poisoning)"]
+cv: "Built a red-team suite (direct/indirect injection, data exfiltration, tool abuse) and layered defences for an LLM agent; attack success {before} → {after} at {fp} false positives, enforced in CI."

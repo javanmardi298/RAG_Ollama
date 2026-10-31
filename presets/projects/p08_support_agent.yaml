@@ -1,0 +1,25 @@
+id: p08_support_agent
+order: 8
+level: 2
+title: "دستیار پشتیبانی چندنوبتی فروشگاه (پروژه‌ی اصلی همین repo)"
+title_en: "Multi-turn customer-support agent (this repository)"
+tracks: [agent, rag, eval, production]
+weeks: "6–10"
+real_world: "دستیار پشتیبانی فروشگاه آنلاین: پیگیری، لغو، مرجوعی و بازپرداخت سفارش با ابزار؛ ارجاع به انسان در موارد پرریسک."
+problem: "گفتگوی چندنوبتی، عمل‌هایی که پول جابه‌جا می‌کنند، دو زبان، و تصمیم بین حل خودکار و ارجاع."
+goal: "همه‌ی بندهای آگهی: agent چندنوبتی، تصمیم ارجاع، RAG چندزبانه، ارزیابی و guardrail، production، A/B."
+prerequisites: [p03_document_qa, p04_ticket_triage]
+data:
+  - {name: "Bitext + CLINC150 + WANDS + shop.db", url: "", license: "همان مرحله‌ی ۰", note: "پیاده‌سازی‌شده در این repo"}
+stack: {llm: "qwen2.5:7b", embeddings: "paraphrase-multilingual-MiniLM-L12-v2", extras: ["LangGraph (نسخه‌ی ۲)"]}
+components: [leakage_free_split, synthetic_data, intent_classifier, calibration, selective_decision, bm25, hybrid_rrf, citations, grounding_check, tool_agent, confirmation, idempotency, langgraph, input_guardrails, pii_masking, redteam_set, sim_user_eval, bootstrap_ci, llm_judge, serving, loadtest, drift, ab_testing, lora, mcp, run_registry, ci_eval]
+implemented: {project: support-agent, stages: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
+stages:
+  - {title: "مرحله‌های ۰ تا ۹ در پنل", learn: ["همه در صفحه‌ی مرحله‌ها"], build: ["از مرحله‌ی ۰ شروع کن"], measure: "جدول نتایج README", pitfall: "Automation Rate بدون False Automation Rate گزارش نشود."}
+metrics: ["task success (CI95)", "automation / false automation", "policy violations", "recall@3", "p95"]
+params: {}
+guardrails: ["همه در مرحله‌ی ۵"]
+production: ["مرحله‌ی ۸"]
+interview: ["در صفحه‌ی هر مرحله"]
+advanced: ["memory برای گفتگوی طولانی (labkit.memory)", "router مدل ارزان/قوی (labkit.ops.Router)", "tracing با Langfuse"]
+cv: "Built a bilingual multi-turn support agent with tool calling, calibrated automate-vs-handoff decisions, cited policy RAG, guardrails and end-to-end evaluation; task success {success}, automation {auto} at {fa} false automation."
