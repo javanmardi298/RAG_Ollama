@@ -642,7 +642,7 @@ async function pageFile(main, r) {
 }
 
 // ----- documents (tutorials, research notes) rendered from markdown -----
-const DOCS = [["lessons/README.md", "📚", "راهنمای درس‌ها و راه‌اندازی"], ["docs/jepa.md", "🧠", "آموزش JEPA و World Model"], ["docs/research_2026.md", "🔬", "پژوهش ۲۰۲۶: چه چیزی تثبیت شده"],
+const DOCS = [["lessons/README.md", "📚", "راهنمای درس‌ها و راه‌اندازی"], ["guides/README.md", "🛠", "راهنمای ساخت پروژه در GitHub خودت"], ["docs/jepa.md", "🧠", "آموزش JEPA و World Model"], ["docs/research_2026.md", "🔬", "پژوهش ۲۰۲۶: چه چیزی تثبیت شده"],
   ["docs/panel.md", "📘", "راهنمای پنل"]];
 let docBase = "docs";
 function docLink(href) {                       // a relative link inside a document -> project path

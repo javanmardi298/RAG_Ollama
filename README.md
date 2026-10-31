@@ -15,6 +15,8 @@ windows\install_claude_desktop.bat   # optional: Claude Desktop gets the same to
 
 **Lessons (step by step, with code):** [lessons/](lessons/README.md) turns the presets into guided lessons: each step has a full text, a starter with TODOs, an automatic check, three hint levels, a quiz and the reference solution (`python -m learn start p01_faq_search`). Notebook-first: every lesson is a notebook where you read the code, write it in the cells, run it, and get automatic checks plus a final lesson report (`windows\notebook.bat p01_faq_search`; Colab; VS Code). Also in the panel (menu «درس‌های تعاملی»: editor, run check, hints, quiz, model selector, teacher chat), and with Claude or OpenCode as a teacher that guides without giving the answer. Lesson code talks to any model through one interface: offline (default), Ollama, Claude API, OpenCode models or an OpenAI-compatible server (`lessons/00_setup/README.md`).
 
+**Build guides:** [guides/](guides/README.md) walk you through rebuilding each project in your own GitHub repo (files to copy, notebook cells with real expected outputs, tests, CI, README with your numbers); every guide is executed end to end before publishing.
+
 **New in this version:** [docs/research_2026.md](docs/research_2026.md) (what is established vs hype, with sources, and where each idea is implemented) and [docs/jepa.md](docs/jepa.md) (step-by-step JEPA / world-model tutorial: I-JEPA on digits, collapse and SIGReg, a reward-free latent world model that plans with CEM-MPC, surprise-based anomaly detection, pretrained V-JEPA 2; `pip install -r requirements-jepa.txt`, CPU is enough). Both open inside the panel.
 
 Other systems: `pip install -r requirements.txt -r requirements-panel.txt && pip install -e . && python -m support.panel`.

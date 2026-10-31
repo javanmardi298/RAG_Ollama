@@ -21,6 +21,7 @@ testpaths = ["tests"]
 [tool.setuptools.package-data]
 "support.panel" = ["static/*", "roadmap_template.html", "templates/*/*", "templates/*/*/*", "templates/*/*/*/*",
                   "templates/*/*/*/*/*"]
+"learn" = ["guide_template.html"]
 
 [tool.ruff]
 line-length = 130

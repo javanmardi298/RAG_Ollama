@@ -1,0 +1,327 @@
+<title>راهنمای ساخت پروژه‌ها</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F4F6; --panel:#FFFFFF; --ink:#15202B; --muted:#5A6672; --rule:#D8DEE4;
+  --accent:#0B6E7F; --accent-soft:#DDEFF2; --code-bg:#0F1720; --code-ink:#DCE6EE; --code-bar:#1A2530;
+  --gh:#24292F; --gh-soft:#E6E8EB; --vs:#1F6FD1; --vs-soft:#DEEAFB; --co:#A55E0A; --co-soft:#F7E9D6; --ol:#2E7A4E; --ol-soft:#DCEFE3;
+  --warn:#A2470F; --warn-soft:#FBEADF; --ok:#2E7A4E; --bad:#B42318;
+  --f-body:"Vazirmatn",Tahoma,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --k:#C792EA; --s:#9CD69C; --c:#6F8394; --num:#F2B66D;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E141A; --panel:#151D25; --ink:#E3EAF0; --muted:#97A5B2; --rule:#26323D;
+  --accent:#5CC3D3; --accent-soft:#123038; --code-bg:#0A0F14; --code-bar:#121A22;
+  --gh:#D7DDE3; --gh-soft:#252E37; --vs:#7DB2F5; --vs-soft:#16283F; --co:#E6A55A; --co-soft:#33240F; --ol:#79CC9A; --ol-soft:#14301F;
+  --warn:#F0A06A; --warn-soft:#35200F; --ok:#79CC9A; --bad:#FF8A80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141A; --panel:#151D25; --ink:#E3EAF0; --muted:#97A5B2; --rule:#26323D;
+  --accent:#5CC3D3; --accent-soft:#123038; --code-bg:#0A0F14; --code-bar:#121A22;
+  --gh:#D7DDE3; --gh-soft:#252E37; --vs:#7DB2F5; --vs-soft:#16283F; --co:#E6A55A; --co-soft:#33240F; --ol:#79CC9A; --ol-soft:#14301F;
+  --warn:#F0A06A; --warn-soft:#35200F; --ok:#79CC9A; --bad:#FF8A80; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.9;margin:0}
+main{direction:rtl;max-width:840px;margin:0 auto;padding:28px 16px 80px}
+h1,h2{text-wrap:balance;line-height:1.4}
+h1{font-size:clamp(1.5rem,4.4vw,2.1rem);font-weight:800;margin:6px 0 10px}
+p,li{max-width:72ch}
+a{color:var(--accent)}
+code{font-family:var(--f-mono);font-size:.85em;background:var(--accent-soft);padding:1px 5px;border-radius:4px;direction:ltr;unicode-bidi:isolate}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}
+.picker select{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:4px 10px;max-width:100%}
+.lede{color:var(--muted);margin:0 0 18px}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px;direction:ltr;justify-content:center}
+.flow .box{padding:6px 12px;border-radius:8px;font:600 .82rem var(--f-mono)}
+.flow .arr{color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0 0}
+.facts div{background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:10px 12px;font-size:.88rem;line-height:1.6;min-width:0}
+.facts b{display:block}
+.progress{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0;margin-top:20px;border-bottom:1px solid var(--rule)}
+.bar{height:6px;background:var(--rule);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.progress p{margin:4px 0 0;font-size:.82rem;color:var(--muted)}
+nav.toc ol{margin:16px 0;padding-inline-start:22px;columns:2;column-gap:28px;font-size:.92rem;line-height:2}
+@media (max-width:600px){nav.toc ol{columns:1}}
+.step{background:var(--panel);border:1px solid var(--rule);border-radius:12px;margin:20px 0;scroll-margin-top:60px;min-width:0}
+.step>header{display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.n{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:var(--ink);color:var(--panel);font:600 1rem var(--f-mono)}
+.ht{flex:1;min-width:0}.ht h2{font-size:1.12rem;margin:0}
+.chips{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center}
+.chip{font:600 .72rem var(--f-mono);padding:2px 9px;border-radius:99px;direction:ltr}
+.chip.gh{background:var(--gh-soft);color:var(--gh)}.chip.vs{background:var(--vs-soft);color:var(--vs)}
+.chip.co{background:var(--co-soft);color:var(--co)}.chip.ol{background:var(--ol-soft);color:var(--ol)}
+.mins{font-size:.75rem;color:var(--muted)}
+.done{display:flex;gap:8px;align-items:center;font-size:.85rem;color:var(--muted);cursor:pointer}
+.done input{width:20px;height:20px;accent-color:var(--accent)}
+.step.is-done .n{background:var(--accent)}
+.sb{padding:4px 16px 14px;min-width:0}
+.sb ol,.sb ul{padding-inline-start:22px}
+figure.code{margin:12px 0;border-radius:8px;overflow:hidden;background:var(--code-bg);min-width:0}
+figure.code figcaption{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--code-bar);padding:6px 10px;direction:ltr}
+.lbl{font-size:.78rem;color:var(--code-ink);opacity:.9;direction:rtl}
+.copy,.small{font:600 .74rem var(--f-mono);background:transparent;color:var(--code-ink);border:1px solid #3A4A58;border-radius:6px;padding:3px 10px;cursor:pointer}
+.copy.ok{background:var(--accent);border-color:var(--accent);color:#06222A}
+figure.code pre{margin:0;padding:12px 14px;overflow:auto;max-height:520px;color:var(--code-ink);font:13px/1.6 var(--f-mono);text-align:left;tab-size:4;direction:ltr}
+figure.code pre code{background:none;padding:0;font-size:inherit;color:inherit;border-radius:0}
+.cell{margin:4px 0 16px}
+.cell.md figure.code{background:var(--accent-soft)}
+.cell.md figure.code figcaption{background:transparent;border-bottom:1px solid var(--rule)}
+.cell.md .lbl,.cell.md pre{color:var(--ink)}
+.cell.md .copy{color:var(--ink);border-color:var(--rule)}
+.out{margin:6px 0 0;border:1px dashed var(--rule);border-radius:8px;padding:8px 10px;font:12.5px/1.6 var(--f-mono);white-space:pre-wrap;direction:ltr;text-align:left;overflow-x:auto;background:var(--panel)}
+.outlbl{font-size:.82rem;color:var(--ok);font-weight:700;margin-top:6px}
+.note{margin:6px 2px 0;font-size:.92rem;color:var(--muted)}
+.callout{display:flex;gap:10px;margin:12px 0;padding:10px 14px;border-radius:8px;font-size:.93rem;line-height:1.8}
+.callout>b{flex:none}.callout>div{min-width:0}
+.callout.why{background:var(--vs-soft)}.callout.why>b{color:var(--vs)}
+.callout.tip{background:var(--accent-soft)}.callout.tip>b{color:var(--accent)}
+.callout.see{background:var(--ol-soft)}.callout.see>b{color:var(--ol)}
+.callout.warn{background:var(--warn-soft)}.callout.warn>b{color:var(--warn)}
+details.mine{margin:6px 0 0;font-size:.88rem}
+details.mine summary{cursor:pointer;color:var(--muted)}
+details.mine textarea,.fill textarea{width:100%;min-height:90px;font:12.5px/1.5 var(--f-mono);direction:ltr;background:var(--panel);color:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:8px;margin-top:6px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.btn{font:600 .84rem var(--f-body);border:1px solid var(--rule);background:var(--panel);color:var(--ink);border-radius:8px;padding:5px 12px;cursor:pointer}
+.btn.p{background:var(--accent);border-color:var(--accent);color:#fff}
+.verdict{font-size:.88rem}.verdict.ok{color:var(--ok)}.verdict.bad{color:var(--bad)}
+.ans{white-space:pre-wrap;font-size:.92rem;background:var(--accent-soft);border-radius:8px;padding:8px 12px;margin-top:6px}
+.trouble details{border-top:1px solid var(--rule);padding:10px 2px}
+.trouble summary{cursor:pointer;font-weight:700}
+.trouble p{margin:6px 0 0;color:var(--muted)}
+.hk{color:var(--k)}.hs{color:var(--s)}.hc{color:var(--c);font-style:italic}.hn{color:var(--num)}
+footer{margin-top:40px;color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<main id="app"></main>
+
+<script>
+const DATA = __DATA__;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const md = (s) => esc(s).replace(/``([^`]+)``/g, "<code>$1</code>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
+const WHERE = { gh: "GitHub", vs: "VS Code", co: "Colab", ol: "Ollama / Claude / OpenCode" };
+const FA = (n) => String(n).replace(/\d/g, (d) => "۰۱۲۳۴۵۶۷۸۹"[d]);
+let G = DATA.guides[0];
+const state = { done: {} };
+let docRef = null, sample = null, downloads = null;
+
+// ---------- tiny python highlighter ----------
+const KW = "False|None|True|and|as|assert|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|not|or|pass|raise|return|try|while|with|yield|print|len|range|open|json";
+const TOK = new RegExp(`(#[^\\n]*)|("""[\\s\\S]*?"""|'''[\\s\\S]*?'''|f?"(?:\\\\.|[^"\\\\\\n])*"|f?'(?:\\\\.|[^'\\\\\\n])*')|\\b(${KW})\\b|\\b(\\d+(?:\\.\\d+)?)\\b`, "g");
+function hl(code, lang) {
+  if (lang !== "python") return esc(code);
+  let out = "", last = 0;
+  for (const m of code.matchAll(TOK)) {
+    out += esc(code.slice(last, m.index));
+    const cls = m[1] ? "hc" : m[2] ? "hs" : m[3] ? "hk" : "hn";
+    out += `<span class="${cls}">${esc(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(code.slice(last));
+}
+const langOf = (name) => /\.py$/.test(name) ? "python" : "text";
+let codeId = 0;
+const CODES = {};
+function codeBlock(label, code, lang, cls = "") {
+  const id = "c" + (++codeId); CODES[id] = code;
+  return `<figure class="code ${cls}"><figcaption><span class="lbl">${md(label)}</span><button class="copy" type="button" data-copy="${id}">Copy</button></figcaption><pre><code>${hl(code, lang)}</code></pre></figure>`;
+}
+
+// ---------- progress: private per-person doc in db, browser storage as fallback ----------
+const LS = "guides-progress-v1";
+try { state.done = JSON.parse(localStorage.getItem(LS)) || {}; } catch { state.done = {}; }
+let saveTimer = null;
+function persist() {
+  try { localStorage.setItem(LS, JSON.stringify(state.done)); } catch { /* storage blocked */ }
+  if (!docRef) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => { try { await docRef.set({ done: state.done, updated: Date.now() }); } catch { /* stays local */ } }, 600);
+}
+(async () => {
+  try {
+    const [db, user] = await Promise.all([window.claude?.use?.("db"), window.claude?.use?.("user")]);
+    if (db && user) {
+      const uid = await user.id();
+      if (uid) {
+        docRef = db.doc("data/users/" + uid + "/guides");
+        const snap = await docRef.get();
+        if (snap.exists) for (const [k, v] of Object.entries(snap.data().done || {})) state.done[k] = [...new Set([...(state.done[k] || []), ...v])];
+        const s = $("#sync"); if (s) s.textContent = "پیشرفت در حساب claude.ai تو ذخیره می‌شود (خصوصی)";
+        refreshDone();
+      }
+    }
+  } catch { /* browser storage only */ }
+  try { sample = await window.claude?.use?.("sample"); } catch { sample = null; }
+  try { downloads = await window.claude?.use?.("downloads"); } catch { downloads = null; }
+  document.querySelectorAll(".needs-claude").forEach((b) => { b.hidden = !sample; });
+})();
+
+// ---------- render ----------
+function stepHtml(s, i) {
+  const n = i + 1, o = G.outputs || {};
+  let body = "";
+  if (s.why) body += `<div class="callout why"><b>چرا</b><div>${md(s.why)}</div></div>`;
+  if (s.pre) body += `<p>${md(s.pre)}</p>`;
+  if (s.do) body += `<ol>${s.do.map((d) => `<li>${md(d.replace("{description}", G.description))}</li>`).join("")}</ol>`;
+  if (s.file) body += codeBlock(s.file, s.content, langOf(s.file));
+  if (s.note) body += `<p class="note">${md(s.note)}</p>`;
+  for (const c of s.commands || []) {
+    body += codeBlock(c.label, c.code.trimEnd(), "text");
+    if (c.output) {
+      const expected = c.output.map((k) => o[k] || "").join("\n").trim();
+      if (expected) body += `<div class="outlbl">باید ببینی</div><div class="out">${esc(expected)}</div>` + mineBox(`s${n}cmd`, expected, c.expect || null, `${s.title}: ${c.code}`);
+    }
+  }
+  if (s.notebook && G.notebook) body += notebookHtml(n);
+  if (s.readme) body += readmeHtml();
+  if (s.cv) body += cvHtml(s.cv);
+  if (s.tip) body += `<div class="callout tip"><b>نکته</b><div>${md(s.tip)}</div></div>`;
+  if (s.see) body += `<div class="callout see"><b>باید ببینی</b><div>${md(s.see)}</div></div>`;
+  if (s.warn) body += `<div class="callout warn"><b>حواست باشد</b><div>${md(s.warn)}</div></div>`;
+  body += `<details class="mine"><summary>به خطا خوردم / سؤال دارم</summary><textarea id="err${n}" placeholder="متن خطا یا سؤالت را این‌جا بگذار"></textarea>
+    <div class="row"><button class="btn needs-claude" hidden data-ask="${n}">از Claude بپرس</button><span class="note">بدون Claude: بخش «اگر به خطا خوردی» پایین صفحه.</span></div><div id="ans${n}"></div></details>`;
+  const chips = (s.where || []).map((w) => `<span class="chip ${w}">${WHERE[w] || w}</span>`).join("");
+  return `<section class="step" id="s${n}"><header><span class="n">${n}</span><div class="ht"><h2>${md(s.title)}</h2><div class="chips">${chips}${s.minutes ? `<span class="mins">حدود ${FA(s.minutes)} دقیقه</span>` : ""}</div></div>
+    <label class="done"><input type="checkbox" data-step="${n}"><span>انجام شد</span></label></header><div class="sb">${body}</div></section>`;
+}
+
+function mineBox(key, expected, pattern, context) {
+  return `<details class="mine"><summary>خروجی من فرق دارد</summary><textarea data-mine="${key}" placeholder="خروجی خودت را این‌جا paste کن"></textarea>
+    <div class="row"><button class="btn" data-compare="${key}">مقایسه</button><button class="btn needs-claude" hidden data-askout="${key}">از Claude بپرس چرا</button><span class="verdict" id="v-${key}"></span></div><div id="a-${key}"></div></details>`
+    .replace("data-compare", `data-expected="${esc(expected)}" data-pattern="${esc(pattern || "")}" data-context="${esc(context)}" data-compare`);
+}
+
+function notebookHtml(n) {
+  const cells = G.notebook.cells, outs = (G.outputs || {}).cells || [];
+  let ci = 0, k = 0, h = `<div class="row" style="margin-bottom:8px"><button class="btn p" data-dl="1">دانلود notebook آماده (${esc(G.notebook.name)})</button><span class="note" id="dlnote"></span></div>`;
+  for (const c of cells) {
+    if (c.md) { h += `<div class="cell md">${codeBlock("سلول متنی · Markdown", c.md.trimEnd(), "text")}</div>`; continue; }
+    ci++;
+    const out = outs[k++] || "";
+    h += `<div class="cell">${codeBlock("سلول کد " + FA(ci), c.code.trimEnd(), "python")}${c.note ? `<p class="note">${md(c.note)}</p>` : ""}
+      ${out ? `<div class="outlbl">باید ببینی</div><div class="out">${esc(out)}</div>` + mineBox(`s${n}c${ci}`, out, c.expect, `notebook cell ${ci}:\n${c.code}`) : ""}</div>`;
+  }
+  return h;
+}
+
+function pick(res, path) {                          // "[method=bm25]/recall@3" or "plain RAG/answered_correctly"
+  let cur = res;
+  for (const seg of path.split("/")) {
+    const m = seg.match(/^\[(.+)=(.+)\]$/);
+    cur = m ? (Array.isArray(cur) ? cur.find((x) => String(x[m[1]]) === m[2]) : undefined) : cur?.[seg];
+    if (cur === undefined) return undefined;
+  }
+  return cur;
+}
+function fillTemplate(text, res) {
+  return text.replace(/\{(\w+)\}/g, (m, key) => {
+    const path = (G.fill || {})[key]; if (!path) return m;
+    const v = pick(res, path);
+    return typeof v === "number" ? (/recall|mrr|ndcg|acc|auc|probe|rate|score/i.test(path) ? v.toFixed(3) : String(v)) : m;
+  });
+}
+function readmeHtml() {
+  return `<div class="fill"><p class="note">محتوای <code>results/results.json</code> خودت را این‌جا paste کن تا عددهای README پر شوند (اگر خالی بماند، جای عددها <code>{…}</code> می‌ماند).</p>
+    <textarea id="resjson" placeholder='[{"method": "bm25", "recall@3": ...}]'></textarea><div class="row"><button class="btn" id="fillbtn">پر کردن عددها</button><span class="verdict" id="fillmsg"></span></div></div>
+    <div id="readmebox">${codeBlock("README.md", G.readme.trimEnd(), "text")}</div>`;
+}
+function cvHtml(cv) {
+  return `<div class="callout tip"><b>خط رزومه</b><div id="cvline" dir="ltr" style="text-align:left">${esc(cv)}</div></div>`;
+}
+
+function render() {
+  codeId = 0;
+  const g = G;
+  const pick = DATA.guides.length > 1 ? `<div class="picker">پروژه: <select id="pick">${DATA.guides.map((x) => `<option value="${x.id}" ${x.id === g.id ? "selected" : ""}>${esc(x.id)}</option>`).join("")}</select></div>` : "";
+  const flow = (g.flow || []).map(([t, c]) => `<span class="box chip ${c}">${esc(t)}</span>`).join(`<span class="arr">⇄</span>`);
+  $("#app").innerHTML = `${pick}<h1>${esc(g.title)}</h1><p class="lede">${md(g.lede)}</p>
+    <div class="flow" aria-label="جریان کار">${flow}</div>
+    <div class="facts">${(g.facts || []).map(([a, b]) => `<div><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div>
+    <div class="progress"><div class="bar"><i id="bar"></i></div><p><span id="ptext"></span> · <span id="sync">پیشرفت در همین مرورگر ذخیره می‌شود</span></p></div>
+    <nav class="toc" aria-label="مراحل"><ol>${g.steps.map((s, i) => `<li><a href="#s${i + 1}">${md(s.title)}</a></li>`).join("")}</ol></nav>
+    ${g.steps.map(stepHtml).join("")}
+    <section class="step trouble" id="trouble"><header><span class="n">?</span><div class="ht"><h2>اگر به خطا خوردی</h2></div></header><div class="sb">
+      ${(g.trouble || []).map(([q, a]) => `<details><summary>${md(q)}</summary><p>${md(a)}</p></details>`).join("")}</div></section>
+    <footer>همه‌ی کد این صفحه قبل از انتشار روی یک پوشه‌ی تمیز اجرا و تست شده و «باید ببینی»ها خروجی واقعی همان اجراست. ${g.lesson ? `درس قدم‌به‌قدم همین موضوع (با تمرین و تست): <code>python -m learn start ${esc(g.lesson)}</code> در repo آزمایشگاه.` : ""}</footer>`;
+  document.querySelectorAll(".needs-claude").forEach((b) => { b.hidden = !sample; });
+  refreshDone();
+}
+function refreshDone() {
+  const set = new Set(state.done[G.id] || []);
+  document.querySelectorAll("input[data-step]").forEach((cb) => { const n = +cb.dataset.step; cb.checked = set.has(n); cb.closest(".step").classList.toggle("is-done", set.has(n)); });
+  const total = G.steps.length, d = [...set].filter((n) => n <= total).length;
+  const bar = $("#bar"); if (bar) bar.style.width = (100 * d / total) + "%";
+  const t = $("#ptext"); if (t) t.textContent = `${FA(d)} از ${FA(total)} مرحله`;
+}
+
+// ---------- interactions ----------
+function norm(s) { return s.replace(/\r/g, "").replace(/Python \d+\.\d+\.\d+/g, "Python 3.x.y").split("\n").map((l) => l.trimEnd()).join("\n").trim(); }
+document.addEventListener("change", (e) => {
+  if (e.target.id === "pick") { G = DATA.guides.find((x) => x.id === e.target.value); render(); window.scrollTo(0, 0); return; }
+  const cb = e.target.closest("input[data-step]"); if (!cb) return;
+  const set = new Set(state.done[G.id] || []); const n = +cb.dataset.step;
+  cb.checked ? set.add(n) : set.delete(n); state.done[G.id] = [...set]; persist(); refreshDone();
+});
+async function askClaude(prompt, box) {
+  if (!sample) return;
+  box.innerHTML = `<div class="ans">…</div>`;
+  const el = box.firstChild;
+  try {
+    const r = await sample(prompt, { onText: ({ text }) => { el.textContent = text; }, cache: false });
+    el.textContent = r.text;
+  } catch (e) {
+    el.textContent = e?.code === "rate_limited" ? "تعداد درخواست زیاد شد؛ کمی بعد دوباره امتحان کن." : e?.code === "not_granted" ? "اجازه‌ی پرسیدن از Claude داده نشد." : "جواب نیامد: " + (e?.message || e);
+  }
+}
+const COACH = "تو مربی یک مهندس AI تازه‌کار هستی که این پروژه را برای نمونه‌کار در GitHub خودش می‌سازد (Windows، VS Code، Python). به فارسی، کوتاه و مشخص جواب بده؛ نام‌های فنی، دستورها و کد را انگلیسی بنویس. اول علت محتمل، بعد دقیقاً چه کار کند (دستور یا تغییر کد)، بعد چطور بفهمد درست شد.";
+document.addEventListener("click", async (e) => {
+  const c = e.target.closest("[data-copy]");
+  if (c) { try { await navigator.clipboard.writeText(CODES[c.dataset.copy]); c.textContent = "Copied"; c.classList.add("ok"); setTimeout(() => { c.textContent = "Copy"; c.classList.remove("ok"); }, 1400); } catch { c.textContent = "متن را انتخاب و کپی کن"; } return; }
+  const cmp = e.target.closest("[data-compare]");
+  if (cmp) {
+    const key = cmp.dataset.compare, mine = norm($(`[data-mine="${key}"]`).value), exp = norm(cmp.dataset.expected), pat = cmp.dataset.pattern;
+    const v = $("#v-" + key);
+    if (!mine) { v.textContent = "اول خروجی‌ات را paste کن"; v.className = "verdict"; return; }
+    if (mine === exp) { v.textContent = "دقیقاً همان است ✓"; v.className = "verdict ok"; return; }
+    if (pat && new RegExp(pat).test(mine)) { v.textContent = "بخش اصلی درست است ✓ (جزئیات کمی فرق دارد؛ مثلاً ترتیب یا عددهای غیرمهم)"; v.className = "verdict ok"; return; }
+    v.textContent = "فرق دارد ✗ — خط به خط مقایسه کن، یا از Claude بپرس"; v.className = "verdict bad"; return;
+  }
+  const ao = e.target.closest("[data-askout]");
+  if (ao) {
+    const key = ao.dataset.askout, btn = $(`[data-compare="${key}"]`);
+    askClaude(`${COACH}\n\nپروژه: ${G.title}\n\n${btn.dataset.context}\n\nخروجی مورد انتظار:\n${btn.dataset.expected}\n\nخروجی من:\n${$(`[data-mine="${key}"]`).value}\n\nچرا فرق دارد و چطور درستش کنم؟`, $("#a-" + key));
+    return;
+  }
+  const ak = e.target.closest("[data-ask]");
+  if (ak) {
+    const n = +ak.dataset.ask, s = G.steps[n - 1], q = $("#err" + n).value.trim();
+    if (!q) return;
+    askClaude(`${COACH}\n\nپروژه: ${G.title}\nمرحله ${n}: ${s.title}\nکارهای این مرحله: ${(s.do || []).join(" | ")}${s.file ? `\nفایلی که ساخته شده: ${s.file}` : ""}\n\nپیام کاربر:\n${q}`, $("#ans" + n));
+    return;
+  }
+  if (e.target.closest("[data-dl]")) {
+    const name = G.notebook.name, text = JSON.stringify(G.notebook_json, null, 1), note = $("#dlnote");
+    try {
+      if (downloads) { await downloads.save({ filename: name, data: new Blob([text], { type: "application/x-ipynb+json" }) }); note.textContent = "ذخیره شد؛ آن را در پوشه‌ی repo بگذار."; return; }
+    } catch (err) { note.textContent = "دانلود انجام نشد: " + (err?.message || err); return; }
+    try { await navigator.clipboard.writeText(text); note.textContent = "دانلود در این نما ممکن نیست؛ محتوای notebook کپی شد: یک فایل خالی " + name + " بساز و paste کن."; }
+    catch { note.textContent = "دانلود در این نما ممکن نیست؛ سلول‌ها را از پایین بساز."; }
+    return;
+  }
+  if (e.target.id === "fillbtn") {
+    let res = null;
+    try { res = JSON.parse($("#resjson").value); } catch { $("#fillmsg").textContent = "JSON معتبر نیست؛ کل فایل results.json را paste کن"; $("#fillmsg").className = "verdict bad"; return; }
+    const text = fillTemplate(G.readme, res);
+    $("#readmebox").innerHTML = codeBlock("README.md (با عددهای تو)", text.trimEnd(), "text");
+    const cv = $("#cvline"), step = G.steps.find((s) => s.cv);
+    if (cv && step) cv.textContent = fillTemplate(step.cv, res);
+    $("#fillmsg").textContent = "پر شد ✓"; $("#fillmsg").className = "verdict ok";
+  }
+});
+render();
+</script>

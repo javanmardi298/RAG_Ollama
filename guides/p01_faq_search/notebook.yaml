@@ -1,0 +1,74 @@
+name: 01_faq_search.ipynb
+cells:
+  - md: |
+      # FAQ search with grounded answers
+
+      Questions from customers of a furniture shop are answered from five FAQ pages.
+      Search is built from scratch (BM25, character trigrams, Reciprocal Rank Fusion) and measured with recall@3 and MRR
+      on 15 labelled questions (3 of them have no answer on purpose). Answers must cite their sources or abstain.
+  - code: |
+      from faq_search import Searcher, answer, chunk_all, evaluate, load_data, make_llm
+
+      docs, questions = load_data()
+      chunks = chunk_all(docs)
+      print(len(docs), "documents,", len(chunks), "chunks,", len(questions), "questions")
+    note: "داده را می‌خواند و سندها را به تکه‌ها می‌شکند."
+    expect: "5 documents, 13 chunks, 15 questions"
+  - md: |
+      ## Chunks
+      One chunk per `##` section; the heading path travels with the text so a chunk never loses its context.
+  - code: |
+      for c in chunks[:4]:
+          print(c["id"], "|", c["heading"], "|", c["text"][:60])
+    note: "چهار تکه‌ی اول با شناسه و عنوان کامل."
+    expect: "payment#0 \\| Payment > Methods"
+  - md: |
+      ## Three search methods
+      BM25 matches exact words; character trigrams survive typos; hybrid fuses both rankings with RRF (ranks only, so the
+      different score scales do not matter).
+  - code: |
+      s = Searcher(chunks)
+      for query in ["how fast is standard delivery", "how fast is standrd delivry"]:
+          print(query)
+          for method in ["bm25", "trigram", "hybrid"]:
+              print(f"  {method:8s}", [c["id"] for c in s.search(query, method)])
+    note: "یک سؤال درست و همان سؤال با غلط املایی. ببین BM25 در دومی چه می‌کند و hybrid چطور جبران می‌کند."
+    expect: "hybrid +\\['shipping#0'"
+  - md: |
+      ## Evaluation
+      Document-level recall@3 and MRR over the 12 answerable questions. The misses show where each method fails.
+  - code: |
+      import json, os
+
+      results = [evaluate(s, questions, m) for m in ["bm25", "trigram", "hybrid"]]
+      print(f"{'method':8s} {'recall@3':>9s} {'mrr':>6s}  misses")
+      for r in results:
+          print(f"{r['method']:8s} {r['recall@3']:9.3f} {r['mrr']:6.3f}  {r['misses']}")
+      os.makedirs("results", exist_ok=True)
+      with open("results/results.json", "w") as f:
+          json.dump(results, f, indent=2)
+    note: "جدول مقایسه‌ی سه روش و ذخیره در `results/results.json` (عددهای README از همین فایل می‌آید)."
+    expect: "hybrid +1\\.000"
+  - md: |
+      ## Answers with citations
+      The model sees the top 3 chunks and must cite them as `[id]`. Invented citations are removed; no valid citation
+      means no answer. `FAQ_PROVIDER` chooses the model: offline (default, no model), ollama, anthropic or opencode.
+  - code: |
+      llm = make_llm()
+      abstained_unanswerable = answered_unanswerable = 0
+      for q in questions:
+          out = answer(q["question"], s.search(q["question"], k=3), llm)
+          if not q["relevant"]:
+              abstained_unanswerable += out["abstained"]
+              answered_unanswerable += not out["abstained"]
+          shown = "ABSTAIN" if out["abstained"] else out["answer"][:60]
+          print(f"{q['question'][:38]:38s} -> {shown}")
+      print("\nunanswerable questions: answered", answered_unanswerable, "| abstained", abstained_unanswerable)
+    note: "با مدل offline، سؤال‌های بی‌جواب هم جواب می‌گیرند چون جست‌وجو همیشه چیزی پیدا می‌کند و مدل ساختگی همیشه ارجاع می‌دهد. این محدودیت واقعی RAG ساده است؛ پروژه‌ی p22 (Agentic RAG) با نمره‌دهی به شواهد آن را حل می‌کند. با مدل واقعی ببین آیا «I do not know» می‌گوید."
+    expect: "unanswerable questions: answered 3"
+  - md: |
+      ## Limitations
+      - 15 questions are enough to learn the method, not to compare methods with confidence.
+      - Plain RAG answers unanswerable questions when retrieval returns something; evidence grading and abstention
+        (agentic RAG) are the next step.
+      - English only; tokenisation is a simple regular expression.

@@ -1,0 +1,27 @@
+{
+ "check_setup": "Python 3.x.y\n13 chunks, 16 questions\nanswerable: ['warranty#0']\nunanswerable: ABSTAIN\nsetup ok\n",
+ "pytest": "......                                                                   [100%]\n6 passed",
+ "cells": [
+  "16 questions: {'yes': 12, 'no': 3, 'direct': 1}",
+  "{'answered_correctly': 12, 'abstained_wrongly': 0, 'abstained_correctly': 1, 'answered_unanswerable': 2, 'direct_ok': 0}",
+  "how long do I have to send back a sofa   retrieve rounds=2  You can return most items within 30 days of delivery. [\ncan I return a personalised mirror       retrieve rounds=1  Custom-made and personalised items cannot be returned. \nhow do I start a return                  retrieve rounds=1  Open your order in the account page and choose \"Return \nwhen do I get my money back              retrieve rounds=1  If an item comes back damaged or used, we may refund on\nwhat if the item comes back damaged      retrieve rounds=1  If an item comes back damaged or used, we may refund on\nhow fast is standard delivery            retrieve rounds=1  Standard delivery takes 3 to 5 working days. [shipping#\nhow much does express shipping cost      retrieve rounds=1  Below that, standard shipping costs 4.90 EUR and expres\nis there a tracking link                 retrieve rounds=1  You receive a tracking link by email when the parcel le\nis a broken table leg covered            retrieve rounds=1  Damage from misuse or normal wear is not covered. [warr\nhow do I claim the warranty              retrieve rounds=1  Furniture has a 2-year warranty against manufacturing d\ncan I pay with PayPal                    retrieve rounds=1  We accept credit cards, PayPal and bank transfer. [paym\nwhere is my invoice                      retrieve rounds=1  The invoice is attached to your order confirmation emai\ncan I pay by cheque                      retrieve rounds=2  ABSTAIN\nwhat is the CEO's phone number           retrieve rounds=2  ABSTAIN\ndo you sell gift cards                   retrieve rounds=2  ABSTAIN\nhello                                    direct   rounds=0  Hello! How can I help?\n\n{'answered_correctly': 12, 'abstained_wrongly': 0, 'abstained_correctly': 3, 'answered_unanswerable': 0, 'direct_ok': 1}",
+  "                 answered  wrong abstain  right abstain  answered unanswerable\nplain RAG              12              0              1                      2\nagentic (rules)        12              0              3                      0",
+  "No model set: AGENT_PROVIDER = ollama | anthropic | opencode (see step 11 of the guide)"
+ ],
+ "results": {
+  "plain RAG": {
+   "answered_correctly": 12,
+   "abstained_wrongly": 0,
+   "abstained_correctly": 1,
+   "answered_unanswerable": 2,
+   "direct_ok": 0
+  },
+  "agentic (rules)": {
+   "answered_correctly": 12,
+   "abstained_wrongly": 0,
+   "abstained_correctly": 3,
+   "answered_unanswerable": 0,
+   "direct_ok": 1
+  }
+ }
+}
