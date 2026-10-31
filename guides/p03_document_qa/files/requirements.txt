@@ -1,0 +1,9 @@
+# core: standard library only, plus tests and notebooks
+pytest>=8.0
+ipykernel>=6.29
+# optional: PDF and Word files
+# pypdf>=4.0
+# python-docx>=1.1
+# optional model providers
+# ollama>=0.4
+# anthropic>=0.40

@@ -93,6 +93,17 @@ details.mine textarea,.fill textarea{width:100%;min-height:90px;font:12.5px/1.5 
 .trouble summary{cursor:pointer;font-weight:700}
 .trouble p{margin:6px 0 0;color:var(--muted)}
 .hk{color:var(--k)}.hs{color:var(--s)}.hc{color:var(--c);font-style:italic}.hn{color:var(--num)}
+.learnbox{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:10px 14px;margin:14px 0 0;font-size:.92rem}
+.learnbox b{display:block;margin-bottom:4px}
+.learnbox .lk{display:inline-block;margin:2px 0 2px 10px}
+details.explain{margin:8px 0 4px;border:1px solid var(--rule);border-radius:8px;padding:6px 12px;background:var(--panel)}
+details.explain summary{cursor:pointer;font-weight:700}
+details.explain li{margin:6px 0}
+.lessonbtn{font-size:.8rem;border:1px solid var(--rule);background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:1px 8px;cursor:pointer;margin-inline-start:6px}
+.lesson{border-inline-start:3px solid var(--accent);background:var(--panel);margin:8px 0;padding:6px 14px;max-height:520px;overflow:auto;border-radius:6px;font-size:.92rem}
+.lesson h2{font-size:1.05rem}.lesson h3{font-size:.98rem}.lesson pre{direction:ltr;text-align:left;background:var(--code-bg);color:var(--code-ink);padding:8px 10px;border-radius:6px;overflow:auto;font:12px/1.5 var(--f-mono)}
+.lesson table{border-collapse:collapse;font-size:.85rem}.lesson td,.lesson th{border:1px solid var(--rule);padding:3px 6px}
+.lesson .tbl{overflow-x:auto}
 footer{margin-top:40px;color:var(--muted);font-size:.85rem}
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
@@ -161,6 +172,52 @@ function persist() {
   document.querySelectorAll(".needs-claude").forEach((b) => { b.hidden = !sample; });
 })();
 
+
+// ---------- lesson texts (markdown) shown in place ----------
+function mdi(t) { return esc(t).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\[([^\]]+)\]\([^)]+\)/g, "$1"); }
+function mdToHtml(md) {
+  const out = []; const lines = md.split("\n"); let i = 0;
+  const isRow = (l) => /^\|.*\|\s*$/.test(l), isItem = (l) => /^\s*([-*]|\d+\.)\s+/.test(l);
+  while (i < lines.length) {
+    const l = lines[i];
+    if (l.startsWith("```")) { const b = []; i++; while (i < lines.length && !lines[i].startsWith("```")) b.push(lines[i++]); out.push(`<pre>${esc(b.join("\n"))}</pre>`); i++; continue; }
+    if (isRow(l)) {
+      const rows = []; while (i < lines.length && isRow(lines[i])) rows.push(lines[i++]);
+      const cells = (r) => r.trim().slice(1, -1).split("|").map((c) => c.trim());
+      const body = rows.filter((r, j) => !(j === 1 && /^[|\s:-]+$/.test(r)));
+      out.push(`<div class="tbl"><table><tr>${cells(body[0]).map((c) => `<th>${mdi(c)}</th>`).join("")}</tr>${body.slice(1).map((r) => `<tr>${cells(r).map((c) => `<td>${mdi(c)}</td>`).join("")}</tr>`).join("")}</table></div>`);
+      continue;
+    }
+    if (isItem(l)) { const ol = /^\s*\d+\./.test(l), items = []; while (i < lines.length && isItem(lines[i])) items.push(mdi(lines[i++].replace(/^\s*([-*]|\d+\.)\s+/, ""))); out.push(`<${ol ? "ol" : "ul"}>${items.map((t) => `<li>${t}</li>`).join("")}</${ol ? "ol" : "ul"}>`); continue; }
+    const h = l.match(/^(#{1,4})\s+(.*)/);
+    if (h) out.push(`<h${Math.min(h[1].length + 1, 4)}>${mdi(h[2])}</h${Math.min(h[1].length + 1, 4)}>`);
+    else if (l.startsWith(">")) out.push(`<p class="note">${mdi(l.replace(/^>\s?/, ""))}</p>`);
+    else if (l.trim() && !/^---+\s*$/.test(l)) out.push(`<p>${mdi(l)}</p>`);
+    i++;
+  }
+  return out.join("\n");
+}
+function lessonHtml(ref) {            // "p01_faq_search" (all steps) or "p01_faq_search/step02_bm25"
+  const [name, step] = ref.split("/"), les = (DATA.lessons || {})[name];
+  if (!les) return "";
+  const steps = step ? [step] : Object.keys(les.steps);
+  return steps.filter((s) => les.steps[s]).map((s) => `<div class="lesson">${mdToHtml(les.steps[s])}</div>`).join("") +
+    `<p class="note">درس تعاملی همین بخش (با کد ناقص، تست و راهنمایی) در repo آزمایشگاه: <code>python -m learn start ${esc(name)}</code></p>`;
+}
+function linkHtml([label, target]) {
+  const [kind, arg] = [target.split(":")[0], target.slice(target.indexOf(":") + 1)];
+  const R = (DATA.links || {}).roadmap_url;
+  if (kind === "lesson") return `<span class="lk">📖 <a href="#" data-lesson="${esc(arg)}">${esc(label)}</a></span>`;
+  if (kind === "guide") return `<span class="lk">🛠 <a href="#" data-guide="${esc(arg)}">${esc(label)}</a></span>`;
+  if (kind === "roadmap") return R ? `<span class="lk">🧭 <a href="${esc(R)}#${esc(arg)}" target="_blank" rel="noopener">${esc(label)}</a></span>` : "";
+  if (kind === "roadmap-tab") return R ? `<span class="lk">📚 <a href="${esc(R)}#tab=${esc(arg)}" target="_blank" rel="noopener">${esc(label)}</a></span>` : "";
+  return `<span class="lk"><a href="${esc(arg)}" target="_blank" rel="noopener">${esc(label)}</a></span>`;
+}
+function explainHtml(items) {
+  return `<details class="explain"><summary>درک کد: تابع به تابع</summary><ul>${items.map(([name, text, ref], k) =>
+    `<li><code>${esc(name)}</code>: ${md(text)}${ref && (DATA.lessons || {})[ref.split("/")[0]] ? `<button class="lessonbtn" data-lref="${esc(ref)}" data-k="${k}">📖 درس این بخش</button><div class="lref" hidden></div>` : ""}</li>`).join("")}</ul></details>`;
+}
+
 // ---------- render ----------
 function stepHtml(s, i) {
   const n = i + 1, o = G.outputs || {};
@@ -170,6 +227,7 @@ function stepHtml(s, i) {
   if (s.do) body += `<ol>${s.do.map((d) => `<li>${md(d.replace("{description}", G.description))}</li>`).join("")}</ol>`;
   if (s.file) body += codeBlock(s.file, s.content, langOf(s.file));
   if (s.note) body += `<p class="note">${md(s.note)}</p>`;
+  if (s.explain) body += explainHtml(s.explain);
   for (const c of s.commands || []) {
     body += codeBlock(c.label, c.code.trimEnd(), "text");
     if (c.output) {
@@ -240,6 +298,7 @@ function render() {
   const pick = DATA.guides.length > 1 ? `<div class="picker">پروژه: <select id="pick">${DATA.guides.map((x) => `<option value="${x.id}" ${x.id === g.id ? "selected" : ""}>${esc(x.id)}</option>`).join("")}</select></div>` : "";
   const flow = (g.flow || []).map(([t, c]) => `<span class="box chip ${c}">${esc(t)}</span>`).join(`<span class="arr">⇄</span>`);
   $("#app").innerHTML = `${pick}<h1>${esc(g.title)}</h1><p class="lede">${md(g.lede)}</p>
+    ${(g.learn || []).length || (g.related || []).length ? `<div class="learnbox"><b>برای فهمیدن بهتر</b>${(g.learn || []).map(linkHtml).join("")}${(g.related || []).map(([a, u]) => linkHtml([a, "url:" + u])).join("")}<div id="lessonpanel"></div></div>` : ""}
     <div class="flow" aria-label="جریان کار">${flow}</div>
     <div class="facts">${(g.facts || []).map(([a, b]) => `<div><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div>
     <div class="progress"><div class="bar"><i id="bar"></i></div><p><span id="ptext"></span> · <span id="sync">پیشرفت در همین مرورگر ذخیره می‌شود</span></p></div>
@@ -280,6 +339,12 @@ async function askClaude(prompt, box) {
 }
 const COACH = "تو مربی یک مهندس AI تازه‌کار هستی که این پروژه را برای نمونه‌کار در GitHub خودش می‌سازد (Windows، VS Code، Python). به فارسی، کوتاه و مشخص جواب بده؛ نام‌های فنی، دستورها و کد را انگلیسی بنویس. اول علت محتمل، بعد دقیقاً چه کار کند (دستور یا تغییر کد)، بعد چطور بفهمد درست شد.";
 document.addEventListener("click", async (e) => {
+  const lb = e.target.closest("[data-lref]");
+  if (lb) { const box = lb.nextElementSibling; if (box.hidden && !box.innerHTML) box.innerHTML = lessonHtml(lb.dataset.lref); box.hidden = !box.hidden; lb.textContent = box.hidden ? "📖 درس این بخش" : "بستن درس"; return; }
+  const la = e.target.closest("[data-lesson]");
+  if (la) { e.preventDefault(); const panel = $("#lessonpanel"); panel.innerHTML = panel.dataset.open === la.dataset.lesson ? "" : lessonHtml(la.dataset.lesson); panel.dataset.open = panel.innerHTML ? la.dataset.lesson : ""; return; }
+  const gl = e.target.closest("[data-guide]");
+  if (gl) { e.preventDefault(); const x = DATA.guides.find((y) => y.id === gl.dataset.guide); if (x) { G = x; render(); window.scrollTo(0, 0); } return; }
   const c = e.target.closest("[data-copy]");
   if (c) { try { await navigator.clipboard.writeText(CODES[c.dataset.copy]); c.textContent = "Copied"; c.classList.add("ok"); setTimeout(() => { c.textContent = "Copy"; c.classList.remove("ok"); }, 1400); } catch { c.textContent = "متن را انتخاب و کپی کن"; } return; }
   const cmp = e.target.closest("[data-compare]");
@@ -323,5 +388,11 @@ document.addEventListener("click", async (e) => {
     $("#fillmsg").textContent = "پر شد ✓"; $("#fillmsg").className = "verdict ok";
   }
 });
-render();
+(function fromHash() {
+  const [gid, step] = decodeURIComponent((location.hash || "").slice(1)).split("/");
+  const x = DATA.guides.find((y) => y.id === gid);
+  if (x) G = x;
+  render();
+  if (x && step) setTimeout(() => document.getElementById(step)?.scrollIntoView(), 50);
+})();
 </script>

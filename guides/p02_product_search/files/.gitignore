@@ -1,0 +1,9 @@
+# Python and editors
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+
+# secrets: API keys live here, never in git
+.env

@@ -296,7 +296,11 @@ if __name__ == "__main__":
     elif cmd == "html":
         docs = {k: (ROOT / f).read_text(encoding="utf-8") for k, f in [("jepa", "docs/jepa.md"), ("research", "docs/research_2026.md"),
                                                                     ("lessons", "lessons/README.md"), ("setup", "lessons/00_setup/README.md")]}
-        data = json.dumps({**export(), "docs": docs}, ensure_ascii=False).replace("</", "<\\/")   # keep </script> out of the data
+        conf = yaml.safe_load((ROOT / "lessons" / "learn.yaml").read_text(encoding="utf-8"))
+        links = {"guides_url": conf.get("guides_url", ""),
+                 "guides": sorted(p.name for p in (ROOT / "guides").iterdir() if (p / "guide.yaml").exists()),
+                 "lessons": sorted(p.name for p in (ROOT / "lessons").iterdir() if p.is_dir() and any(p.glob("step*")))}
+        data = json.dumps({**export(), "docs": docs, "links": links}, ensure_ascii=False).replace("</", "<\\/")   # keep </script> out of the data
         page = (Path(__file__).parent / "roadmap_template.html").read_text(encoding="utf-8").replace("__DATA__", data)
         Path(sys.argv[2]).write_text(page, encoding="utf-8")
     else:

@@ -295,7 +295,11 @@ function panel(p) {
   const d = doneOf(p.id);
   const tabs = [["plan", "مسئله و برنامه"], ["stages", `مرحله‌ها ${d.size}/${p.stages.length}`], ["parts", "قطعه‌ها و داده"], ["career", "مصاحبه و رزومه"]];
   let body = "";
+  const L = DATA.links || {};
+  const build = (L.guides || []).includes(p.id) ? `<a class="btn p" href="${esc(L.guides_url)}#${p.id}" target="_blank" rel="noopener">🛠 راهنمای ساخت در GitHub خودت (قدم‌به‌قدم، کد آماده)</a>` : "";
+  const lesson = (L.lessons || []).includes(p.id) ? `<span class="note">📓 درس تعاملی با تمرین و تست: <code>python -m learn start ${esc(p.id)}</code> (پنل: «درس‌های تعاملی»)</span>` : "";
   if (state.ptab === "plan") body = `
+    ${build || lesson ? `<div class="blk" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">${build}${lesson}</div>` : ""}
     <div class="blk"><h4>کاربرد واقعی</h4><p>${esc(p.real_world)}</p></div>
     <div class="blk"><h4>مسئله</h4><p>${esc(p.problem)}</p></div>
     <div class="blk"><h4>هدف</h4><p>${esc(p.goal)}</p></div>
@@ -418,5 +422,11 @@ document.addEventListener("change", (ev) => {
   persist(); render();
 });
 document.querySelectorAll("nav.views button").forEach((b) => b.addEventListener("click", () => { state.view = b.id.slice(2); render(); }));
+(function fromHash() {
+  const h = decodeURIComponent((location.hash || "").slice(1));
+  if (!h) return;
+  if (h.startsWith("tab=") && document.getElementById("v-" + h.slice(4))) state.view = h.slice(4);
+  else if (P[h]) { state.view = "map"; state.sel = h; state.ptab = "plan"; }
+})();
 render();
 </script>

@@ -1,0 +1,84 @@
+name: 01_product_search.ipynb
+cells:
+  - md: |
+      # Product search for a furniture shop
+
+      84 products, 24 shopper queries and graded labels (Exact = 2, Partial = 1). Questions: does richer product text help
+      (category + structured features), do typo-tolerant trigrams and hybrid fusion help, and is the difference real?
+      Metrics: nDCG@10 (graded), recall@10 (Exact only), MRR.
+  - code: |
+      from product_search import BM25, bootstrap, evaluate, load_data, product_text, rrf, top_k, trigram_scores
+
+      products, queries, qrels = load_data()
+      ids = [p["product_id"] for p in products]
+      print(len(products), "products,", len(queries), "queries")
+      print(product_text(products[0], rich=False))
+      print("---")
+      print(product_text(products[0], rich=True))
+    note: "داده و دو شکل متن محصول: basic (نام + توضیح) و rich (به‌علاوه‌ی دسته و ویژگی‌های ساخت‌یافته مثل رنگ و جنس)."
+    expect: "84 products, 24 queries"
+  - md: |
+      ## Basic vs rich product text (BM25)
+  - code: |
+      runs, scores = {}, {}
+      for name, rich in [("bm25 basic", False), ("bm25 rich", True)]:
+          bm = BM25([product_text(p, rich) for p in products])
+          runs[name] = {q: top_k(bm.scores(t), ids, 10) for q, t in queries.items()}
+          per_query, means = evaluate(runs[name], qrels)
+          scores[name] = per_query
+          print(f"{name:14s}", means)
+    note: "متن rich بهتر است چون رنگ و جنس محصول اغلب فقط در ویژگی‌های ساخت‌یافته هست، نه در نام یا توضیح."
+    expect: "bm25 rich +\\{'ndcg@10': 0\\.9"
+  - md: |
+      ## Typos and hybrid search
+      Character trigrams survive typos ("velvt sofa"); RRF fuses BM25 and trigram rankings by rank only.
+  - code: |
+      rich_texts = [product_text(p) for p in products]
+      bm_rich = BM25(rich_texts)
+      runs["trigram rich"] = {q: top_k(trigram_scores(t, rich_texts), ids, 10) for q, t in queries.items()}
+      runs["hybrid rrf"] = {q: rrf([top_k(bm_rich.scores(t), ids, 50), top_k(trigram_scores(t, rich_texts), ids, 50)])[:10]
+                              for q, t in queries.items()}
+      for name in ["trigram rich", "hybrid rrf"]:
+          scores[name], means = evaluate(runs[name], qrels)
+          print(f"{name:14s}", means)
+      print()
+      by_id = {p["product_id"]: p for p in products}
+      show = lambda pids: [by_id[p]["product_class"] for p in pids]
+      for q in ["grey velvt sofaa", "oak dinning tabel"]:
+          print(f"{q:18s} bm25: {show(top_k(bm_rich.scores(q), ids, 3))}")
+          print(f"{'':18s} hybrid: {show(rrf([top_k(bm_rich.scores(q), ids, 50), top_k(trigram_scores(q, rich_texts), ids, 50)])[:3])}")
+    note: "روی این داده، hybrid اولین نتیجه‌ی درست را بالاتر می‌آورد (MRR بیشتر) ولی nDCG کمی کمتر از BM25 روی متن rich دارد: ترکیب همیشه در همه‌ی معیارها برنده نیست. در دو query غلط‌دار پایین ببین BM25 چه دسته‌ای برمی‌گرداند و hybrid چه."
+    expect: "grey velvt sofaa +bm25:"
+  - md: |
+      ## Is the difference real? (bootstrap over the 24 queries)
+  - code: |
+      import json, os
+
+      base = {q: v["ndcg@10"] for q, v in scores["bm25 basic"].items()}
+      sig = {name: bootstrap(base, {q: v["ndcg@10"] for q, v in scores[name].items()}) for name in scores if name != "bm25 basic"}
+      for name, s in sig.items():
+          print(f"{name:14s}", s)
+      table = {name: evaluate(runs[name], qrels)[1] for name in runs}
+      os.makedirs("results", exist_ok=True)
+      with open("results/results.json", "w") as f:
+          json.dump({"table": table, "vs_basic": sig}, f, indent=2)
+    note: "برای هر روش در برابر bm25/basic: `diff` اختلاف میانگین nDCG، و `low`..`high` بازه‌ی ۹۵٪. اگر `low` بزرگ‌تر از صفر باشد، بهبود واقعی است (نه شانس ۲۴ سؤال)."
+    expect: "bm25 rich +\\{'diff': 0\\.1"
+  - md: |
+      ## Dense embeddings (optional)
+      Needs `pip install sentence-transformers` (downloads a small model). Skipped otherwise.
+  - code: |
+      try:
+          from product_search import Dense
+          dense = Dense(rich_texts)
+          runs["dense rich"] = {q: top_k(dense.scores(t), ids, 10) for q, t in queries.items()}
+          print("dense rich  ", evaluate(runs["dense rich"], qrels)[1])
+      except ImportError:
+          print("sentence-transformers is not installed: dense search skipped")
+    note: "اختیاری. بدون sentence-transformers فقط پیام رد شدن چاپ می‌شود. با آن، می‌بینی embedding روی هم‌معنی‌ها (couch/sofa) چه می‌کند."
+    expect: "dense search skipped|dense rich"
+  - md: |
+      ## Limitations
+      - Synthetic catalogue (84 products) with rule-based labels: good for learning the method, not for claims.
+        The same pipeline on the real WANDS dataset (43k products, 233k human labels) is the next step.
+      - 24 queries: use the bootstrap interval, not the point estimate.

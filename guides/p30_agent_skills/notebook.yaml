@@ -1,0 +1,60 @@
+name: 01_agent_skills.ipynb
+cells:
+  - md: |
+      # Agent Skills: packaging procedures as SKILL.md folders
+
+      A skill is a folder with a `SKILL.md` (a short name and description in the frontmatter, then instructions) and
+      optional scripts and reference files. An agent (Claude Code, the Claude Agent SDK and other compatible tools) keeps
+      only the name and description in its context and reads the rest when a request needs it (progressive disclosure).
+      This notebook validates three skills, measures their context cost, tests when each should activate, and runs one
+      skill's script.
+  - code: |
+      from skills_kit import activation_report, context_cost, load_skills, validate
+
+      skills = load_skills()
+      for name, s in skills.items():
+          print(f"{name:15s} {s['meta']['description'][:70]}...")
+      print("problems:", validate(skills) or "none")
+    note: "سه skill و نتیجه‌ی اعتبارسنجی: نام برابر نام پوشه، توضیح با «Use when ...»، و وجود فایل‌هایی که SKILL.md به آن‌ها اشاره می‌کند."
+    expect: "problems: none"
+  - md: |
+      ## Context cost: why only the description is always loaded
+  - code: |
+      print(context_cost(skills))
+    note: "با progressive disclosure فقط نام و توضیح همیشه در context است؛ بدنه وقتی لازم شد خوانده می‌شود. با ده‌ها skill این تفاوت بزرگ می‌شود."
+    expect: "'always_loaded_tokens': \\d+"
+  - md: |
+      ## When does each skill activate?
+      A keyword proxy over the descriptions; a real agent decides from the description with the model, so a good description
+      matters more than anything else in the skill.
+  - code: |
+      report = activation_report(skills)
+      for r in report["rows"]:
+          mark = "ok " if r["expected"] == r["got"] else "MISS"
+          print(f"{mark} {r['request'][:52]:52s} expected={r['expected']} got={r['got']}")
+      print(f"\n{report['correct']}/{report['total']} correct")
+    note: "یک مورد رد می‌شود: «extract the data from this invoice» با توضیح invoice-check کلمه‌ی مشترک کافی ندارد. تمرین: توضیح invoice-check را طوری بهتر کن که این را هم بگیرد (مثلاً «extract») و دوباره اجرا کن."
+    expect: "7/8 correct"
+  - md: |
+      ## A skill with a script: invoice-check
+  - code: |
+      import subprocess, sys
+
+      for f in ["examples/invoice_ok.json", "examples/invoice_bad.json"]:
+          out = subprocess.run([sys.executable, "skills/invoice-check/scripts/validate_invoice.py", f], capture_output=True, text=True)
+          print(f, "-> exit", out.returncode)
+          print("   " + out.stdout.strip().replace("\n", "\n   "))
+    note: "قاعده‌های قطعی (جمع، تاریخ، فیلد خالی) در اسکریپت‌اند، نه در استدلال مدل. مدل اسکریپت را اجرا می‌کند و نتیجه را گزارش می‌دهد."
+    expect: "invoice_bad.json -> exit 1"
+  - md: |
+      ## Save the results
+  - code: |
+      import json, os
+
+      os.makedirs("results", exist_ok=True)
+      with open("results/results.json", "w") as f:
+          json.dump({"skills": list(skills), "problems": validate(skills), "context": context_cost(skills),
+                     "activation": {"correct": report["correct"], "total": report["total"]}}, f, indent=2)
+      print(open("results/results.json").read())
+    note: "خلاصه‌ی نتایج برای README."
+    expect: "\"activation\""

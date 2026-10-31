@@ -4,6 +4,8 @@
 
 > نسخه‌ی تعاملی (تیک مراحل، مقایسه‌ی خروجی، پرسیدن از Claude، دانلود notebook): صفحه‌ی «راهنمای ساخت پروژه‌ها» (claude.ai artifact).
 
+**برای فهمیدن بهتر:** [درس قدم‌به‌قدم Agentic RAG (۵ گام)](../../lessons/p22_agentic_rag/README.md) · پروژه در نقشه‌ی راه (نقشه‌ی راه، پروژه‌ی `p22_agentic_rag`) · [پژوهش ۲۰۲۶: Agentic RAG چه چیزی تثبیت شده](../../docs/research_2026.md)
+
 ## مراحل
 1. ساختن repo در GitHub
 2. فایل .gitignore
@@ -411,6 +413,17 @@ def make_llm_components(llm):
 ````
 
 مدل در `make_llm` با متغیر محیطی `AGENT_PROVIDER` انتخاب می‌شود: `ollama`، `anthropic` یا `opencode`. بدون آن، فقط نسخه‌ی قاعده‌ای اجرا می‌شود.
+
+<details><summary><b>درک کد: تابع به تابع</b></summary>
+
+- **`route`**: سلام و حساب ساده مستقیم جواب می‌گیرند؛ بقیه به جست‌وجو می‌روند. در تردید، جست‌وجو امن‌تر است. ([درس](../../lessons/p22_agentic_rag/step01_router/lesson.md))
+- **`content_words، expand، grade`**: مرتبط بودن = حداقل نصف کلمه‌های محتوایی سؤال در تکه باشد؛ مترادف‌ها (send back → return) قبلش باز می‌شوند. ([درس](../../lessons/p22_agentic_rag/step02_grader/lesson.md))
+- **`rewrite و agentic_search`**: اگر شاهد کافی نبود، query تازه (مترادف، فقط کلمه‌های محتوایی) با سقف ۳ دور. grade همیشه با سؤال اصلی. ([درس](../../lessons/p22_agentic_rag/step03_corrective_loop/lesson.md))
+- **`verify، run_agent، report`**: هر کلمه‌ی محتوایی جواب باید در شواهد باشد؛ ارجاع باید واقعی باشد؛ وگرنه امتناع. report پنج نوع نتیجه را می‌شمارد. ([درس](../../lessons/p22_agentic_rag/step04_verify_abstain/lesson.md))
+- **`plain_rag`**: خط پایه برای مقایسه: همیشه از هر چیزی که جست‌وجو آورد جواب می‌دهد.
+- **`make_llm و make_llm_components`**: همان چهار تصمیم را از مدل می‌پرسد (JSON) و به همان حلقه می‌دهد؛ پس قاعده و مدل با یک ارزیابی مقایسه می‌شوند. ([درس](../../lessons/p22_agentic_rag/step05_llm_components/lesson.md))
+
+</details>
 
 ## 6. فایل check_setup.py
 _GitHub · حدود 2 دقیقه_

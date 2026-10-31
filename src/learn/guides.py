@@ -98,16 +98,47 @@ def verify(gid: str, save: bool = True) -> dict:
     return out
 
 
+def _lessons_used(guides: list[dict]) -> dict:
+    """Texts of every lesson a guide links to (explain refs and lesson: links), so the page can show them in place."""
+    names = set()
+    for g in guides:
+        names |= {t.split(":", 1)[1] for _, t in g.get("learn", []) if t.startswith("lesson:")}
+        for s in g["steps"]:
+            names |= {e[2].split("/")[0] for e in s.get("explain", []) if len(e) > 2 and e[2]}
+    out = {}
+    for name in sorted(names):
+        d = ROOT / "lessons" / name
+        steps = sorted(p for p in d.iterdir() if p.is_dir() and (p / "lesson.md").exists())
+        out[name] = {"title": (d / "README.md").read_text(encoding="utf-8").splitlines()[0].lstrip("# ").strip(),
+                     "steps": {p.name: (p / "lesson.md").read_text(encoding="utf-8") for p in steps}}
+    return out
+
+
 def export() -> dict:
     out = []
     for gid in ids():
         g = load(gid)
         g["notebook_json"] = notebook(gid) if g["notebook"] else None
         out.append(g)
-    return {"guides": out}
+    conf = yaml.safe_load((ROOT / "lessons" / "learn.yaml").read_text(encoding="utf-8"))
+    return {"guides": out, "lessons": _lessons_used(out),
+            "links": {"roadmap_url": conf.get("roadmap_url", ""), "guides_url": conf.get("guides_url", "")}}
 
 
 WHERE = {"gh": "GitHub", "vs": "VS Code", "co": "Colab", "ol": "Ollama / Claude / OpenCode"}
+
+
+def _md_link(label: str, target: str) -> str:
+    kind, _, arg = target.partition(":")
+    if kind == "lesson":
+        return f"[{label}](../../lessons/{arg}/README.md)"
+    if kind == "guide":
+        return f"[{label}](../{arg}/GUIDE.md)"
+    if kind == "roadmap":
+        return f"{label} (نقشه‌ی راه، پروژه‌ی `{arg}`)"
+    if kind == "roadmap-tab":
+        return f"[{label}](../../docs/{'jepa' if arg == 'jepa' else 'research_2026'}.md)"
+    return f"[{label}]({arg})"
 
 
 def markdown(gid: str) -> str:
@@ -115,6 +146,8 @@ def markdown(gid: str) -> str:
     g = load(gid)
     o = g.get("outputs", {})
     L = [f"# {g['title']}", "", g["lede"], "", "> نسخه‌ی تعاملی (تیک مراحل، مقایسه‌ی خروجی، پرسیدن از Claude، دانلود notebook): صفحه‌ی «راهنمای ساخت پروژه‌ها» (claude.ai artifact).", ""]
+    if g.get("learn"):
+        L += ["**برای فهمیدن بهتر:** " + " · ".join(_md_link(label, t) for label, t in g["learn"]), ""]
     L += ["## مراحل", *[f"{i}. {s['title']}" for i, s in enumerate(g["steps"], 1)], ""]
     for i, s in enumerate(g["steps"], 1):
         L += [f"## {i}. {s['title']}", f"_{' · '.join(WHERE.get(w, w) for w in s.get('where', []))}{' · حدود ' + str(s['minutes']) + ' دقیقه' if s.get('minutes') else ''}_", ""]
@@ -128,6 +161,12 @@ def markdown(gid: str) -> str:
             L += [f"`{s['file']}`", "", f"````{lang}", s["content"].rstrip(), "````", ""]
         if s.get("note"):
             L += [s["note"], ""]
+        if s.get("explain"):
+            L += ["<details><summary><b>درک کد: تابع به تابع</b></summary>", ""]
+            for e in s["explain"]:
+                ref = f" ([درس]({'../../lessons/' + e[2] + '/lesson.md'}))" if len(e) > 2 and e[2] else ""
+                L += [f"- **`{e[0]}`**: {e[1]}{ref}"]
+            L += ["", "</details>", ""]
         for c in s.get("commands", []):
             L += [f"_{c['label']}_", "", "```", c["code"].rstrip(), "```", ""]
             if c.get("output"):

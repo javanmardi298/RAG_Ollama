@@ -4,6 +4,8 @@
 
 > نسخه‌ی تعاملی (تیک مراحل، مقایسه‌ی خروجی، پرسیدن از Claude، دانلود notebook): صفحه‌ی «راهنمای ساخت پروژه‌ها» (claude.ai artifact).
 
+**برای فهمیدن بهتر:** [درس قدم‌به‌قدم JEPA (۴ گام)](../../lessons/p17_jepa_basics/README.md) · [آموزش کامل JEPA و world model (۸ مرحله)](../../docs/jepa.md) · پروژه در نقشه‌ی راه (نقشه‌ی راه، پروژه‌ی `p17_jepa_basics`)
+
 ## مراحل
 1. ساختن repo در GitHub
 2. فایل .gitignore
@@ -246,6 +248,16 @@ def linear_probe(enc: Encoder | None, data=None, seed: int = 7) -> float:
     clf = LogisticRegression(max_iter=3000).fit(sc.transform(features(enc, xtr)), ytr.numpy())
     return float(clf.score(sc.transform(features(enc, xte)), yte.numpy()))
 ````
+
+<details><summary><b>درک کد: تابع به تابع</b></summary>
+
+- **`sigreg و collapse_stats`**: SIGReg: embedding ها روی جهت‌های تصادفی project و با N(0,1) مقایسه می‌شوند (LeJEPA). collapse_stats پراکندگی و رتبه‌ی مؤثر را می‌دهد. ([درس](../../lessons/p17_jepa_basics/step03_collapse/lesson.md))
+- **`load_digits_patches و sample_masks`**: رقم ۸×۸ به ۱۶ patch دوپیکسلی؛ ماسک یک بلوک ۲×۲ را پنهان می‌کند. ([درس](../../lessons/p17_jepa_basics/step01_patches_masks/lesson.md))
+- **`Encoder و Predictor`**: Transformer کوچک؛ encoder فقط patch های دیده‌شده را می‌بیند، predictor در جای پنهان‌ها mask token می‌گذارد و embedding آن‌ها را حدس می‌زند.
+- **`train`**: loss فقط روی patch های پنهان؛ ema: هدف از معلم EMA بدون گرادیان؛ sigreg: یک encoder + SIGReg؛ naive: بدون درمان (collapse)؛ pixel: پیش‌بینی پیکسل. ([درس](../../lessons/p17_jepa_basics/step02_latent_loss_ema/lesson.md))
+- **`features و linear_probe`**: encoder منجمد، میانگین embedding ها، logistic regression روی train و دقت روی test. ([درس](../../lessons/p17_jepa_basics/step04_probe_and_verdict/lesson.md))
+
+</details>
 
 ## 5. فایل check_setup.py
 _GitHub · حدود 2 دقیقه_

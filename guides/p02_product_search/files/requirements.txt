@@ -1,0 +1,5 @@
+numpy>=1.24
+pytest>=8.0
+ipykernel>=6.29
+# optional: dense search with embeddings (downloads a small model, about 90 MB)
+# sentence-transformers>=3.0

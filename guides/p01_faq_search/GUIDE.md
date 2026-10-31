@@ -4,6 +4,8 @@
 
 > نسخه‌ی تعاملی (تیک مراحل، مقایسه‌ی خروجی، پرسیدن از Claude، دانلود notebook): صفحه‌ی «راهنمای ساخت پروژه‌ها» (claude.ai artifact).
 
+**برای فهمیدن بهتر:** [درس قدم‌به‌قدم همین پروژه (۵ گام با تمرین)](../../lessons/p01_faq_search/README.md) · پروژه در نقشه‌ی راه: مرحله‌ها، سؤال مصاحبه، نسخه‌ی پیشرفته (نقشه‌ی راه، پروژه‌ی `p01_faq_search`)
+
 ## مراحل
 1. ساختن repo در GitHub
 2. فایل .gitignore
@@ -413,6 +415,18 @@ def make_llm(provider=None, model=None):
 ````
 
 ارائه‌دهنده‌ی مدل در `make_llm` با متغیر محیطی `FAQ_PROVIDER` انتخاب می‌شود: `offline` (پیش‌فرض، بدون مدل)، `ollama`، `anthropic` یا `opencode`.
+
+<details><summary><b>درک کد: تابع به تابع</b></summary>
+
+- **`chunk_markdown`**: سند را در هر عنوان `##` می‌بُرد و عنوان کامل («Returns > Return window») را کنار متن نگه می‌دارد؛ تابع داخلی `flush` بخش جاری را می‌بندد. ([درس](../../lessons/p01_faq_search/step01_chunk_markdown/lesson.md))
+- **`tokenize و BM25`**: BM25 سه ایده دارد: تکرار کلمه (با اشباع k1)، نادر بودن کلمه (idf) و نرمال‌سازی طول (b). `scores` برای هر سند جمع امتیاز کلمه‌های query را می‌دهد؛ `search` صفرها را حذف می‌کند. ([درس](../../lessons/p01_faq_search/step02_bm25/lesson.md))
+- **`trigrams و trigram_search`**: هر کلمه به سه‌حرفی‌های هم‌پوشان شکسته می‌شود و شباهت Jaccard حساب می‌شود؛ یک غلط تایپی فقط چند سه‌حرفی را خراب می‌کند. ([درس](../../lessons/p01_faq_search/step04_hybrid_rrf/lesson.md))
+- **`rrf و Searcher`**: RRF فقط رتبه‌ها را جمع می‌کند (1/(60+rank))، پس مقیاس متفاوت امتیاز BM25 و Jaccard مهم نیست. Searcher هر سه روش را پشت یک تابع `search` می‌گذارد. ([درس](../../lessons/p01_faq_search/step04_hybrid_rrf/lesson.md))
+- **`recall_at_k، reciprocal_rank، evaluate`**: recall@k: سند درست در k نتیجه‌ی اول هست؟ MRR: چقدر بالا؟ `evaluate` سؤال‌های بی‌جواب را کنار می‌گذارد و سندهای تکراری را یکی می‌کند. ([درس](../../lessons/p01_faq_search/step03_metrics/lesson.md))
+- **`build_messages، extract_citations، answer`**: prompt منبع‌ها را با شناسه می‌دهد؛ ارجاع‌ها با شناسه‌های واقعی فیلتر می‌شوند؛ بدون شاهد یا بدون ارجاع معتبر = امتناع. دفاع در کد است، نه در prompt. ([درس](../../lessons/p01_faq_search/step05_answer_citations/lesson.md))
+- **`make_llm`**: یک رابط برای همه‌ی مدل‌ها: تابعی که پیام‌ها را می‌گیرد و متن برمی‌گرداند. offline بدون مدل، Ollama محلی، Claude با کلید API، OpenCode با `opencode run`. ([درس](../../lessons/m01_compare_models/step01_provider_config/lesson.md))
+
+</details>
 
 ## 6. فایل check_setup.py
 _GitHub · حدود 2 دقیقه_

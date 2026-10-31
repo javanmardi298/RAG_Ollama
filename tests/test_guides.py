@@ -11,7 +11,8 @@ from learn import guides
 
 
 def test_guides_load_and_reference_existing_files():
-    assert set(guides.ids()) >= {"p01_faq_search", "p22_agentic_rag", "p17_jepa_basics"}
+    assert set(guides.ids()) >= {"p01_faq_search", "p02_product_search", "p03_document_qa", "p04_ticket_triage", "p17_jepa_basics",
+                                 "p22_agentic_rag", "p30_agent_skills"}
     for gid in guides.ids():
         g = guides.load(gid)
         assert g["repo"] and g["steps"] and g["readme"] and g["outputs"].get("cells"), gid
@@ -23,7 +24,10 @@ def test_guides_load_and_reference_existing_files():
         assert nb["nbformat"] == 4 and sum(c["cell_type"] == "code" for c in nb["cells"]) == len(g["outputs"]["cells"]), gid
 
 
-@pytest.mark.parametrize("gid", ["p01_faq_search", "p22_agentic_rag", "p17_jepa_basics"])
+ALL = ["p01_faq_search", "p02_product_search", "p03_document_qa", "p04_ticket_triage", "p17_jepa_basics", "p22_agentic_rag", "p30_agent_skills"]
+
+
+@pytest.mark.parametrize("gid", ALL)
 def test_copied_files_pass_their_own_tests(gid, tmp_path):
     if gid == "p17_jepa_basics":
         pytest.importorskip("torch")
@@ -35,7 +39,7 @@ def test_copied_files_pass_their_own_tests(gid, tmp_path):
         assert p.returncode == 0, p.stdout[-1500:] + p.stderr[-1500:]
 
 
-@pytest.mark.parametrize("gid", ["p01_faq_search", "p22_agentic_rag"])
+@pytest.mark.parametrize("gid", [g for g in ALL if g != "p17_jepa_basics"])
 def test_notebooks_run_and_outputs_json_is_current(gid):
     pytest.importorskip("nbclient")
     pytest.importorskip("ipykernel")
@@ -62,3 +66,21 @@ def test_guide_markdown_is_current_and_html_builds(tmp_path):
     assert "<title>" in page and "__DATA__" not in page and "</script" not in page.split("const DATA = ")[1].split(";\nconst $")[0]
     data = json.loads(page.split("const DATA = ")[1].split(";\nconst $ =")[0].replace("<\\/", "</"))
     assert len(data["guides"]) == len(guides.ids())
+
+
+def test_cross_links_resolve():
+    data = guides.export()
+    ids = {g["id"] for g in data["guides"]}
+    for g in data["guides"]:
+        for _, target in g.get("learn", []):
+            kind, _, arg = target.partition(":")
+            if kind == "lesson":
+                assert arg in data["lessons"], (g["id"], target)
+            if kind == "guide":
+                assert arg in ids, (g["id"], target)
+        for s in g["steps"]:
+            for e in s.get("explain", []):
+                if len(e) > 2 and e[2]:
+                    lesson, step = e[2].split("/")
+                    assert step in data["lessons"][lesson]["steps"], (g["id"], e[2])
+    assert data["links"]["roadmap_url"].startswith("https://claude.ai/artifact/")

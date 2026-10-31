@@ -1,0 +1,28 @@
+{
+ "check_setup": "Python 3.x.y\n3 skills: invoice-check, meeting-notes, project-report\nproblems: none\nsetup ok\n",
+ "pytest": ".....                                                                    [100%]\n5 passed",
+ "cells": [
+  "invoice-check   Check an invoice or receipt the user shares (as text or JSON) - requir...\nmeeting-notes   Turn a meeting transcript or rough notes into decisions, action items ...\nproject-report  Summarise a project's latest results (results/*.json) into a short sta...\nproblems: none",
+  "{'always_loaded_tokens': 183, 'on_demand_tokens': 274, 'if_all_in_prompt_tokens': 457}",
+  "ok  how is the project doing? give me a status report    expected=project-report got=project-report\nok  what should I do next on this project, based on the  expected=project-report got=project-report\nok  here is a receipt, check the totals                  expected=invoice-check got=invoice-check\nMISS extract the data from this invoice                   expected=invoice-check got=None\nok  summarise this meeting transcript and list the actio expected=meeting-notes got=meeting-notes\nok  who owns which task from yesterday's meeting notes   expected=meeting-notes got=meeting-notes\nok  what's the weather in Berlin                         expected=None got=None\nok  write a poem about autumn                            expected=None got=None\n\n7/8 correct",
+  "examples/invoice_ok.json -> exit 0\n   invoice ok\n   iban: ******************3000\nexamples/invoice_bad.json -> exit 1\n   missing field: number\n   total 250.0 is not net 200.0 + tax 38.0\n   date 2099-01-01 is in the future",
+  "{\n  \"skills\": [\n    \"invoice-check\",\n    \"meeting-notes\",\n    \"project-report\"\n  ],\n  \"problems\": [],\n  \"context\": {\n    \"always_loaded_tokens\": 183,\n    \"on_demand_tokens\": 274,\n    \"if_all_in_prompt_tokens\": 457\n  },\n  \"activation\": {\n    \"correct\": 7,\n    \"total\": 8\n  }\n}"
+ ],
+ "results": {
+  "skills": [
+   "invoice-check",
+   "meeting-notes",
+   "project-report"
+  ],
+  "problems": [],
+  "context": {
+   "always_loaded_tokens": 183,
+   "on_demand_tokens": 274,
+   "if_all_in_prompt_tokens": 457
+  },
+  "activation": {
+   "correct": 7,
+   "total": 8
+  }
+ }
+}

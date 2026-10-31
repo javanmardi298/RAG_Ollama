@@ -1,0 +1,96 @@
+name: 01_ticket_triage.ipynb
+cells:
+  - md: |
+      # Support-ticket triage with a human fallback
+
+      240 synthetic tickets, 6 intents (refund, shipping delay, cancellation, damaged item, account access, invoice), each
+      written from one of 60 wording templates. The model routes a ticket automatically only when it is confident enough;
+      everything else goes to a human. Questions: how good is it really (no leakage), are its confidences honest
+      (calibration), and how many tickets can be automated at a given accuracy?
+  - code: |
+      import numpy as np
+      from triage import (choose_threshold, confusion, ece, fit_temperature, load_tickets, predict, random_split, scores,
+                          selective, split, train)
+
+      tickets = load_tickets()
+      tr, dev, test = split(tickets)
+      print(len(tickets), "tickets:", len(tr), "train /", len(dev), "dev /", len(test), "test")
+      overlap = {t["template"] for t in tr} & {t["template"] for t in test}
+      print("templates shared by train and test:", len(overlap))
+    note: "تقسیم بر اساس قالب جمله: هیچ قالبی هم در train و هم در test نیست. یعنی آزمون واقعاً روی جمله‌بندی‌های تازه است، مثل مشتری‌های واقعی."
+    expect: "templates shared by train and test: 0"
+  - md: |
+      ## Leakage: the same model with a naive random split
+  - code: |
+      leaky = random_split(tickets)
+      print("random split (leaky):", scores(leaky[2], predict(train(leaky[0]), leaky[2])[0]))
+      model = train(tr)
+      print("split by template:   ", scores(test, predict(model, test)[0]))
+    note: "تقسیم تصادفی نتیجه را ۱.۰ نشان می‌دهد، چون جمله‌های تقریباً یکسان در هر دو طرف هستند. تقسیم درست، دقت واقعی را نشان می‌دهد. این یکی از رایج‌ترین اشتباه‌ها در پروژه‌های طبقه‌بندی است."
+    expect: "random split \\(leaky\\): \\{'accuracy': 1\\.0"
+  - md: |
+      ## Where does it go wrong? (test confusion matrix)
+  - code: |
+      classes = list(model.classes_)
+      labels, _ = predict(model, test)
+      cm = confusion(test, labels, classes)
+      print(" " * 15 + " ".join(f"{c[:7]:>7s}" for c in classes))
+      for c, row in zip(classes, cm):
+          print(f"{c:15s}" + " ".join(f"{v:7d}" for v in row))
+    note: "سطرها برچسب واقعی، ستون‌ها پیش‌بینی. عددهای خارج قطر اشتباه‌ها هستند."
+    expect: "shipping_delay"
+  - md: |
+      ## Are the confidences honest? (calibration)
+      Temperature scaling: one number fitted on dev that makes probabilities match reality better.
+  - code: |
+      T = fit_temperature(model, dev)
+      y_dev = np.array([t["label"] for t in dev])
+      for temp in (1.0, T):
+          lab, conf = predict(model, dev, temp)
+          print(f"temperature {temp:.2f}: ECE {ece(lab == y_dev, conf):.3f}, mean confidence {conf.mean():.2f}, accuracy {np.mean(lab == y_dev):.2f}")
+    note: "ECE فاصله‌ی اطمینان مدل با دقت واقعی است؛ کمتر بهتر. temperature روی dev پیدا می‌شود، هرگز روی test."
+    expect: "temperature 1\\.00: ECE"
+  - md: |
+      ## The most confident mistakes
+  - code: |
+      lab, conf = predict(model, dev, T)
+      wrong = [i for i in np.argsort(-conf) if lab[i] != y_dev[i]][:4]
+      for i in wrong:
+          print(f"{conf[i]:.2f}  predicted {lab[i]:15s} true {y_dev[i]:15s} | {dev[i]['text']}")
+    note: "مهم‌ترین درس این پروژه: مدل با اطمینان ۰.۹۶ «delivery is delayed» را damaged_item می‌داند! n-gram های حرفی «delayed» و «damaged» را شبیه می‌بینند. آستانه‌ی اطمینان به‌تنهایی جلوی این را نمی‌گیرد؛ داده‌ی متنوع‌تر یا مدل بهتر لازم است."
+    expect: "predicted damaged_item +true shipping_delay"
+  - md: |
+      ## Human fallback: coverage at a target accuracy
+      The threshold is chosen on dev for each target accuracy, then applied unchanged to test.
+  - code: |
+      import json, os
+
+      lab_d, conf_d = predict(model, dev, T)
+      lab_t, conf_t = predict(model, test, T)
+      y_test = np.array([t["label"] for t in test])
+      rows = {}
+      for target in (0.8, 0.9):
+          th = choose_threshold(lab_d == y_dev, conf_d, target)
+          rows[str(target)] = {"dev": selective(lab_d == y_dev, conf_d, th), "test": selective(lab_t == y_test, conf_t, th)}
+          print(f"target {target}: dev {rows[str(target)]['dev']}\n             test {rows[str(target)]['test']}")
+      os.makedirs("results", exist_ok=True)
+      with open("results/results.json", "w") as f:
+          json.dump({"test": scores(test, lab_t), "leaky_random_split": scores(leaky[2], predict(train(leaky[0]), leaky[2])[0]),
+                     "temperature": T, "routing": rows}, f, indent=2)
+    note: "با هدف ۰.۸، تقریباً همه‌ی تیکت‌ها خودکار می‌روند. با هدف ۰.۹ هیچ آستانه‌ای کافی نیست (به خاطر همان اشتباه‌های مطمئن) و همه به انسان می‌روند. این جواب درست و امن است: سیستم وقتی مطمئن نیست، خودکار کار نمی‌کند."
+    expect: "target 0\\.8: dev"
+  - md: |
+      ## A language model, zero-shot (optional)
+      Set `TRIAGE_PROVIDER` to `ollama`, `anthropic` or `opencode` before starting the notebook.
+  - code: |
+      import os
+      from triage import llm_classifier
+
+      if os.environ.get("TRIAGE_PROVIDER"):
+          classify = llm_classifier(classes)
+          llm_labels = [classify(t["text"]) for t in test]
+          print("LLM zero-shot:", scores(test, llm_labels))
+      else:
+          print("No model set: TRIAGE_PROVIDER = ollama | anthropic | opencode (see the guide)")
+    note: "مدل زبانی بدون آموزش معنی «delayed» و «damaged» را می‌فهمد ولی کندتر و (ابری) پولی است. با عدد مقایسه کن."
+    expect: "No model set|LLM zero-shot"

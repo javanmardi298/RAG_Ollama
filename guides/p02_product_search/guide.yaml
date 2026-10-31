@@ -1,0 +1,213 @@
+id: p02_product_search
+title: ساختن جست‌وجوی محصول با ارزیابی درجه‌دار، از صفر در GitHub
+repo: product_search
+description: 'Product search for a furniture shop: basic vs rich product text, BM25, typo-tolerant trigrams and hybrid RRF, evaluated with nDCG@10 / recall@10 / MRR and bootstrap tests'
+lede: 'جست‌وجوی محصول برای یک فروشگاه مبلمان می‌سازی و با برچسب‌های درجه‌دار (Exact / Partial) می‌سنجی: آیا متن غنی‌تر محصول کمک می‌کند؟ ترکیب دو جست‌وجو چطور؟ و آیا تفاوت واقعی است یا شانس؟ بدون GPU و بدون مدل، روی یک کاتالوگ کوچک ساختگی. نسخه‌ی کامل با داده‌ی واقعی WANDS (۴۳ هزار محصول، Colab + Ollama) در صفحه‌ی Build Log خودت است.'
+learn:
+- - پروژه در نقشه‌ی راه
+  - roadmap:p02_product_search
+- - 'مفاهیم BM25 و RRF: درس p01'
+  - lesson:p01_faq_search
+lesson: ''
+fill:
+  basic_ndcg: table/bm25 basic/ndcg@10
+  basic_recall: table/bm25 basic/recall@10
+  basic_mrr: table/bm25 basic/mrr
+  rich_ndcg: table/bm25 rich/ndcg@10
+  rich_recall: table/bm25 rich/recall@10
+  rich_mrr: table/bm25 rich/mrr
+  tri_ndcg: table/trigram rich/ndcg@10
+  tri_recall: table/trigram rich/recall@10
+  tri_mrr: table/trigram rich/mrr
+  hyb_ndcg: table/hybrid rrf/ndcg@10
+  hyb_recall: table/hybrid rrf/recall@10
+  hyb_mrr: table/hybrid rrf/mrr
+  rich_diff: vs_basic/bm25 rich/diff
+  rich_low: vs_basic/bm25 rich/low
+  rich_high: vs_basic/bm25 rich/high
+  ndcg: table/bm25 rich/ndcg@10
+  base: table/bm25 basic/ndcg@10
+related:
+- - نسخه‌ی کامل همین پروژه با WANDS، Colab و Ollama (صفحه‌ی Build Log تو)
+  - https://claude.ai/artifact/UWiW9TM74zsyyhLxTN3KJm
+facts:
+- - GitHub
+  - فایل‌ها و تست خودکار
+- - VS Code + notebook
+  - اجرا روی لپ‌تاپ، بدون GPU
+- - نسخه‌ی کامل
+  - WANDS در Colab (صفحه‌ی Build Log)
+flow:
+- - GitHub
+  - gh
+- - VS Code + notebook
+  - vs
+steps:
+- title: ساختن repo در GitHub
+  where:
+  - gh
+  minutes: 3
+  why: 'repo خودت نمونه‌کار توست: هر فایلی که اینجا می‌سازی، کارفرما می‌بیند. اسم و توضیح کوتاه و دقیق، اولین چیزی است که دیده می‌شود.'
+  do:
+  - در github.com بالا سمت راست **+** → **New repository**.
+  - '**Repository name:** `product_search`'
+  - '**Description:** `{description}`'
+  - '**Public** را انتخاب کن (برای نمونه‌کار و Actions رایگان).'
+  - تیک **Add a README file**، **Add .gitignore:** None (خودمان می‌سازیم)، **Choose a license:** MIT License → **Create repository**.
+  see: 'repo دو فایل دارد: `README.md` و `LICENSE`. در LICENSE اگر نام تو در خط Copyright نیست، با آیکون مداد اصلاحش کن.'
+- title: فایل .gitignore
+  where:
+  - gh
+  minutes: 2
+  why: 'به git می‌گوید چه چیزهایی هرگز وارد repo نشوند: محیط مجازی، فایل‌های موقت، و `.env` که کلید API در آن است. **قبل از** هر فایل دیگری بساز.'
+  do:
+  - '**Add file** → **Create new file**، نام `.gitignore`، متن زیر را paste کن. commit: `Add .gitignore`.'
+  file: .gitignore
+- title: فایل requirements.txt
+  where:
+  - gh
+  minutes: 2
+  why: numpy برای محاسبه‌ی سریع امتیازها و bootstrap. بقیه‌ی پروژه با کتابخانه‌ی استاندارد پایتون است. `sentence-transformers` اختیاری است (جست‌وجوی embedding)؛ فعلاً با `#` غیرفعال است.
+  do:
+  - '**Add file → Create new file**، نام `requirements.txt`. commit: `Add requirements`.'
+  file: requirements.txt
+- title: 'فایل داده: data/products.json'
+  where:
+  - gh
+  minutes: 3
+  why: '۸۴ محصول (مبل، صندلی، میز، تخت، چراغ، فرش، ...) با نام، دسته، ویژگی‌های ساخت‌یافته (رنگ، جنس، سبک) و توضیح؛ ۲۴ جست‌وجوی خریدار و برچسب‌های درجه‌دار مثل WANDS: Exact (۲) و Partial (۱). داده ساختگی است و مجوزی لازم ندارد.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `data/products.json` (با تایپ `/` خود GitHub پوشه را می‌سازد). commit: `Add synthetic catalogue with graded labels`.'
+  file: data/products.json
+- title: 'فایل اصلی: product_search.py'
+  where:
+  - gh
+  minutes: 5
+  why: 'همه‌ی منطق در یک فایل: ساختن متن محصول (basic و rich)، BM25، جست‌وجوی سه‌حرفی، embedding اختیاری، ترکیب RRF، معیارهای درجه‌دار nDCG@10، recall@10 و MRR، و bootstrap برای اینکه بفهمی تفاوت واقعی است یا نه.'
+  do:
+  - '**Add file → Create new file**، در کادر نام بنویس `product_search.py`. commit: `Add product search: product text, BM25, trigrams, RRF, graded metrics, bootstrap`.'
+  file: product_search.py
+  explain:
+  - - load_data و product_text
+    - برچسب‌های Exact/Partial به ۲/۱ تبدیل می‌شوند. متن rich دسته و ویژگی‌های ساخت‌یافته را هم دارد؛ رنگ و جنس اغلب فقط آنجا هستند.
+    - ''
+  - - BM25 و trigram_scores
+    - همان BM25 و سه‌حرفی‌های p01، این بار با numpy و روی محصولات.
+    - p01_faq_search/step02_bm25
+  - - top_k و rrf
+    - مرتب‌سازی قطعی با شکستن تساوی با اندیس؛ RRF دو فهرست را با رتبه ترکیب می‌کند.
+    - p01_faq_search/step04_hybrid_rrf
+  - - Dense
+    - 'اختیاری: embedding با sentence-transformers؛ شباهت کسینوسی با ضرب داخلی بردارهای نرمال‌شده.'
+    - ''
+  - - dcg، ndcg، recall، mrr، evaluate
+    - 'nDCG برچسب درجه‌دار را می‌فهمد: Exact در رتبه‌ی ۱ از Partial در رتبه‌ی ۱ بهتر است. recall فقط Exact را می‌شمارد. evaluate امتیاز هر query را هم برمی‌گرداند.'
+    - p01_faq_search/step03_metrics
+  - - bootstrap
+    - ۱۰٬۰۰۰ بار نمونه‌برداری دوباره از اختلاف‌های هر query؛ اگر حد پایین بازه‌ی ۹۵٪ بیشتر از صفر باشد، بهبود واقعی است.
+    - ''
+- title: فایل check_setup.py
+  where:
+  - gh
+  minutes: 2
+  why: یک بررسی کوچک که بعد از نصب روی لپ‌تاپ اجرا می‌کنی تا مطمئن شوی پایتون، داده و توابع اصلی کار می‌کنند، قبل از notebook.
+  do:
+  - '**Add file → Create new file**، نام `check_setup.py`. commit: `Add setup check`.'
+  file: check_setup.py
+- title: 'تست‌ها: tests/test_product_search.py'
+  where:
+  - gh
+  minutes: 3
+  why: تست‌ها معیارها را با مثال کوچکی که جوابش را می‌دانیم چک می‌کنند و مطمئن می‌شوند متن rich روی این داده از basic بهتر است. هیچ مدلی لازم نیست.
+  do:
+  - '**Add file → Create new file**، نام `tests/test_product_search.py`. commit: `Add tests`.'
+  file: tests/test_product_search.py
+- title: تست خودکار در GitHub (Actions)
+  where:
+  - gh
+  minutes: 3
+  why: با هر push، GitHub تست‌ها را روی یک ماشین تمیز اجرا می‌کند. تیک سبز یعنی پروژه روی هر سیستمی کار می‌کند، نه فقط لپ‌تاپ تو.
+  do:
+  - '**Add file → Create new file**، نام `.github/workflows/tests.yml`. commit: `Add CI`.'
+  - به تب **Actions** برو و چند ثانیه صبر کن.
+  file: .github/workflows/tests.yml
+  see: 'در تب Actions یک اجرای `tests` با تیک سبز. اگر قرمز شد، رویش کلیک کن: خطا دقیقاً می‌گوید کدام فایل یا خط.'
+- title: آوردن repo به لپ‌تاپ و ساختن محیط پایتون
+  where:
+  - vs
+  minutes: 8
+  why: محیط مجازی (venv) یک پایتون جدا فقط برای این پروژه است تا بسته‌هایش با پروژه‌های دیگر قاطی نشوند.
+  pre: 'پیش‌نیاز: Git (از git-scm.com) و Python 3.10 یا جدیدتر، و در VS Code افزونه‌های **Python** و **Jupyter** از Microsoft.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Git: Clone** → آدرس `https://github.com/<نام-کاربری-تو>/product_search.git` → یک پوشه انتخاب کن → **Open**.'
+  - 'ترمینال را باز کن: ``Ctrl+` ``'
+  commands:
+  - label: ترمینال VS Code · Windows PowerShell
+    code: 'python -m venv .venv
+
+      .venv\Scripts\Activate.ps1
+
+      pip install -r requirements.txt
+
+      '
+  - label: ترمینال VS Code
+    code: 'python check_setup.py
+
+      python -m pytest -q
+
+      '
+    output:
+    - check_setup
+    - pytest
+    expect: setup ok|\d+ passed
+  warn: 'اگر PowerShell گفت running scripts is disabled: یک بار `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` و دوباره فعال کن. روی Mac/Linux به‌جای خط دوم: `source .venv/bin/activate`.'
+- title: ساختن و اجرای notebook
+  where:
+  - vs
+  minutes: 15
+  why: 'notebook داستان پروژه است: دو شکل متن محصول، سه روش جست‌وجو، اثر غلط املایی، و آزمون bootstrap که می‌گوید کدام بهبود واقعی است.'
+  do:
+  - 'VS Code: `Ctrl+Shift+P` → **Create: New Jupyter Notebook** → `Ctrl+S` با نام `01_product_search.ipynb` در پوشه‌ی repo.'
+  - بالا سمت راست **Select Kernel → Python Environments → .venv**.
+  - 'سلول‌ها را به ترتیب زیر بساز (متن: **+ Markdown**، کد: **+ Code**) و هر سلول کد را با `Shift+Enter` اجرا کن. خروجی را با «باید ببینی» زیرش مقایسه کن.'
+  tip: 'اگر نمی‌خواهی سلول‌ها را یکی‌یکی بسازی: دکمه‌ی **دانلود notebook** بالای سلول‌ها فایل آماده را می‌دهد؛ در پوشه‌ی repo بگذار و Run All. ولی یک بار دستی ساختن، کد را بهتر در ذهنت می‌نشاند.'
+  notebook: 01_product_search.ipynb
+- title: commit و push از VS Code
+  where:
+  - vs
+  - gh
+  minutes: 3
+  why: notebook با خروجی‌هایش و فایل نتایج باید در GitHub باشند تا بدون اجرا دیده شوند.
+  do:
+  - 'پنل Source Control: `Ctrl+Shift+G`. فایل‌های `01_product_search.ipynb` و `results/results.json` را می‌بینی.'
+  - 'پیام: `Add notebook: product text, hybrid search and bootstrap` → **Commit** → **Sync Changes**.'
+  see: 'در GitHub، `01_product_search.ipynb` را باز کن: جدول‌ها و خروجی‌ها بدون اجرا دیده می‌شوند. تب Actions دوباره سبز است.'
+  warn: 'قانون ساده: قبل از هر کار در VS Code اول **Pull** بزن، و یک فایل را هم‌زمان در GitHub و VS Code ویرایش نکن.'
+- title: README نهایی
+  where:
+  - gh
+  minutes: 10
+  why: 'README صفحه‌ی اول پروژه است: در ۳۰ ثانیه بگوید چه مسئله‌ای، چه روشی، چه عددی و چه محدودیتی. عددها را از `results/results.json` خودت بردار، نه از این صفحه.'
+  do:
+  - 'در GitHub روی `README.md` → آیکون مداد → متن زیر را جایگزین کن و عددهای `{...}` را پر کن (یا results.json را پایین paste کن). commit: `Write README`.'
+  - نام کاربری‌ات را در خط badge جایگزین کن.
+  readme: true
+- title: صیقل نهایی repo
+  where:
+  - gh
+  minutes: 5
+  why: جزئیات کوچکی که repo را حرفه‌ای نشان می‌دهد.
+  do:
+  - 'صفحه‌ی repo → چرخ‌دنده‌ی **About** → Topics: `information-retrieval`, `search`, `bm25`, `evaluation`, `python`.'
+  - 'در پروفایل GitHub: **Customize your pins** → این repo را pin کن.'
+  - خط رزومه‌ی پایین را با عددهای خودت بردار.
+  cv: 'Built a product search engine (BM25 over structured product text, typo-tolerant trigrams, hybrid RRF) evaluated with graded relevance: nDCG@10 {base} → {ndcg} from enriching product text, with bootstrap confidence intervals; tested with pytest and GitHub Actions.'
+trouble:
+- - '`No module named product_search` در notebook'
+  - notebook باید در همان پوشه‌ی `product_search.py` باشد و kernel روی `.venv` باشد.
+- - '`FileNotFoundError: data/products.json`'
+  - فایل داده را با مسیر دقیق `data/products.json` ساخته‌ای؟ notebook را از پوشه‌ی repo اجرا کن.
+- - '`python` شناخته نمی‌شود'
+  - Python را با تیک «Add to PATH» نصب کن، یا به‌جای `python` بنویس `py`.
+- - تب Actions قرمز است
+  - روی اجرای قرمز کلیک کن؛ معمولاً یک فایل با نام یا مسیر اشتباه ساخته شده (مثلاً `test/` به‌جای `tests/`).
